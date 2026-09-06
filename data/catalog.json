@@ -1,0 +1,90 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "git.repository.status",
+      "name": "Git Repository Status",
+      "summary": "Inspect branch and working tree changes in a local Git repository.",
+      "intents": ["check git status", "inspect repository", "查看代码仓库状态", "有哪些未提交修改"],
+      "keywords": ["git", "repository", "status", "branch", "changes", "仓库", "状态"],
+      "inputs": {"path": "string"},
+      "outputs": {"status": "string"},
+      "context_cost": 96,
+      "risk": "low",
+      "permissions": ["read local repository"],
+      "provider_refs": ["builtin.git"]
+    },
+    {
+      "capability_id": "local.files.search",
+      "name": "Local File Search",
+      "summary": "Search text in a local project with ripgrep.",
+      "intents": ["find code", "search files", "locate a symbol", "在项目里搜索代码", "查找文件内容"],
+      "keywords": ["files", "search", "ripgrep", "code", "symbol", "文件", "搜索", "代码"],
+      "inputs": {"query": "string", "path": "string"},
+      "outputs": {"matches": "string"},
+      "context_cost": 124,
+      "risk": "low",
+      "permissions": ["read local files"],
+      "provider_refs": ["builtin.ripgrep"]
+    },
+    {
+      "capability_id": "github.pr.review",
+      "name": "GitHub Pull Request Review",
+      "summary": "Review a GitHub pull request for correctness, maintainability, and regressions.",
+      "intents": ["review github pr", "review pull request", "审查 GitHub PR", "检查合并请求"],
+      "keywords": ["github", "pr", "pull request", "review", "代码审查", "合并请求"],
+      "inputs": {"repository": "string", "pull_request": "number"},
+      "outputs": {"findings": "array"},
+      "context_cost": 860,
+      "risk": "medium",
+      "permissions": ["read repository", "read pull requests"],
+      "provider_refs": ["github.mcp"]
+    },
+    {
+      "capability_id": "github.pr.security_review",
+      "name": "Pull Request Security Review",
+      "summary": "Analyze a pull request for exploitable security issues and unsafe data flows.",
+      "intents": ["review pr security", "find vulnerabilities in pull request", "检查 PR 安全漏洞"],
+      "keywords": ["security", "vulnerability", "github", "pr", "安全", "漏洞", "审计"],
+      "inputs": {"repository": "string", "pull_request": "number"},
+      "outputs": {"security_findings": "array"},
+      "context_cost": 1120,
+      "risk": "medium",
+      "permissions": ["read repository", "read pull requests"],
+      "provider_refs": ["github.mcp", "codex.security"]
+    },
+    {
+      "capability_id": "postgres.query.explain",
+      "name": "PostgreSQL Performance Analysis",
+      "summary": "Explain a slow PostgreSQL query and recommend evidence-based optimizations.",
+      "intents": ["analyze slow postgres query", "explain query plan", "分析 PostgreSQL 慢查询"],
+      "keywords": ["postgres", "postgresql", "sql", "query", "explain", "performance", "慢查询", "数据库"],
+      "inputs": {"query": "string", "connection": "secret"},
+      "outputs": {"analysis": "object"},
+      "context_cost": 740,
+      "risk": "high",
+      "permissions": ["database connection", "execute read-only query"],
+      "provider_refs": ["postgres.mcp"]
+    },
+    {
+      "capability_id": "document.pdf.to_markdown",
+      "name": "PDF to Markdown",
+      "summary": "Extract structured text and tables from a PDF into Markdown.",
+      "intents": ["convert pdf to markdown", "extract pdf text", "把 PDF 转成 Markdown"],
+      "keywords": ["pdf", "markdown", "extract", "document", "转换", "提取"],
+      "inputs": {"file": "path"},
+      "outputs": {"markdown": "string"},
+      "context_cost": 420,
+      "risk": "low",
+      "permissions": ["read selected file"],
+      "provider_refs": ["pdf.skill"]
+    }
+  ],
+  "providers": [
+    {"provider_id": "builtin.git", "name": "Git CLI", "type": "CLI", "source": "local", "version": "system", "maintenance": "active", "trust": "local", "status": "Available", "capabilities": ["git.repository.status"], "executable": "git"},
+    {"provider_id": "builtin.ripgrep", "name": "ripgrep", "type": "CLI", "source": "local", "version": "system", "maintenance": "active", "trust": "local", "status": "Available", "capabilities": ["local.files.search"], "executable": "rg"},
+    {"provider_id": "github.mcp", "name": "GitHub MCP", "type": "MCP", "source": "official registry", "version": "latest", "maintenance": "active", "trust": "official", "status": "Discovered", "capabilities": ["github.pr.review", "github.pr.security_review"]},
+    {"provider_id": "codex.security", "name": "Codex Security", "type": "MCP", "source": "OpenAI plugin", "version": "latest", "maintenance": "active", "trust": "official", "status": "Discovered", "capabilities": ["github.pr.security_review"]},
+    {"provider_id": "postgres.mcp", "name": "PostgreSQL MCP", "type": "MCP", "source": "public registry", "version": "latest", "maintenance": "community", "trust": "review required", "status": "Discovered", "capabilities": ["postgres.query.explain"]},
+    {"provider_id": "pdf.skill", "name": "PDF Skill", "type": "Skill", "source": "local or registry", "version": "latest", "maintenance": "active", "trust": "review required", "status": "Discovered", "capabilities": ["document.pdf.to_markdown"]}
+  ]
+}

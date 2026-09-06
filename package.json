@@ -1,0 +1,21 @@
+{
+  "name": "@capability-layer/cap",
+  "version": "0.1.0",
+  "description": "Intent-first capability discovery and consolidation for AI agents",
+  "type": "module",
+  "bin": {
+    "cap": "./bin/cap.js",
+    "cap-mcp": "./bin/cap-mcp.js"
+  },
+  "scripts": {
+    "start": "node ./bin/cap.js",
+    "web": "node ./bin/cap.js web",
+    "mcp": "node ./bin/cap-mcp.js",
+    "test": "node --test",
+    "check": "node --check src/cli.js && node --check src/mcp-server.js && node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
