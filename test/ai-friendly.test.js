@@ -71,12 +71,12 @@ test('schema rejects broken catalog fields', async () => {
 
 test('public API exports only the read/main path', () => {
   assert.deepEqual(Object.keys(api), [
-    'searchCapabilities',
     'acquireCapability',
-    'useCapability',
     'inspectLocal',
     'loadCatalog',
-    'loadState'
+    'loadState',
+    'searchCapabilities',
+    'useCapability'
   ]);
   for (const name of Object.keys(api)) {
     assert.equal(typeof api[name], 'function');
