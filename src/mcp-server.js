@@ -1,3 +1,4 @@
+/** MCP JSON-RPC stdio server with a small CAP tool surface. */
 import readline from 'node:readline';
 import { searchCapabilities } from './search.js';
 import { acquireCapability } from './registry.js';

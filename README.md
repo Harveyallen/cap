@@ -117,6 +117,22 @@ CAP Core ── Search ── Catalog
 
 核心对象是 Capability，而不是 MCP Server。一个 Capability 可以由多个 MCP、Skill、API 或 CLI Provider 实现。
 
+## AI 友好仓库
+
+本仓库按 coding agent 可导航方式组织：
+
+| 文件 | 用途 |
+|------|------|
+| [`AGENTS.md`](./AGENTS.md) | Agent 工作约定（命令、边界、目录图） |
+| [`llms.txt`](./llms.txt) | LLM / Agent 文档索引 |
+| [`docs/architecture.md`](./docs/architecture.md) | 模块边界与数据流 |
+| [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills |
+| [`.mcp.json`](./.mcp.json) | 项目级 CAP MCP（dogfood） |
+| [`src/index.js`](./src/index.js) | 稳定程序化 API |
+| [`data/catalog.schema.json`](./data/catalog.schema.json) | Catalog 结构约束 |
+
+Claude Code / Cursor / Copilot 等也会读取 `CLAUDE.md`、`.cursor/rules/`、`.github/copilot-instructions.md`，内容以 `AGENTS.md` 为准。
+
 ## 开发
 
 ```bash
@@ -124,7 +140,7 @@ npm test
 npm run check
 ```
 
-种子 Catalog 位于 `data/catalog.json`。添加记录时保持 `capability_id` 稳定，并在 `provider_refs` 与 Provider 的 `capabilities` 中双向声明。
+种子 Catalog 位于 `data/catalog.json`，结构见 `data/catalog.schema.json`。添加记录时保持 `capability_id` 稳定，并在 `provider_refs` 与 Provider 的 `capabilities` 中双向声明。Agent 侧可直接按 `.agents/skills/add-capability/SKILL.md` 执行。
 
 ## V0.1 边界
 

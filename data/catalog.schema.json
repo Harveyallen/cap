@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://capability-layer.local/schemas/catalog.schema.json",
+  "title": "CAP Catalog",
+  "type": "object",
+  "required": ["capabilities", "providers"],
+  "additionalProperties": false,
+  "properties": {
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "capability_id",
+          "name",
+          "summary",
+          "intents",
+          "keywords",
+          "inputs",
+          "outputs",
+          "context_cost",
+          "risk",
+          "permissions",
+          "provider_refs"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]*$"
+          },
+          "name": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "intents": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "keywords": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "inputs": { "type": "object" },
+          "outputs": { "type": "object" },
+          "context_cost": { "type": "integer", "minimum": 1 },
+          "risk": { "enum": ["low", "medium", "high"] },
+          "permissions": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "provider_refs": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "provider_id",
+          "name",
+          "type",
+          "source",
+          "version",
+          "maintenance",
+          "trust",
+          "status",
+          "capabilities"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]*$"
+          },
+          "name": { "type": "string", "minLength": 1 },
+          "type": { "enum": ["CLI", "MCP", "Skill", "API"] },
+          "source": { "type": "string" },
+          "version": { "type": "string" },
+          "maintenance": { "type": "string" },
+          "trust": { "type": "string" },
+          "status": { "type": "string" },
+          "capabilities": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "executable": { "type": "string" }
+        }
+      }
+    }
+  }
+}

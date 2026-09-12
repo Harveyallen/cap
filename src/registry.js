@@ -1,3 +1,4 @@
+/** Catalog loading, CAP Registry persistence, and acquire. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { capHome, packageRoot } from './paths.js';

@@ -1,3 +1,4 @@
+/** CLI command routing and human/JSON formatting. */
 import { inspectLocal } from './inspector.js';
 import { searchCapabilities } from './search.js';
 import { acquireCapability, loadState } from './registry.js';

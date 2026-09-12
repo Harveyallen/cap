@@ -1,0 +1,35 @@
+---
+name: cap-develop
+description: Develop or debug the CAP repository itself (CLI, MCP, registry, search, optimize).
+---
+
+# Develop CAP
+
+## Before coding
+
+1. Read root `AGENTS.md` and `docs/architecture.md`.
+2. Identify the owning module from the map; keep domain logic out of `cli.js` / `web-server.js`.
+3. Prefer extending existing functions over new files unless a clear boundary appears.
+
+## Verify loop
+
+```bash
+npm run check
+node ./bin/cap.js search "<intent>" --json
+```
+
+Use a temp registry:
+
+```bash
+CAP_HOME=/tmp/cap-dev-$$ node ./bin/cap.js acquire git.repository.status --json
+```
+
+## MCP surface
+
+Default tools: `cap.search`, `cap.acquire`, `cap.use`. Only expose `cap.inspect` behind `CAP_MCP_INSPECT=1`.
+
+## Done when
+
+- Tests cover the changed behavior
+- No new runtime dependency without explicit approval
+- Changelog updated for user-visible changes
