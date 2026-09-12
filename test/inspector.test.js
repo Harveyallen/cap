@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { classifyPressure, inspectLocal, resolveBudget } from '../src/inspector.js';
+import { classifyPressure, estimateTokens, inspectLocal, resolveBudget } from '../src/inspector.js';
 import { applyOptimization } from '../src/optimize.js';
 import { compactTokens, inspectText, main } from '../src/cli.js';
 
@@ -41,7 +41,7 @@ test('inspect counts MCP tools, skills, and context', async (t) => {
   assert.equal(result.pressure.injectedTokens, result.summary.contextTokens);
   assert.equal(result.pressure.band, 'healthy');
   assert.ok(result.pressure.healthScore > 90);
-  assert.ok(result.funnel.installed >= result.funnel.enabled);
+  assert.equal(result.funnel.installed, 3);
   assert.equal(result.funnel.enabled, 3);
   assert.equal(result.funnel.injected, 3);
   assert.equal(result.funnel.used, 0);
@@ -71,6 +71,44 @@ test('budget env overrides and pressure bands', async (t) => {
   assert.equal(classifyPressure(84_000, 168000).band, 'high');
   assert.equal(classifyPressure(117_600, 168000).band, 'critical');
   assert.equal(classifyPressure(142_800, 168000).band, 'emergency');
+  assert.equal(classifyPressure(100, 0).band, 'unknown');
+  assert.equal(classifyPressure(0, 0).band, 'unknown');
+  assert.equal(classifyPressure(50, -1).band, 'unknown');
+  const zeroBudget = await inspectLocal({...options, env: {CAP_EFFECTIVE_BUDGET: '0'}});
+  assert.equal(zeroBudget.pressure.band, 'unknown');
+  assert.equal(zeroBudget.pressure.healthScore, 0);
+});
+
+test('skill body is on-demand and excluded from injected tokens', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const body = `${'On-demand instruction body. '.repeat(80)}\n`;
+  await fs.writeFile(path.join(options.userHome, '.claude', 'skills', 'reviewer', 'SKILL.md'), `---\nname: reviewer\ndescription: Review code\n---\n${body}`);
+  const result = await inspectLocal({...options, env: {}});
+  const skill = result.items.find((item) => item.name === 'reviewer');
+  const identity = estimateTokens('reviewer\nReview code');
+  assert.equal(skill.contextTokens, identity);
+  assert.equal(skill.cost.descriptionTokens, identity);
+  assert.equal(skill.cost.instructionOnDemand, true);
+  assert.ok(skill.cost.instructionTokens > identity);
+  assert.equal(skill.cost.instructionTokens, estimateTokens(body));
+  assert.equal(skill.cost.totalTokens, skill.cost.descriptionTokens + skill.cost.instructionTokens);
+  assert.equal(result.pressure.injectedTokens, result.summary.contextTokens);
+  const injected = result.items.filter((item) => item.direct).reduce((sum, item) => sum + item.contextTokens, 0);
+  assert.equal(result.summary.contextTokens, injected);
+  assert.ok(result.summary.contextTokens < injected + skill.cost.instructionTokens);
+  assert.ok(result.summary.contextTokens < skill.cost.totalTokens + result.items.filter((item) => item.name !== 'reviewer' && item.direct).reduce((sum, item) => sum + item.contextTokens, 0));
+});
+
+test('funnel.installed is local scan names, not seed catalog', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const result = await inspectLocal({...options, env: {}});
+  const local = new Set(result.items.filter((item) => item.kind !== 'warning').map((item) => item.name.toLowerCase()));
+  assert.equal(result.funnel.installed, local.size);
+  assert.equal(result.funnel.installed, 3);
+  assert.equal(local.has('builtin.git'), false);
+  assert.equal(local.has('pdf.skill'), false);
 });
 
 test('CLI inspect prints Context Health sections', async (t) => {
@@ -80,7 +118,7 @@ test('CLI inspect prints Context Health sections', async (t) => {
   const text = inspectText(report, options);
   assert.match(text, /CAP Inspect · /);
   assert.match(text, /Pressure\s+Healthy/);
-  assert.match(text, /Funnel\s+\d+ installed → 3 enabled → 3 injected → used unknown/);
+  assert.match(text, /Funnel\s+\d+ local installed → 3 enabled → 3 injected → used unknown/);
   assert.match(text, /建议迁移/);
   assert.match(text, /MCP \/ Skills（Claude Code）/);
   assert.match(text, /tip: cap optimize/);

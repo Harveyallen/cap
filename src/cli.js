@@ -77,8 +77,7 @@ function reductionBar(percent, width = 22) {
 
 function pressureTone(band) {
   if (band === 'healthy') return 32;
-  if (band === 'moderate') return 33;
-  if (band === 'high') return 33;
+  if (band === 'moderate' || band === 'high' || band === 'unknown') return 33;
   return 31;
 }
 
@@ -112,7 +111,7 @@ export function inspectText(report, options = {}) {
     `${s.mcpServers} MCP · ${s.skills} Skills · ${s.directTools} tools${estimateNote} · ${compactTokens(s.contextTokens)} tokens`,
     `${reductionBar(s.estimatedReductionPercent)}  →  ${s.directTools ? s.capEntryTools : 0} CAP entry tools (−${s.estimatedReductionPercent}%)`,
     `Pressure  ${paint(pressureTone(band), band[0].toUpperCase() + band.slice(1))}  ${pressure.percent ?? 0}% · health ${pressure.healthScore ?? ''} · effective ${compactTokens(budget.effectiveBudget)} / nominal ${compactTokens(budget.nominalWindow)}`,
-    `Funnel    ${funnel.installed ?? 0} installed → ${funnel.enabled ?? 0} enabled → ${funnel.injected ?? 0} injected → ${used}`,
+    `Funnel    ${funnel.installed ?? 0} local installed → ${funnel.enabled ?? 0} enabled → ${funnel.injected ?? 0} injected → ${used}`,
     `${paint(33, '⚠')} ${s.warnings ?? 0} warnings · ${s.duplicateGroups} duplicates · ${paint(32, '✓')} ${s.managed ?? 0} managed`
   ];
 

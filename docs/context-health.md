@@ -53,6 +53,8 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 
 `healthScore ≈ clamp(0, 100, 100 - pressure%)`。分数高表示占用低。
 
+当 `effectiveBudget <= 0`（未配置、算成 0、或非法值）时，**不能**标成 `healthy`。`classifyPressure` 返回 `band: "unknown"`、`percent: 0`、`healthScore: 0`——分母无效，压力不可计算。
+
 ## 四个设计支柱
 
 1. **Nominal vs Effective 分母**  
@@ -60,13 +62,14 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 
 2. **漏斗：Installed → Enabled → Injected → Used**  
    安装了不等于在用。V2 能确定的映射：
-   - `installed`：种子 Catalog Provider + 扫描到的 MCP/Skill 去重计数
-   - `enabled`：出现在 Agent 配置里的 MCP + Skills
+   - `installed`：本地扫描到的 MCP / Skill **名称去重**（本地 inventory）。**不含**种子 Catalog 里从未扫到的 Provider
+   - `enabled`：出现在 Agent 配置里的 MCP + Skills（配置条目数，重复项分别计数）
    - `injected`：`direct=true`（当前会暴露给 Agent 的项）
    - `used`：来自 Registry activity 的成功 `use`；若没有则 `0` 且 `usedUnknown: true`
 
 3. **每条 Capability 的 Context Cost**  
    尽量拆成 `schema` / `description` / `instructions` / `total`。全部标记 `estimated`。  
+   Skill：常驻注入只有 **name + description**（frontmatter 身份）。正文进入 `cost.instructionTokens`，并标 `instructionOnDemand: true`，**不计入** `contextTokens` / `pressure.injectedTokens` / Pressure 分子。`cost.totalTokens` 可以是各分段之和（潜在总成本）。  
    `value` / Value-per-Cost 在 V2 先留空（`value: null`），供 V3 Profiler 使用。
 
 4. **Monitor → advise → auto-govern**  
@@ -101,7 +104,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
     "healthScore": 99
   },
   "funnel": {
-    "installed": 9,
+    "installed": 3,
     "enabled": 3,
     "injected": 3,
     "used": 0,
@@ -110,7 +113,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 }
 ```
 
-`summary` 增加 `warnings`、`managed`、`reclaimableTokens`（把 Direct MCP 迁到 CAP 后可回收的估算 token）。每条 inventory item 增加 `status`（`direct` | `managed` | `estimated`）和 `cost`。
+`summary` 增加 `warnings`、`managed`、`reclaimableTokens`。`reclaimableTokens` 是把 Direct MCP 迁到 CAP 后可回收的**毛估**，**不扣除** 3 个 CAP entry tools 自身占用。每条 inventory item 增加 `status`（`direct` | `managed` | `estimated`）和 `cost`。
 
 人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染：压力带、漏斗、重复项、按 token 排序的迁移建议、按 Agent 分组的清单。
 

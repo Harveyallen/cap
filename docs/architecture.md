@@ -41,7 +41,7 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 - Seed catalog: `data/catalog.json` validated by `data/catalog.schema.json` (required fields, enums, id patterns, minItems, no extra properties) on `loadCatalog` and in tests.
 - Registry default path: `$CAP_HOME/registry.json` or `~/.cap/registry.json`.
 - Context footprint: character/4 estimate, not a vendor tokenizer.
-- Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Product rules: [context-health.md](./context-health.md).
+- Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Skill `contextTokens` are name+description only. `funnel.installed` is local scan names, not catalog size. `effectiveBudget <= 0` → pressure `unknown`. Product rules: [context-health.md](./context-health.md).
 - Budget env: `CAP_NOMINAL_WINDOW`, `CAP_HARNESS_SOFT_LIMIT`, `CAP_RESERVE_TOKENS`, `CAP_EFFECTIVE_BUDGET`.
 
 ## Agent integration

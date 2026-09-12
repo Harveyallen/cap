@@ -2,7 +2,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { loadCatalog, loadState } from './registry.js';
+import { loadState } from './registry.js';
 
 const TOKEN_CHARS = 4;
 const DEFAULT_NOMINAL_WINDOW = 200_000;
@@ -25,9 +25,12 @@ function intOpt(value, fallback) {
   return Number.isFinite(n) && n >= 0 ? Math.round(n) : fallback;
 }
 
-function itemCost({schemaTokens = 0, descriptionTokens = 0, instructionTokens = 0, totalTokens, estimated = true}) {
+function itemCost({schemaTokens = 0, descriptionTokens = 0, instructionTokens = 0, totalTokens, estimated = true, instructionOnDemand = false}) {
   const total = totalTokens ?? (schemaTokens + descriptionTokens + instructionTokens);
-  return {schemaTokens, descriptionTokens, instructionTokens, totalTokens: total, estimated, value: null};
+  return {
+    schemaTokens, descriptionTokens, instructionTokens, totalTokens: total, estimated, value: null,
+    ...(instructionOnDemand ? {instructionOnDemand: true} : {})
+  };
 }
 
 function itemStatus(item) {
@@ -62,8 +65,11 @@ export function resolveBudget(options = {}) {
 /** Context Pressure = injected / effective budget. Bands are an engineering standard. */
 export function classifyPressure(injectedTokens, effectiveBudget) {
   const tokens = Math.max(0, Number(injectedTokens) || 0);
-  const budget = Math.max(0, Number(effectiveBudget) || 0);
-  const percent = budget > 0 ? Math.round((tokens / budget) * 1000) / 10 : 0;
+  const budget = Number(effectiveBudget);
+  if (!Number.isFinite(budget) || budget <= 0) {
+    return {injectedTokens: tokens, percent: 0, band: 'unknown', healthScore: 0};
+  }
+  const percent = Math.round((tokens / budget) * 1000) / 10;
   let band = 'emergency';
   if (percent < 30) band = 'healthy';
   else if (percent < 50) band = 'moderate';
@@ -72,11 +78,9 @@ export function classifyPressure(injectedTokens, effectiveBudget) {
   return {injectedTokens: tokens, percent, band, healthScore: Math.max(0, Math.min(100, Math.round(100 - percent)))};
 }
 
-export function buildFunnel({items, catalog, activity}) {
+export function buildFunnel({items, activity}) {
   const inventory = items.filter((item) => item.kind !== 'warning');
-  const catalogIds = new Set((catalog?.providers ?? []).map((provider) => provider.provider_id.toLowerCase()));
-  const names = new Set(catalogIds);
-  for (const item of inventory) names.add(item.name.toLowerCase());
+  const names = new Set(inventory.map((item) => item.name.toLowerCase()));
   const usedIds = new Set((activity ?? []).filter((row) => row.action === 'use' && row.success).map((row) => row.capability_id));
   return {
     installed: names.size,
@@ -171,17 +175,18 @@ async function walkSkills(root, agent) {
       const frontmatter = text.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? text.slice(0, 800);
       const body = text.replace(/^---\n[\s\S]*?\n---\n?/, '');
       const name = frontmatter.match(/^name:\s*(.+)$/m)?.[1]?.trim() ?? entry.name;
-      const description = frontmatter.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? frontmatter;
+      const description = frontmatter.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? '';
+      const identityTokens = estimateTokens([name, description].filter(Boolean).join('\n'));
       const cost = itemCost({
-        descriptionTokens: estimateTokens(description),
+        descriptionTokens: identityTokens,
         instructionTokens: estimateTokens(body),
-        totalTokens: estimateTokens(frontmatter),
-        estimated: true
+        estimated: true,
+        instructionOnDemand: true
       });
       skills.push(decorate({
         kind: 'skill', agent, name, source: file, direct: true,
-        toolCount: 0, contextTokens: cost.totalTokens, cost,
-        fingerprint: `${name.toLowerCase()}:${cost.totalTokens}`
+        toolCount: 0, contextTokens: identityTokens, cost,
+        fingerprint: `${name.toLowerCase()}:${identityTokens}`
       }));
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
@@ -211,7 +216,7 @@ export async function inspectLocal(options = {}) {
     ...skillRoots.map(([root, agent]) => walkSkills(root, agent))
   ]);
   const items = batches.flat();
-  const [state, catalog] = await Promise.all([loadState(options), loadCatalog().catch(() => ({providers: []}))]);
+  const state = await loadState(options);
   const managedNames = new Set(state.external_providers.map((item) => item.name));
   for (const item of items) {
     if (managedNames.has(item.name)) item.direct = false;
@@ -236,7 +241,7 @@ export async function inspectLocal(options = {}) {
   const reclaimableTokens = recommendations.reduce((sum, item) => sum + item.estimatedTokensSaved, 0);
   const budget = resolveBudget(options);
   const pressure = classifyPressure(contextTokens, budget.effectiveBudget);
-  const funnel = buildFunnel({items, catalog, activity: state.activity});
+  const funnel = buildFunnel({items, activity: state.activity});
   return {
     generatedAt: new Date().toISOString(),
     summary: {

@@ -15,7 +15,7 @@ Claude Code / Codex
 14 MCP · 8 Skills · 286 tools · ~37.8k tokens
 ████████████████████░░  →  3 CAP entry tools (−99%)
 Pressure  High  22% · health 78 · effective ~168k / nominal ~200k
-Funnel    24 installed → 22 enabled → 16 injected → used unknown
+Funnel    24 local installed → 22 enabled → 16 injected → used unknown
 ⚠ 2 warnings · 3 duplicates · ✓ 1 managed
 
 $ cap search "分析 PostgreSQL 慢查询"
