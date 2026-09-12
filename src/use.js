@@ -22,7 +22,7 @@ function run(executable, args, options = {}) {
 
 export async function useCapability(capabilityId, input = {}, options = {}) {
   const [catalog, state] = await Promise.all([loadCatalog(), loadState(options)]);
-  if (!state.managed_capabilities.includes(capabilityId)) throw new Error(`${capabilityId} is not CAP Managed. Run cap acquire ${capabilityId} first.`);
+  if (!state.managed_capabilities.includes(capabilityId)) throw new Error(`${capabilityId} is not CAP Managed. Run cap add ${capabilityId} first.`);
   const capability = catalog.capabilities.find((item) => item.capability_id === capabilityId);
   if (!capability) throw new Error(`Unknown capability: ${capabilityId}`);
   const providerId = capability.provider_refs.find((id) => state.managed_providers.includes(id));

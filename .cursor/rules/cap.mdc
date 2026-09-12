@@ -9,6 +9,6 @@ Follow root `AGENTS.md`. Summary:
 - Domain logic in `src/{search,registry,use,inspector,optimize,mcp-server}.js`; keep CLI/Web thin
 - Catalog edits must keep Capability↔Provider refs bidirectional; validate against `data/catalog.schema.json`
 - Prefer CLI `--json` and `CAP_HOME` temp dirs when testing
-- Never expand default MCP tools beyond search/acquire/use without opt-in
-- Public `src/index.js` stays search/acquire/use/inspect/loadCatalog/loadState
+- Never expand default MCP tools beyond search/add/use without opt-in
+- Public `src/index.js` stays search/add/use/inspect/loadCatalog/loadState
 - Run `npm run check` before finishing

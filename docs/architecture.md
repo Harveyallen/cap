@@ -20,15 +20,15 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 
 - **Capability**: stable intent-oriented id (`git.repository.status`), not an MCP server.
 - **Provider**: implementation (CLI / MCP / Skill) that declares which capabilities it covers.
-- **Managed**: Capability/Provider recorded in the CAP Registry after `acquire`.
-- **Activity**: recent acquire/use outcomes for later CapabilityBench work.
+- **Managed**: Capability/Provider recorded in the CAP Registry after `add`.
+- **Activity**: recent add/use outcomes for later CapabilityBench work.
 
 ## Module responsibilities
 
 | Module | Owns | Must not |
 |--------|------|----------|
 | `search.js` | Hybrid keyword/intent scoring | Persist state |
-| `registry.js` | Catalog load + registry R/W + acquire | Execute providers |
+| `registry.js` | Catalog load + registry R/W + add | Execute providers |
 | `use.js` | Execute managed builtins | Discover/search |
 | `inspector.js` | Read local Agent configs/skills, estimate footprint | Connect to MCP servers |
 | `optimize.js` | Plan + guarded JSON MCP migration | Mutate TOML in v0.1 |

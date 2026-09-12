@@ -29,12 +29,12 @@ $ cap search "分析 PostgreSQL 慢查询"
 
 - `cap inspect`：扫描 Claude Code / Codex 的 MCP 配置与本地 Skills，估算直接暴露工具和 Context footprint，标记重复项。
 - `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。
-- `cap acquire`：将 Capability 和 Provider 登记为 `CAP Managed`。
+- `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
 - `cap use`：通过 Capability 抽象调用已登记的本地 Provider；初版内置 Git 状态与 ripgrep 搜索。
 - `cap optimize`：展示 Before / After；显式使用 `--apply --yes` 时迁移 JSON MCP 配置，并先生成时间戳备份。
 - `cap web`：轻量 Discover、My Capabilities、Health 页面。
-- `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.acquire`、`cap.use`；可选暴露 `cap.inspect`。
-- Activity：记录 Acquire/Use 结果，为后续 CapabilityBench 积累基础数据。
+- `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.add`、`cap.use`；可选暴露 `cap.inspect`。
+- Activity：记录 Add/Use 结果，为后续 CapabilityBench 积累基础数据。
 
 ## 快速开始
 
@@ -44,7 +44,7 @@ $ cap search "分析 PostgreSQL 慢查询"
 npm link
 cap inspect
 cap search "review GitHub PR security"
-cap acquire git.repository.status
+cap add git.repository.status
 cap use git.repository.status --input '{"path":"."}'
 cap web
 ```
@@ -128,7 +128,7 @@ CAP Core ── Search ── Catalog
 | [`docs/architecture.md`](./docs/architecture.md) | 模块边界与数据流 |
 | [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills |
 | [`.mcp.json`](./.mcp.json) | 项目级 CAP MCP（dogfood） |
-| [`src/index.js`](./src/index.js) | 稳定程序化 API：`searchCapabilities` / `acquireCapability` / `useCapability` / `inspectLocal` / `loadCatalog` / `loadState` |
+| [`src/index.js`](./src/index.js) | 稳定程序化 API：`searchCapabilities` / `addCapability` / `useCapability` / `inspectLocal` / `loadCatalog` / `loadState` |
 | [`data/catalog.schema.json`](./data/catalog.schema.json) | Catalog 结构约束 |
 
 Claude Code / Cursor / Copilot 等也会读取 `CLAUDE.md`、`.cursor/rules/`、`.github/copilot-instructions.md`，内容以 `AGENTS.md` 为准。
@@ -145,6 +145,6 @@ npm run check
 ## V0.1 边界
 
 - 公共 Registry/GitHub 的在线抓取、语义向量检索与 OAuth 连接尚未实现；当前使用本地 curated Catalog 和可解释的混合关键词评分。
-- 非内置 Provider 可以 Acquire，但 Use 会返回 `connection_required`，不会伪装成已执行。
+- 非内置 Provider 可以添加，但 Use 会返回 `connection_required`，不会伪装成已执行。
 - Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。
 - 首版优先验证开发者闭环，不包含 Desktop、企业权限和团队治理。
