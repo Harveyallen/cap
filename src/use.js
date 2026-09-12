@@ -1,3 +1,4 @@
+/** Execute CAP-managed builtin providers (git / ripgrep). */
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { loadCatalog, loadState, saveState } from './registry.js';

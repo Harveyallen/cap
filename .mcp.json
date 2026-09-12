@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cap": {
+      "command": "node",
+      "args": ["./bin/cap-mcp.js"]
+    }
+  }
+}

@@ -1,3 +1,4 @@
+/** Preview and guarded JSON MCP consolidation into CAP Registry. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { inspectLocal } from './inspector.js';

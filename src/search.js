@@ -1,3 +1,4 @@
+/** Intent/keyword capability ranking over the seed catalog. */
 import { loadCatalog, loadState } from './registry.js';
 
 function terms(value) {

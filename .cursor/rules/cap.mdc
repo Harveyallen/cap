@@ -1,0 +1,14 @@
+---
+description: CAP repository conventions for Cursor agents
+globs:
+alwaysApply: true
+---
+
+Follow root `AGENTS.md`. Summary:
+
+- Node 20+ ESM, zero runtime deps by default
+- Domain logic in `src/{search,registry,use,inspector,optimize,mcp-server}.js`; keep CLI/Web thin
+- Catalog edits must keep Capability↔Provider refs bidirectional; validate against `data/catalog.schema.json`
+- Prefer CLI `--json` and `CAP_HOME` temp dirs when testing
+- Never expand default MCP tools beyond search/acquire/use without opt-in
+- Run `npm run check` before finishing

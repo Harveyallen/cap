@@ -1,3 +1,4 @@
+/** Resolve CAP_HOME and package root paths. */
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

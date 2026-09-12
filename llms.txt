@@ -1,0 +1,29 @@
+# CAP
+
+> Intent-first capability discovery and consolidation for AI agents.
+
+## Docs
+
+- [README](README.md): human quick start and product overview
+- [AGENTS.md](AGENTS.md): instructions for coding agents
+- [Architecture](docs/architecture.md): module boundaries and data flow
+- [Catalog schema](data/catalog.schema.json): seed catalog contract
+- [Changelog](CHANGELOG.md)
+
+## Entry points
+
+- CLI: `bin/cap.js` → `src/cli.js`
+- MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools: `cap.search`, `cap.acquire`, `cap.use`; optional `cap.inspect`)
+- Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`
+- Library: `src/index.js`
+
+## Agent skills
+
+- `.agents/skills/cap-develop/SKILL.md`
+- `.agents/skills/add-capability/SKILL.md`
+
+## Verify
+
+```bash
+npm run check
+```

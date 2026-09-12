@@ -1,3 +1,4 @@
+/** Local Discover UI and thin JSON HTTP APIs. */
 import http from 'node:http';
 import { searchCapabilities } from './search.js';
 import { inspectLocal } from './inspector.js';

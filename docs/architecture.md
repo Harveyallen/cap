@@ -1,0 +1,47 @@
+# CAP architecture
+
+## Goal
+
+Agents should see a **small, stable Capability surface**, while humans can install many Providers. CAP sits between Agent frontends (CLI / Web / MCP) and local or registered Providers.
+
+```text
+CLI / Web / MCP
+       │
+       ▼
+CAP Core ── Search ── Catalog (data/catalog.json)
+   │  │
+   │  └──── Registry / Activity (~/.cap/registry.json or $CAP_HOME)
+   │
+   ├────── Inspector ── Claude Code / Codex configs + Skills
+   └────── Use ─────── Managed providers (builtin CLI or connection_required)
+```
+
+## Core objects
+
+- **Capability**: stable intent-oriented id (`git.repository.status`), not an MCP server.
+- **Provider**: implementation (CLI / MCP / Skill) that declares which capabilities it covers.
+- **Managed**: Capability/Provider recorded in the CAP Registry after `acquire`.
+- **Activity**: recent acquire/use outcomes for later CapabilityBench work.
+
+## Module responsibilities
+
+| Module | Owns | Must not |
+|--------|------|----------|
+| `search.js` | Hybrid keyword/intent scoring | Persist state |
+| `registry.js` | Catalog load + registry R/W + acquire | Execute providers |
+| `use.js` | Execute managed builtins | Discover/search |
+| `inspector.js` | Read local Agent configs/skills, estimate footprint | Connect to MCP servers |
+| `optimize.js` | Plan + guarded JSON MCP migration | Mutate TOML in v0.1 |
+| `mcp-server.js` | JSON-RPC stdio tool surface | Dump downstream schemas |
+| `web-server.js` | Discover UI + thin JSON APIs | Own business logic |
+| `cli.js` | Arg parsing + human/JSON formatting | Domain logic |
+
+## Data contracts
+
+- Seed catalog: `data/catalog.json` validated by `data/catalog.schema.json`.
+- Registry default path: `$CAP_HOME/registry.json` or `~/.cap/registry.json`.
+- Context footprint: character/4 estimate, not a vendor tokenizer.
+
+## Agent integration
+
+Project `.mcp.json` exposes CAP as an MCP server for local dogfooding. Coding agents should load `AGENTS.md` and optional skills under `.agents/skills/`.

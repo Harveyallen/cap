@@ -1,19 +1,44 @@
 {
   "name": "@capability-layer/cap",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Intent-first capability discovery and consolidation for AI agents",
   "type": "module",
   "bin": {
     "cap": "./bin/cap.js",
     "cap-mcp": "./bin/cap-mcp.js"
   },
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "llms.txt",
+    "bin",
+    "data",
+    "docs",
+    "src",
+    ".agents",
+    ".mcp.json"
+  ],
   "scripts": {
     "start": "node ./bin/cap.js",
     "web": "node ./bin/cap.js web",
     "mcp": "node ./bin/cap-mcp.js",
     "test": "node --test",
-    "check": "node --check src/cli.js && node --check src/mcp-server.js && node --test"
+    "check": "node --check src/cli.js && node --check src/mcp-server.js && node --check src/index.js && node --test"
   },
+  "keywords": [
+    "ai",
+    "agents",
+    "mcp",
+    "capabilities",
+    "claude-code",
+    "codex",
+    "cursor",
+    "context"
+  ],
   "engines": {
     "node": ">=20"
   },
