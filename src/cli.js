@@ -1,7 +1,7 @@
 /** CLI command routing and human/JSON formatting. */
 import { inspectLocal } from './inspector.js';
 import { searchCapabilities } from './search.js';
-import { acquireCapability, loadState } from './registry.js';
+import { addCapability, loadState } from './registry.js';
 import { useCapability } from './use.js';
 import { applyOptimization, buildOptimizationPlan, writeOptimizationPlan } from './optimize.js';
 import { startWebServer } from './web-server.js';
@@ -11,7 +11,7 @@ const help = `CAP 0.1 — discover more capabilities, expose fewer tools
 Usage:
   cap inspect [--json]
   cap search <task> [--json]
-  cap acquire <capability-id> [--provider <provider-id>] [--json]
+  cap add <capability-id> [--provider <provider-id>] [--json]
   cap use <capability-id> [--input <json>] [--json]
   cap optimize [--write-plan <file>] [--apply --yes] [--json]
   cap activity [--json]
@@ -63,10 +63,10 @@ export async function main(args, options = {}) {
     const results = await searchCapabilities(query, options);
     return print(json ? results : searchText(results), json);
   }
-  if (command === 'acquire') {
+  if (command === 'add') {
     const capabilityId = positional(rest)[0];
     if (!capabilityId) throw new Error('Capability id is required');
-    const result = await acquireCapability(capabilityId, flag(rest, '--provider'), options);
+    const result = await addCapability(capabilityId, flag(rest, '--provider'), options);
     return print(json ? result : `Added ${result.capability.name} via ${result.provider.name}\nRegistry: ${result.statePath}`, json);
   }
   if (command === 'use') {

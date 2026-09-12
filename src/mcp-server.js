@@ -1,13 +1,13 @@
 /** MCP JSON-RPC stdio server with a small CAP tool surface. */
 import readline from 'node:readline';
 import { searchCapabilities } from './search.js';
-import { acquireCapability } from './registry.js';
+import { addCapability } from './registry.js';
 import { useCapability } from './use.js';
 import { inspectLocal } from './inspector.js';
 
 const tools = [
   {name: 'cap.search', description: 'Find capabilities for a task or intent.', inputSchema: {type: 'object', properties: {query: {type: 'string'}, limit: {type: 'integer', minimum: 1, maximum: 20}}, required: ['query']}},
-  {name: 'cap.acquire', description: 'Add or connect a capability behind CAP.', inputSchema: {type: 'object', properties: {capability_id: {type: 'string'}, provider_id: {type: 'string'}}, required: ['capability_id']}},
+  {name: 'cap.add', description: 'Add or connect a capability behind CAP.', inputSchema: {type: 'object', properties: {capability_id: {type: 'string'}, provider_id: {type: 'string'}}, required: ['capability_id']}},
   {name: 'cap.use', description: 'Execute a CAP-managed capability.', inputSchema: {type: 'object', properties: {capability_id: {type: 'string'}, input: {type: 'object'}}, required: ['capability_id']}},
   {name: 'cap.inspect', description: 'Inspect local Agent capability health.', inputSchema: {type: 'object', properties: {}}}
 ];
@@ -19,7 +19,7 @@ function exposedTools(options = {}) {
 
 async function callTool(name, args, options) {
   if (name === 'cap.search') return searchCapabilities(args.query, {...options, limit: args.limit});
-  if (name === 'cap.acquire') return acquireCapability(args.capability_id, args.provider_id, options);
+  if (name === 'cap.add') return addCapability(args.capability_id, args.provider_id, options);
   if (name === 'cap.use') return useCapability(args.capability_id, args.input, options);
   if (name === 'cap.inspect') return inspectLocal(options);
   throw new Error(`Unknown tool: ${name}`);

@@ -3,7 +3,11 @@
 ## Unreleased
 
 - Validate the seed catalog against `data/catalog.schema.json` with a zero-dependency checker (required, enum, id pattern, minItems, reject extra fields).
-- Narrowed the `src/index.js` public surface to `searchCapabilities`, `acquireCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, and `loadState`.
+- Narrowed the `src/index.js` public surface to `searchCapabilities`, `addCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, and `loadState`.
+
+## 0.1.2
+
+- **Breaking:** renamed the acquire flow to add with no compatibility alias. CLI is `cap add`; MCP tool is `cap.add`; programmatic API is `addCapability`; activity records use `action: "add"`; web API is `POST /api/add`. `cap acquire` and `cap.acquire` are gone.
 
 ## 0.1.1
 

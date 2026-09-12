@@ -71,7 +71,7 @@ test('schema rejects broken catalog fields', async () => {
 
 test('public API exports only the read/main path', () => {
   assert.deepEqual(Object.keys(api), [
-    'acquireCapability',
+    'addCapability',
     'inspectLocal',
     'loadCatalog',
     'loadState',
@@ -81,6 +81,7 @@ test('public API exports only the read/main path', () => {
   for (const name of Object.keys(api)) {
     assert.equal(typeof api[name], 'function');
   }
+  assert.equal(api.acquireCapability, undefined);
 });
 
 test('project ships shared agent skills discoverable by inspect', async () => {

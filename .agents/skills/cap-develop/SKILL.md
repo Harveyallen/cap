@@ -21,12 +21,12 @@ node ./bin/cap.js search "<intent>" --json
 Use a temp registry:
 
 ```bash
-CAP_HOME=/tmp/cap-dev-$$ node ./bin/cap.js acquire git.repository.status --json
+CAP_HOME=/tmp/cap-dev-$$ node ./bin/cap.js add git.repository.status --json
 ```
 
 ## MCP surface
 
-Default tools: `cap.search`, `cap.acquire`, `cap.use`. Only expose `cap.inspect` behind `CAP_MCP_INSPECT=1`.
+Default tools: `cap.search`, `cap.add`, `cap.use`. Only expose `cap.inspect` behind `CAP_MCP_INSPECT=1`.
 
 ## Done when
 

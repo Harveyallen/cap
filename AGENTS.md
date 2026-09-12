@@ -4,7 +4,7 @@ Instructions for AI coding agents working on CAP.
 
 ## Project
 
-CAP is a local capability layer for AI agents: discover Capabilities by intent, consolidate Providers behind a small stable surface (`cap.search` / `cap.acquire` / `cap.use`). Motto: **Install more. Expose less.**
+CAP is a local capability layer for AI agents: discover Capabilities by intent, consolidate Providers behind a small stable surface (`cap.search` / `cap.add` / `cap.use`). Motto: **Install more. Expose less.**
 
 Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies**. Tests use `node:test`.
 
@@ -39,7 +39,7 @@ npm test
 npm run check
 node ./bin/cap.js inspect
 node ./bin/cap.js search "分析 PostgreSQL 慢查询" --json
-node ./bin/cap.js acquire git.repository.status
+node ./bin/cap.js add git.repository.status
 node ./bin/cap.js use git.repository.status --input '{"path":"."}' --json
 node ./bin/cap.js optimize
 node ./bin/cap-mcp.js   # stdio MCP; optional CAP_MCP_INSPECT=1
@@ -54,7 +54,7 @@ Project `.mcp.json` uses a relative `./bin/cap-mcp.js` path. Start the MCP serve
 `src/index.js` (package root export) is the read / main path only:
 
 - `searchCapabilities`
-- `acquireCapability`
+- `addCapability`
 - `useCapability`
 - `inspectLocal`
 - `loadCatalog`

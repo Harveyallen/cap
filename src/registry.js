@@ -1,4 +1,4 @@
-/** Catalog loading, CAP Registry persistence, and acquire. */
+/** Catalog loading, CAP Registry persistence, and add. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { validateCatalog } from './catalog-schema.js';
@@ -32,7 +32,7 @@ export async function saveState(state, options = {}) {
   return target;
 }
 
-export async function acquireCapability(capabilityId, providerId, options = {}) {
+export async function addCapability(capabilityId, providerId, options = {}) {
   const catalog = await loadCatalog();
   const capability = catalog.capabilities.find((item) => item.capability_id === capabilityId);
   if (!capability) throw new Error(`Unknown capability: ${capabilityId}`);
@@ -42,7 +42,7 @@ export async function acquireCapability(capabilityId, providerId, options = {}) 
   const state = await loadState(options);
   if (!state.managed_capabilities.includes(capabilityId)) state.managed_capabilities.push(capabilityId);
   if (!state.managed_providers.includes(selected)) state.managed_providers.push(selected);
-  state.activity.unshift({at: new Date().toISOString(), action: 'acquire', capability_id: capabilityId, provider_id: selected, success: true});
+  state.activity.unshift({at: new Date().toISOString(), action: 'add', capability_id: capabilityId, provider_id: selected, success: true});
   state.activity = state.activity.slice(0, 100);
   const statePath = await saveState(state, options);
   return {capability, provider: {...provider, status: 'CAP Managed'}, statePath};
