@@ -120,7 +120,8 @@ test('CLI inspect prints Context Health sections', async (t) => {
   const text = inspectText(report, options);
   assert.match(text, /CAP Inspect · /);
   assert.match(text, /健康\s+.*很好/);
-  assert.match(text, /漏斗\s+本地发现 \d+ → 写进配置 3 → 会暴露 3 → 实际调用 未知/);
+  assert.doesNotMatch(text, /^入口  /m);
+  assert.doesNotMatch(text, /^漏斗  /m);
   assert.match(text, /这些 MCP 现在直接暴露/);
   assert.match(text, /迁到 CAP/);
   assert.match(text, /Claude Code/);
@@ -131,7 +132,8 @@ test('CLI inspect prints Context Health sections', async (t) => {
   console.log = (value) => logs.push(value);
   t.after(() => { console.log = original; });
   await main(['inspect'], options);
-  assert.match(logs.join('\n'), /只留 3 个入口工具|已是 CAP/);
+  assert.match(logs.join('\n'), /健康/);
+  assert.doesNotMatch(logs.join('\n'), /^漏斗  /m);
 });
 
 test('optimize backs up JSON config and moves providers into CAP state', async (t) => {
@@ -215,11 +217,11 @@ test('CLI inspect treats project CAP as the surface', async (t) => {
     env: {}
   });
   const text = inspectText(report, options);
-  assert.match(text, /已是 CAP/);
-  assert.match(text, /不用把 cap 再迁走/);
+  assert.match(text, /没有需要迁走的第三方 MCP/);
   assert.doesNotMatch(text, /这些 MCP 现在直接暴露/);
+  assert.doesNotMatch(text, /^入口  /m);
+  assert.doesNotMatch(text, /^漏斗  /m);
   assert.match(text, /3 个工具/);
-  assert.match(text, /会暴露/);
   assert.match(text, /Project/);
 });
 

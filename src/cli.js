@@ -102,25 +102,17 @@ export function inspectText(report, options = {}) {
   const s = report.summary;
   const pressure = report.pressure ?? {};
   const budget = report.budget ?? {};
-  const funnel = report.funnel ?? {};
   const home = options.userHome ?? os.homedir();
   const cwd = options.projectRoot ?? process.cwd();
   const rel = (file) => shortPath(file, home, cwd);
   const agents = [...new Set(report.items.filter((item) => item.agent).map((item) => item.agent))].join(' / ') || '未发现 Agent 配置';
   const estimateNote = report.items.some((item) => item.toolCountEstimated && !item.capSurface) ? '（部分工具数是估算）' : '';
   const band = pressure.band ?? 'healthy';
-  const usedUnknown = funnel.usedUnknown || funnel.used == null;
-  const configured = funnel.configured ?? funnel.injected ?? 0;
   const capSurface = Boolean(s.capSurface) || report.items.some((item) => item.capSurface);
   const rule = '─'.repeat(56);
   const healthLine = band === 'unknown'
     ? '健康  无法计算 · 有效预算无效（检查 CAP_EFFECTIVE_BUDGET）'
     : `健康  ${paint(pressureTone(band), `${pressure.healthScore ?? '—'} / 100 · ${bandPhrase(band)}`)} · 常驻占用了有效预算的 ${pressure.percent ?? 0}%`;
-  const entryLine = report.recommendations.length
-    ? `入口  把下面的 MCP 收到 CAP 后，Agent 只留 ${s.capEntryTools} 个入口工具${s.estimatedReductionPercent ? `（约少 ${s.estimatedReductionPercent}% 工具）` : ''}`
-    : capSurface
-      ? `入口  已是 CAP（${s.capEntryTools} 个工具：search / add / use），不用把 cap 再迁走`
-      : '入口  还没有 CAP。用 cap add，或把现有 MCP 迁过来。';
   const lines = [
     paint(1, `CAP Inspect · ${stamp(report.generatedAt)}`),
     `范围  ${agents} · 只读本地配置，未连接 MCP`,
@@ -128,9 +120,6 @@ export function inspectText(report, options = {}) {
     `${s.mcpServers} 个 MCP · ${s.skills} 个 Skill · ${s.directTools} 个暴露工具${estimateNote} · 常驻 ${compactTokens(s.contextTokens)} tok`,
     healthLine,
     `占用  常驻 ${compactTokens(s.contextTokens)} tok / 有效预算 ${compactTokens(budget.effectiveBudget)}（厂商标称 ${compactTokens(budget.nominalWindow)}）`,
-    entryLine,
-    `漏斗  本地发现 ${funnel.installed ?? 0} → 写进配置 ${funnel.enabled ?? 0} → 会暴露 ${configured} → 实际调用 ${usedUnknown ? '未知' : funnel.used}`,
-    '      前三列看配置文件；实际调用只统计成功的 cap use。',
     `状态  ${s.warnings ?? 0} 个警告 · ${s.duplicateGroups} 组重复 · 已迁入 CAP 的 MCP ${s.managed ?? 0} 个 · Registry 已 add ${s.registryCapabilities ?? 0} 个能力`
   ];
 
