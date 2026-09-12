@@ -60,12 +60,13 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 1. **Nominal vs Effective 分母**  
    不要只用 1M 当健康基线。先看 harness 软上限，再减去输出/推理预留。
 
-2. **漏斗：Installed → Enabled → Injected → Used**  
-   安装了不等于在用。V2 能确定的映射：
+2. **漏斗：Installed → Enabled → Configured → Used**  
+   安装了不等于在用。Inspect **只扫配置 / Skills 文件**，不连接 MCP，也不测量当前会话是否真的加载了这些项。V2 能确定的映射：
    - `installed`：本地扫描到的 MCP / Skill **名称去重**（本地 inventory）。**不含**种子 Catalog 里从未扫到的 Provider
    - `enabled`：出现在 Agent 配置里的 MCP + Skills（配置条目数，重复项分别计数）
-   - `injected`：`direct=true`（当前会暴露给 Agent 的项）
+   - `injected` / `configured`：`direct=true`（配置里会暴露给 Agent 的项；`configured` 是同一数字的诚实别名）
    - `used`：来自 Registry activity 的成功 `use`；若没有则 `0` 且 `usedUnknown: true`
+   - `notes`：说明以上是 config scan
 
 3. **每条 Capability 的 Context Cost**  
    尽量拆成 `schema` / `description` / `instructions` / `total`。全部标记 `estimated`。  
@@ -107,13 +108,19 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
     "installed": 3,
     "enabled": 3,
     "injected": 3,
+    "configured": 3,
     "used": 0,
-    "usedUnknown": true
+    "usedUnknown": true,
+    "notes": "Config/skill scan only. Inspect does not connect to MCP servers or measure the live session."
   }
 }
 ```
 
-`summary` 增加 `warnings`、`managed`、`reclaimableTokens`。`reclaimableTokens` 是把 Direct MCP 迁到 CAP 后可回收的**毛估**，**不扣除** 3 个 CAP entry tools 自身占用。每条 inventory item 增加 `status`（`direct` | `managed` | `estimated`）和 `cost`。
+`summary` 增加 `warnings`、`managed`、`reclaimableTokens`、`capSurface`。`reclaimableTokens` 是把 **非 CAP** Direct MCP 迁到 CAP 后可回收的毛估，**不含** `cap-mcp` 自身。识别规则是启动命令/参数指向 `cap-mcp` / `cap-mcp.js`，不是服务器名叫 `cap`。对 CAP surface：用已知入口工具 schema 估价（默认 3；`CAP_MCP_INSPECT=1` 时 4），`status: "cap"`，`toolCountEstimated: false`。第三方 MCP 仍不连接，工具数继续是 minimum estimate。
+
+每条 inventory item 增加 `status`（`direct` | `managed` | `estimated` | `cap`）和 `cost`。项目 `.mcp.json` 的 `agent` 为 `Project`（Cursor 与 Claude Code 都会读）。
+
+人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染：压力带（进度条按 pressure%）、漏斗（configured/scan）、重复项、按 token 排序的迁移建议（不含 CAP surface）、按 Agent 分组的清单。Skill 行额外显示 on-demand 正文 token。
 
 人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染：压力带、漏斗、重复项、按 token 排序的迁移建议、按 Agent 分组的清单。
 

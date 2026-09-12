@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Inspect recognizes the local `cap-mcp` entry as the CAP surface: real default tool count/schemas (3, or 4 when `CAP_MCP_INSPECT=1`), status `cap`, excluded from Move → CAP / `reclaimableTokens`. A server merely named `cap` is not treated as the surface.
+- Inspect funnel human/Web copy says `configured (scan)`; JSON keeps `injected` and adds `configured` plus a scan-only note. Pressure bar uses pressure %, not reduction %. Skill rows show on-demand instruction tokens. Project `.mcp.json` is labeled `Project`.
+- `optimize --apply` keeps `cap-mcp` entries and only migrates other JSON MCP servers.
 - Documented CAP as an Agent Capability & Context Control Plane in `docs/context-health.md`.
 - `cap inspect` (human + `--json`) and Web Health now show Context Health: `budget`, `pressure` (band + healthScore), Installed→Enabled→Injected→Used funnel, per-item estimated cost, richer inventory, and token-ranked migration suggestions.
 - Skill Pressure / `contextTokens` count only name + description; skill body is `instructionTokens` and on-demand. `funnel.installed` is local scanned names only (not the seed catalog). `effectiveBudget <= 0` yields pressure band `unknown`. `reclaimableTokens` is a gross estimate and does not subtract the 3 CAP entry tools.

@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { inspectLocal } from './inspector.js';
+import { isCapMcpConfig } from './mcp-tools.js';
 import { loadState, saveState } from './registry.js';
 
 export async function buildOptimizationPlan(options = {}) {
@@ -9,7 +10,7 @@ export async function buildOptimizationPlan(options = {}) {
   return {
     createdAt: new Date().toISOString(),
     before: {directTools: inspection.summary.directTools, contextTokens: inspection.summary.contextTokens},
-    after: {directTools: inspection.summary.directTools ? 3 : 0, contextTokens: inspection.summary.directTools ? 180 : 0},
+    after: {directTools: inspection.summary.directTools ? inspection.summary.capEntryTools : 0, contextTokens: inspection.summary.directTools ? 180 : 0},
     reductionPercent: inspection.summary.estimatedReductionPercent,
     migrations: inspection.recommendations,
     rollback: 'Every changed JSON config is copied to a timestamped .cap-backup file before modification.'
@@ -29,16 +30,24 @@ export async function applyOptimization(options = {}) {
     const key = config.mcpServers ? 'mcpServers' : config.mcp_servers ? 'mcp_servers' : null;
     if (!key) continue;
     const servers = config[key];
+    const remaining = {};
+    const migrated = [];
+    for (const [name, providerConfig] of Object.entries(servers)) {
+      if (isCapMcpConfig(providerConfig)) {
+        remaining[name] = providerConfig;
+        continue;
+      }
+      state.external_providers.push({name, type: 'MCP', originalSource: source, config: providerConfig, migratedAt: new Date().toISOString()});
+      migrated.push(name);
+    }
+    if (!migrated.length) continue;
     const backup = `${source}.${stamp}.cap-backup`;
     await fs.copyFile(source, backup);
-    for (const [name, providerConfig] of Object.entries(servers)) {
-      state.external_providers.push({name, type: 'MCP', originalSource: source, config: providerConfig, migratedAt: new Date().toISOString()});
-    }
-    config[key] = {};
+    config[key] = remaining;
     const temp = `${source}.cap-tmp`;
     await fs.writeFile(temp, `${JSON.stringify(config, null, 2)}\n`);
     await fs.rename(temp, source);
-    changed.push({source, backup, providers: Object.keys(servers)});
+    changed.push({source, backup, providers: migrated});
   }
   state.external_providers = [...new Map(state.external_providers.map((item) => [`${item.originalSource}:${item.name}`, item])).values()];
   await saveState(state, options);

@@ -4,18 +4,7 @@ import { searchCapabilities } from './search.js';
 import { addCapability } from './registry.js';
 import { useCapability } from './use.js';
 import { inspectLocal } from './inspector.js';
-
-const tools = [
-  {name: 'cap.search', description: 'Find capabilities for a task or intent.', inputSchema: {type: 'object', properties: {query: {type: 'string'}, limit: {type: 'integer', minimum: 1, maximum: 20}}, required: ['query']}},
-  {name: 'cap.add', description: 'Add or connect a capability behind CAP.', inputSchema: {type: 'object', properties: {capability_id: {type: 'string'}, provider_id: {type: 'string'}}, required: ['capability_id']}},
-  {name: 'cap.use', description: 'Execute a CAP-managed capability.', inputSchema: {type: 'object', properties: {capability_id: {type: 'string'}, input: {type: 'object'}}, required: ['capability_id']}},
-  {name: 'cap.inspect', description: 'Inspect local Agent capability health.', inputSchema: {type: 'object', properties: {}}}
-];
-
-function exposedTools(options = {}) {
-  const includeInspect = options.exposeInspect ?? process.env.CAP_MCP_INSPECT === '1';
-  return includeInspect ? tools : tools.filter((tool) => tool.name !== 'cap.inspect');
-}
+import { exposedCapTools } from './mcp-tools.js';
 
 async function callTool(name, args, options) {
   if (name === 'cap.search') return searchCapabilities(args.query, {...options, limit: args.limit});
@@ -31,9 +20,9 @@ export async function handleMcpMessage(message, options = {}) {
     if (message.method === 'initialize') return {...base, result: {protocolVersion: message.params?.protocolVersion ?? '2025-06-18', capabilities: {tools: {}}, serverInfo: {name: 'cap', version: '0.1.0'}}};
     if (message.method === 'notifications/initialized') return null;
     if (message.method === 'ping') return {...base, result: {}};
-    if (message.method === 'tools/list') return {...base, result: {tools: exposedTools(options)}};
+    if (message.method === 'tools/list') return {...base, result: {tools: exposedCapTools(options)}};
     if (message.method === 'tools/call') {
-      if (!exposedTools(options).some((tool) => tool.name === message.params?.name)) throw new Error(`Tool is not exposed: ${message.params?.name}`);
+      if (!exposedCapTools(options).some((tool) => tool.name === message.params?.name)) throw new Error(`Tool is not exposed: ${message.params?.name}`);
       const result = await callTool(message.params?.name, message.params?.arguments ?? {}, options);
       return {...base, result: {content: [{type: 'text', text: JSON.stringify(result, null, 2)}], structuredContent: result}};
     }

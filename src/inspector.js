@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { loadState } from './registry.js';
+import { exposedCapTools, isCapMcpConfig } from './mcp-tools.js';
 
 const TOKEN_CHARS = 4;
 const DEFAULT_NOMINAL_WINDOW = 200_000;
@@ -35,6 +36,7 @@ function itemCost({schemaTokens = 0, descriptionTokens = 0, instructionTokens = 
 
 function itemStatus(item) {
   if (item.kind === 'warning') return 'warning';
+  if (item.capSurface) return 'cap';
   if (!item.direct) return 'managed';
   if (item.toolCountEstimated) return 'estimated';
   return 'direct';
@@ -82,12 +84,15 @@ export function buildFunnel({items, activity}) {
   const inventory = items.filter((item) => item.kind !== 'warning');
   const names = new Set(inventory.map((item) => item.name.toLowerCase()));
   const usedIds = new Set((activity ?? []).filter((row) => row.action === 'use' && row.success).map((row) => row.capability_id));
+  const injected = inventory.filter((item) => item.direct).length;
   return {
     installed: names.size,
     enabled: inventory.length,
-    injected: inventory.filter((item) => item.direct).length,
+    injected,
+    configured: injected,
     used: usedIds.size,
-    usedUnknown: usedIds.size === 0
+    usedUnknown: usedIds.size === 0,
+    notes: 'Config/skill scan only. Inspect does not connect to MCP servers or measure the live session.'
   };
 }
 
@@ -113,11 +118,24 @@ function decorate(item) {
   return item;
 }
 
-async function inspectJsonConfig(file, agent) {
+function capSurfaceItem({name, file, agent, options, fingerprint}) {
+  const tools = exposedCapTools(options);
+  const schemaTokens = estimateTokens(tools);
+  const cost = itemCost({schemaTokens, estimated: true});
+  return decorate({
+    kind: 'mcp', agent, name, source: file, direct: true, capSurface: true,
+    toolCount: tools.length, toolCountEstimated: false,
+    contextTokens: schemaTokens, cost, fingerprint
+  });
+}
+
+async function inspectJsonConfig(file, agent, options = {}) {
   const value = await readJson(file);
   if (!value) return [];
   if (value.__parseError) return [{kind: 'warning', agent, source: file, message: value.__parseError}];
   return serverEntries(value).map(([name, config]) => {
+    const fingerprint = JSON.stringify({command: config.command, args: config.args, url: config.url});
+    if (isCapMcpConfig(config)) return capSurfaceItem({name, file, agent, options, fingerprint});
     const schemas = config.tools ?? config.toolSchemas ?? config.schemas ?? [];
     const explicitCount = Array.isArray(schemas) ? schemas.length : Object.keys(schemas).length;
     const descriptionTokens = estimateTokens(config.description ?? '');
@@ -128,7 +146,7 @@ async function inspectJsonConfig(file, agent) {
       descriptionTokens,
       instructionTokens,
       totalTokens: explicitCount ? schemaTokens + descriptionTokens + instructionTokens : schemaTokens,
-      estimated: !explicitCount
+      estimated: true
     });
     return decorate({
       kind: 'mcp', agent, name, source: file, direct: true,
@@ -136,12 +154,12 @@ async function inspectJsonConfig(file, agent) {
       toolCountEstimated: !explicitCount && !config.toolCount,
       contextTokens: cost.totalTokens,
       cost,
-      fingerprint: JSON.stringify({command: config.command, args: config.args, url: config.url})
+      fingerprint
     });
   });
 }
 
-async function inspectCodexToml(file) {
+async function inspectCodexToml(file, options = {}) {
   let text;
   try { text = await fs.readFile(file, 'utf8'); } catch (error) {
     if (error.code === 'ENOENT') return [];
@@ -151,11 +169,15 @@ async function inspectCodexToml(file) {
   return headers.map((match, index) => {
     const end = headers[index + 1]?.index ?? text.length;
     const block = text.slice(match.index, end);
+    const fingerprint = block.replace(/\s+/g, ' ');
+    if (isCapMcpConfig({}, block)) {
+      return capSurfaceItem({name: match[2], file, agent: 'Codex', options, fingerprint});
+    }
     const cost = itemCost({schemaTokens: estimateTokens(block), estimated: true});
     return decorate({
       kind: 'mcp', agent: 'Codex', name: match[2], source: file, direct: true,
       toolCount: 1, toolCountEstimated: true, contextTokens: cost.totalTokens, cost,
-      fingerprint: block.replace(/\s+/g, ' ')
+      fingerprint
     });
   });
 }
@@ -201,7 +223,7 @@ export async function inspectLocal(options = {}) {
   const jsonConfigs = options.jsonConfigs ?? [
     [path.join(home, '.claude.json'), 'Claude Code'],
     [path.join(home, '.claude', 'settings.json'), 'Claude Code'],
-    [path.join(project, '.mcp.json'), 'Claude Code']
+    [path.join(project, '.mcp.json'), 'Project']
   ];
   const skillRoots = options.skillRoots ?? [
     [path.join(home, '.claude', 'skills'), 'Claude Code'],
@@ -211,15 +233,15 @@ export async function inspectLocal(options = {}) {
     [path.join(project, '.agents', 'skills'), 'Shared']
   ];
   const batches = await Promise.all([
-    ...jsonConfigs.map(([file, agent]) => inspectJsonConfig(file, agent)),
-    inspectCodexToml(options.codexConfig ?? path.join(home, '.codex', 'config.toml')),
+    ...jsonConfigs.map(([file, agent]) => inspectJsonConfig(file, agent, options)),
+    inspectCodexToml(options.codexConfig ?? path.join(home, '.codex', 'config.toml'), options),
     ...skillRoots.map(([root, agent]) => walkSkills(root, agent))
   ]);
   const items = batches.flat();
   const state = await loadState(options);
   const managedNames = new Set(state.external_providers.map((item) => item.name));
   for (const item of items) {
-    if (managedNames.has(item.name)) item.direct = false;
+    if (managedNames.has(item.name) && !item.capSurface) item.direct = false;
     decorate(item);
   }
   const grouped = items.filter((item) => item.kind !== 'warning').reduce((all, item) => {
@@ -234,8 +256,11 @@ export async function inspectLocal(options = {}) {
   const managed = inventory.filter((item) => !item.direct);
   const directTools = direct.reduce((sum, item) => sum + item.toolCount, 0);
   const contextTokens = direct.reduce((sum, item) => sum + item.contextTokens, 0);
-  const recommendations = direct
-    .filter((item) => item.kind === 'mcp')
+  const capSurface = inventory.some((item) => item.capSurface);
+  const capEntryTools = exposedCapTools(options).length;
+  const migrateable = direct.filter((item) => item.kind === 'mcp' && !item.capSurface);
+  const migrateableTools = migrateable.reduce((sum, item) => sum + item.toolCount, 0);
+  const recommendations = migrateable
     .map((item) => ({provider: item.name, action: 'Move to CAP', source: item.source, estimatedTokensSaved: item.contextTokens}))
     .sort((a, b) => b.estimatedTokensSaved - a.estimatedTokensSaved);
   const reclaimableTokens = recommendations.reduce((sum, item) => sum + item.estimatedTokensSaved, 0);
@@ -254,8 +279,9 @@ export async function inspectLocal(options = {}) {
       warnings: warnings.length,
       managed: managed.length,
       duplicateGroups: duplicateGroups.length,
-      capEntryTools: 3,
-      estimatedReductionPercent: directTools > 3 ? Math.round((1 - 3 / directTools) * 100) : 0
+      capSurface,
+      capEntryTools,
+      estimatedReductionPercent: migrateableTools > capEntryTools ? Math.round((1 - capEntryTools / migrateableTools) * 100) : 0
     },
     budget,
     pressure,

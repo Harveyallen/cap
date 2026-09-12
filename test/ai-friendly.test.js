@@ -98,6 +98,25 @@ test('project ships shared agent skills discoverable by inspect', async () => {
   assert.deepEqual(names, ['add-capability', 'cap-develop']);
 });
 
+test('project .mcp.json is CAP surface not a migrate target', async () => {
+  const result = await inspectLocal({
+    projectRoot: root,
+    userHome: path.join(root, '.missing-user-home'),
+    home: path.join(root, '.missing-cap-home'),
+    jsonConfigs: [[path.join(root, '.mcp.json'), 'Project']],
+    skillRoots: [[path.join(root, '.agents', 'skills'), 'Shared']],
+    codexConfig: path.join(root, '.missing-codex.toml'),
+    env: {}
+  });
+  const cap = result.items.find((item) => item.name === 'cap');
+  assert.equal(cap.capSurface, true);
+  assert.equal(cap.toolCount, 3);
+  assert.ok(cap.contextTokens > 50);
+  assert.equal(result.recommendations.length, 0);
+  assert.equal(result.summary.reclaimableTokens, 0);
+  assert.equal(result.summary.capSurface, true);
+});
+
 test('agent orientation docs exist', async () => {
   for (const relative of ['AGENTS.md', 'CLAUDE.md', 'llms.txt', 'docs/architecture.md', 'docs/context-health.md', '.mcp.json', '.cursor/rules/cap.mdc']) {
     await fs.access(path.join(root, relative));

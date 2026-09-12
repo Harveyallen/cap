@@ -27,7 +27,7 @@ $ cap search "分析 PostgreSQL 慢查询"
 
 ## V0.1 已实现
 
-- `cap inspect`：扫描 Claude Code / Codex 的 MCP 配置与本地 Skills，输出 Context Health（budget / pressure / funnel）、重复项与按 token 排序的迁移建议。详见 [docs/context-health.md](./docs/context-health.md)。
+- `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），输出 Context Health。`cap-mcp` 记为 CAP surface（真实入口工具数 / schema），不会建议「把 cap 迁到 CAP」。漏斗第三列是 configured（scan）。详见 [docs/context-health.md](./docs/context-health.md)。
 - `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。
 - `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
 - `cap use`：通过 Capability 抽象调用已登记的本地 Provider；初版内置 Git 状态与 ripgrep 搜索。

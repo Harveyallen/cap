@@ -14,7 +14,7 @@
 ## Entry points
 
 - CLI: `bin/cap.js` → `src/cli.js`
-- MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect`)
+- MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect`)
 - Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`
 - Library: `src/index.js` (`searchCapabilities`, `addCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, `loadState`)
 

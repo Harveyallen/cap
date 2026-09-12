@@ -82,6 +82,7 @@ function pressureTone(band) {
 }
 
 function statusLabel(item) {
+  if (item.status === 'cap' || item.capSurface) return 'CAP';
   if (item.status === 'managed' || item.direct === false) return 'Managed';
   if (item.status === 'estimated' || item.toolCountEstimated) return '~est';
   return 'Direct';
@@ -100,19 +101,27 @@ export function inspectText(report, options = {}) {
   const cwd = options.projectRoot ?? process.cwd();
   const rel = (file) => shortPath(file, home, cwd);
   const agents = [...new Set(report.items.filter((item) => item.agent).map((item) => item.agent))].join(' / ') || 'No Agent configuration found';
-  const estimateNote = report.items.some((item) => item.toolCountEstimated) ? ' (minimum estimate)' : '';
+  const estimateNote = report.items.some((item) => item.toolCountEstimated && !item.capSurface) ? ' (minimum estimate)' : '';
   const band = pressure.band ?? 'healthy';
   const used = funnel.usedUnknown || funnel.used == null ? 'used unknown' : `${funnel.used} used`;
+  const configured = funnel.configured ?? funnel.injected ?? 0;
+  const capSurface = Boolean(s.capSurface) || report.items.some((item) => item.capSurface);
   const rule = '─'.repeat(56);
+  const surfaceLine = report.recommendations.length
+    ? `${reductionBar(s.estimatedReductionPercent)}  →  ${s.capEntryTools} CAP entry tools (−${s.estimatedReductionPercent}%)`
+    : capSurface
+      ? `Surface   ${s.capEntryTools} CAP entry tools · already on CAP`
+      : `${reductionBar(0)}  →  0 CAP entry tools (−0%)`;
   const lines = [
     paint(1, `CAP Inspect · ${stamp(report.generatedAt)}`),
     agents,
     rule,
     `${s.mcpServers} MCP · ${s.skills} Skills · ${s.directTools} tools${estimateNote} · ${compactTokens(s.contextTokens)} tokens`,
-    `${reductionBar(s.estimatedReductionPercent)}  →  ${s.directTools ? s.capEntryTools : 0} CAP entry tools (−${s.estimatedReductionPercent}%)`,
     `Pressure  ${paint(pressureTone(band), band[0].toUpperCase() + band.slice(1))}  ${pressure.percent ?? 0}% · health ${pressure.healthScore ?? ''} · effective ${compactTokens(budget.effectiveBudget)} / nominal ${compactTokens(budget.nominalWindow)}`,
-    `Funnel    ${funnel.installed ?? 0} local installed → ${funnel.enabled ?? 0} enabled → ${funnel.injected ?? 0} injected → ${used}`,
-    `${paint(33, '⚠')} ${s.warnings ?? 0} warnings · ${s.duplicateGroups} duplicates · ${paint(32, '✓')} ${s.managed ?? 0} managed`
+    `${reductionBar(pressure.percent ?? 0)}  ${pressure.percent ?? 0}% of effective (config scan)`,
+    surfaceLine,
+    `Funnel    ${funnel.installed ?? 0} local installed → ${funnel.enabled ?? 0} enabled → ${configured} configured (scan) → ${used}`,
+    `${paint(33, '⚠')} ${s.warnings ?? 0} warnings · ${s.duplicateGroups} duplicates · ${capSurface ? 'CAP surface · ' : ''}${paint(32, '✓')} ${s.managed ?? 0} managed`
   ];
 
   const warnings = report.items.filter((item) => item.kind === 'warning');
@@ -135,20 +144,23 @@ export function inspectText(report, options = {}) {
   }
 
   const inventory = report.items.filter((item) => item.kind !== 'warning');
-  const order = ['Claude Code', 'Codex', 'Shared'];
+  const order = ['Claude Code', 'Codex', 'Project', 'Shared'];
   const agentsPresent = [...new Set(inventory.map((item) => item.agent))];
   agentsPresent.sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b));
   for (const agent of agentsPresent) {
     const rows = inventory.filter((item) => item.agent === agent);
     lines.push(rule, `MCP / Skills（${agent}）`);
     for (const item of rows) {
-      const tools = item.kind === 'skill' ? 'skill' : `~${item.toolCount} tools`;
-      lines.push(`  ${kindMark(item)} ${item.name.padEnd(18)} ${tools.padEnd(12)} ${compactTokens(item.contextTokens).padStart(7)} tok  ${statusLabel(item).padEnd(8)}  ${rel(item.source)}`);
+      const tools = item.kind === 'skill' ? 'skill' : `${item.toolCountEstimated ? '~' : ''}${item.toolCount} tools`;
+      const onDemand = item.cost?.instructionOnDemand && item.cost.instructionTokens
+        ? ` (+${item.cost.instructionTokens} on-demand)`
+        : '';
+      lines.push(`  ${kindMark(item)} ${item.name.padEnd(18)} ${tools.padEnd(12)} ${compactTokens(item.contextTokens).padStart(7)} tok${onDemand}  ${statusLabel(item).padEnd(8)}  ${rel(item.source)}`);
     }
   }
 
   if (!inventory.length && !warnings.length) lines.push(rule, '  未发现本地 MCP / Skills 配置。');
-  lines.push(rule, paint(2, 'tip: cap optimize · 或 cap search 搜索任务'));
+  lines.push(rule, paint(2, 'tip: inspect is a config scan (does not connect to MCP) · cap optimize · cap search'));
   return lines.join('\n');
 }
 
