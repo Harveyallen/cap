@@ -99,7 +99,7 @@ test('project ships shared agent skills discoverable by inspect', async () => {
 });
 
 test('agent orientation docs exist', async () => {
-  for (const relative of ['AGENTS.md', 'CLAUDE.md', 'llms.txt', 'docs/architecture.md', '.mcp.json', '.cursor/rules/cap.mdc']) {
+  for (const relative of ['AGENTS.md', 'CLAUDE.md', 'llms.txt', 'docs/architecture.md', 'docs/context-health.md', '.mcp.json', '.cursor/rules/cap.mdc']) {
     await fs.access(path.join(root, relative));
   }
 });

@@ -18,7 +18,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/search.js` | Intent/keyword capability search |
 | `src/registry.js` | Catalog + `~/.cap/registry.json` state |
 | `src/use.js` | Execute managed providers (git / ripgrep builtins) |
-| `src/inspector.js` | Scan Claude Code / Codex MCP + Skills |
+| `src/inspector.js` | Scan Claude Code / Codex MCP + Skills; Context Health (budget / pressure / funnel) |
 | `src/optimize.js` | Preview / apply MCP consolidation |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
 | `src/web-server.js` | Local Discover UI + JSON APIs |
@@ -30,7 +30,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `test/*.test.js` | Node test suite |
 | `.agents/skills/` | Shared agent skills (also scanned by `cap inspect`) |
 
-Human overview: `README.md`. Architecture detail: `docs/architecture.md`. LLM index: `llms.txt`.
+Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md`. LLM index: `llms.txt`.
 
 ## Commands
 

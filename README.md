@@ -1,22 +1,22 @@
 # CAP
 
-CAP 是面向 AI Agent 的本地能力层。用户按任务搜索 Capability，Provider 被收拢到 CAP Registry，Agent 默认只需看到少量稳定入口。
+CAP 是面向 AI Agent 的 **Capability & Context Control Plane**。用户按任务搜索 Capability，Provider 被收拢到 CAP Registry；同时计量这些能力占用的上下文。目标不是「安装了多少 Skill」，而是 **Context Health、已消耗 token、以及可回收 token**。
 
+> 用最小能力集，换最大有效上下文。
+>
 > Install more. Expose less.
 
 ## 首屏 Demo
 
 ```console
 $ cap inspect
+CAP Inspect · 2026-09-12 11:32
 Claude Code / Codex
-  MCP Servers       14
-  Skills            8
-  Direct Tools      286
-  Estimated Schema  37,800 tokens
-
-Potential consolidation
-  286 tools → 3 CAP entry tools
-  Estimated reduction: 99%
+14 MCP · 8 Skills · 286 tools · ~37.8k tokens
+████████████████████░░  →  3 CAP entry tools (−99%)
+Pressure  High  22% · health 78 · effective ~168k / nominal ~200k
+Funnel    24 local installed → 22 enabled → 16 injected → used unknown
+⚠ 2 warnings · 3 duplicates · ✓ 1 managed
 
 $ cap search "分析 PostgreSQL 慢查询"
 1. PostgreSQL Performance Analysis  [Available]
@@ -27,12 +27,12 @@ $ cap search "分析 PostgreSQL 慢查询"
 
 ## V0.1 已实现
 
-- `cap inspect`：扫描 Claude Code / Codex 的 MCP 配置与本地 Skills，估算直接暴露工具和 Context footprint，标记重复项。
+- `cap inspect`：扫描 Claude Code / Codex 的 MCP 配置与本地 Skills，输出 Context Health（budget / pressure / funnel）、重复项与按 token 排序的迁移建议。详见 [docs/context-health.md](./docs/context-health.md)。
 - `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。
 - `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
 - `cap use`：通过 Capability 抽象调用已登记的本地 Provider；初版内置 Git 状态与 ripgrep 搜索。
 - `cap optimize`：展示 Before / After；显式使用 `--apply --yes` 时迁移 JSON MCP 配置，并先生成时间戳备份。
-- `cap web`：轻量 Discover、My Capabilities、Health 页面。
+- `cap web`：轻量 Discover、My Capabilities、Context Health 仪表盘。
 - `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.add`、`cap.use`；可选暴露 `cap.inspect`。
 - Activity：记录 Add/Use 结果，为后续 CapabilityBench 积累基础数据。
 
@@ -126,6 +126,7 @@ CAP Core ── Search ── Catalog
 | [`AGENTS.md`](./AGENTS.md) | Agent 工作约定（命令、边界、目录图） |
 | [`llms.txt`](./llms.txt) | LLM / Agent 文档索引 |
 | [`docs/architecture.md`](./docs/architecture.md) | 模块边界与数据流 |
+| [`docs/context-health.md`](./docs/context-health.md) | Context Pressure、漏斗与 Health 产品说明 |
 | [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills |
 | [`.mcp.json`](./.mcp.json) | 项目级 CAP MCP（dogfood） |
 | [`src/index.js`](./src/index.js) | 稳定程序化 API：`searchCapabilities` / `addCapability` / `useCapability` / `inspectLocal` / `loadCatalog` / `loadState` |
@@ -146,5 +147,5 @@ npm run check
 
 - 公共 Registry/GitHub 的在线抓取、语义向量检索与 OAuth 连接尚未实现；当前使用本地 curated Catalog 和可解释的混合关键词评分。
 - 非内置 Provider 可以添加，但 Use 会返回 `connection_required`，不会伪装成已执行。
-- Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。
+- Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。高 Context Pressure 不会突然「触发幻觉」，但会造成注意力稀释、召回变差、选错工具和指令冲突（Lost in the Middle）。
 - 首版优先验证开发者闭环，不包含 Desktop、企业权限和团队治理。
