@@ -1,6 +1,5 @@
 ---
 description: CAP repository conventions for Cursor agents
-globs:
 alwaysApply: true
 ---
 
@@ -11,4 +10,5 @@ Follow root `AGENTS.md`. Summary:
 - Catalog edits must keep Capability↔Provider refs bidirectional; validate against `data/catalog.schema.json`
 - Prefer CLI `--json` and `CAP_HOME` temp dirs when testing
 - Never expand default MCP tools beyond search/acquire/use without opt-in
+- Public `src/index.js` stays search/acquire/use/inspect/loadCatalog/loadState
 - Run `npm run check` before finishing
