@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { classifyPressure, estimateTokens, inspectLocal, resolveBudget } from '../src/inspector.js';
+import { exposedCapTools, isCapMcpConfig } from '../src/mcp-tools.js';
 import { applyOptimization } from '../src/optimize.js';
 import { compactTokens, inspectText, main } from '../src/cli.js';
 
@@ -98,6 +99,7 @@ test('skill body is on-demand and excluded from injected tokens', async (t) => {
   assert.equal(result.summary.contextTokens, injected);
   assert.ok(result.summary.contextTokens < injected + skill.cost.instructionTokens);
   assert.ok(result.summary.contextTokens < skill.cost.totalTokens + result.items.filter((item) => item.name !== 'reviewer' && item.direct).reduce((sum, item) => sum + item.contextTokens, 0));
+  assert.match(inspectText(result, options), /用到这个 Skill 时才加载/);
 });
 
 test('funnel.installed is local scan names, not seed catalog', async (t) => {
@@ -117,18 +119,21 @@ test('CLI inspect prints Context Health sections', async (t) => {
   const report = await inspectLocal(options);
   const text = inspectText(report, options);
   assert.match(text, /CAP Inspect · /);
-  assert.match(text, /Pressure\s+Healthy/);
-  assert.match(text, /Funnel\s+\d+ local installed → 3 enabled → 3 injected → used unknown/);
-  assert.match(text, /建议迁移/);
-  assert.match(text, /MCP \/ Skills（Claude Code）/);
-  assert.match(text, /tip: cap optimize/);
+  assert.match(text, /健康\s+.*很好/);
+  assert.doesNotMatch(text, /^入口  /m);
+  assert.doesNotMatch(text, /^漏斗  /m);
+  assert.match(text, /这些 MCP 现在直接暴露/);
+  assert.match(text, /迁到 CAP/);
+  assert.match(text, /Claude Code/);
+  assert.match(text, /只读本地配置，未连接 MCP/);
   assert.equal(compactTokens(37800), '~37.8k');
   const logs = [];
   const original = console.log;
   console.log = (value) => logs.push(value);
   t.after(() => { console.log = original; });
   await main(['inspect'], options);
-  assert.match(logs.join('\n'), /3 CAP entry tools/);
+  assert.match(logs.join('\n'), /健康/);
+  assert.doesNotMatch(logs.join('\n'), /^漏斗  /m);
 });
 
 test('optimize backs up JSON config and moves providers into CAP state', async (t) => {
@@ -141,4 +146,102 @@ test('optimize backs up JSON config and moves providers into CAP state', async (
   await fs.access(result.changed[0].backup);
   const state = JSON.parse(await fs.readFile(path.join(options.home, 'registry.json'), 'utf8'));
   assert.deepEqual(state.external_providers.map((item) => item.name).sort(), ['github', 'postgres']);
+});
+
+test('CAP mcp surface uses known tools and is not a migrate target', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const mcpPath = path.join(options.projectRoot, '.mcp.json');
+  await fs.writeFile(mcpPath, JSON.stringify({
+    mcpServers: {
+      cap: {command: 'node', args: ['./bin/cap-mcp.js']},
+      other: {command: 'node', args: ['./bin/not-cap.js']}
+    }
+  }));
+  const result = await inspectLocal({
+    ...options,
+    jsonConfigs: [
+      [path.join(options.userHome, '.claude.json'), 'Claude Code'],
+      [mcpPath, 'Project']
+    ],
+    env: {}
+  });
+  const cap = result.items.find((item) => item.name === 'cap');
+  const other = result.items.find((item) => item.name === 'other');
+  assert.equal(cap.capSurface, true);
+  assert.equal(cap.status, 'cap');
+  assert.equal(cap.toolCount, 3);
+  assert.equal(cap.toolCountEstimated, false);
+  assert.equal(cap.contextTokens, estimateTokens(exposedCapTools({env: {}})));
+  assert.ok(cap.contextTokens > 50);
+  assert.equal(Boolean(other.capSurface), false);
+  assert.equal(result.recommendations.some((item) => item.provider === 'cap'), false);
+  assert.equal(result.recommendations.some((item) => item.provider === 'other'), true);
+  assert.equal(result.summary.capSurface, true);
+  assert.equal(result.funnel.configured, result.funnel.injected);
+  const inspectOn = await inspectLocal({
+    ...options,
+    jsonConfigs: [[mcpPath, 'Project']],
+    skillRoots: [],
+    env: {CAP_MCP_INSPECT: '1'}
+  });
+  assert.equal(inspectOn.items.find((item) => item.name === 'cap').toolCount, 4);
+});
+
+test('a server named cap is not the CAP surface without cap-mcp', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const mcpPath = path.join(options.projectRoot, '.mcp.json');
+  await fs.writeFile(mcpPath, JSON.stringify({mcpServers: {cap: {command: 'npx', args: ['some-other-cap']}}}));
+  const result = await inspectLocal({
+    ...options,
+    jsonConfigs: [[mcpPath, 'Project']],
+    skillRoots: [],
+    env: {}
+  });
+  const cap = result.items.find((item) => item.name === 'cap');
+  assert.equal(Boolean(cap.capSurface), false);
+  assert.equal(result.recommendations[0].provider, 'cap');
+  assert.equal(isCapMcpConfig({command: 'node', args: ['./bin/cap-mcp.js']}), true);
+  assert.equal(isCapMcpConfig({command: 'npx', args: ['some-other-cap']}), false);
+});
+
+test('CLI inspect treats project CAP as the surface', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const mcpPath = path.join(options.projectRoot, '.mcp.json');
+  await fs.writeFile(mcpPath, JSON.stringify({mcpServers: {cap: {command: 'node', args: ['./bin/cap-mcp.js']}}}));
+  const report = await inspectLocal({
+    ...options,
+    jsonConfigs: [[mcpPath, 'Project']],
+    env: {}
+  });
+  const text = inspectText(report, options);
+  assert.match(text, /没有需要迁走的第三方 MCP/);
+  assert.doesNotMatch(text, /这些 MCP 现在直接暴露/);
+  assert.doesNotMatch(text, /^入口  /m);
+  assert.doesNotMatch(text, /^漏斗  /m);
+  assert.match(text, /3 个工具/);
+  assert.match(text, /Project/);
+});
+
+test('optimize keeps the CAP mcp entry and migrates the rest', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const mcpPath = path.join(options.projectRoot, '.mcp.json');
+  await fs.writeFile(mcpPath, JSON.stringify({
+    mcpServers: {
+      cap: {command: 'node', args: ['./bin/cap-mcp.js']},
+      github: {command: 'github-mcp'}
+    }
+  }, null, 2));
+  const result = await applyOptimization({
+    ...options,
+    jsonConfigs: [[mcpPath, 'Project']],
+    skillRoots: []
+  });
+  assert.equal(result.changed.length, 1);
+  const config = JSON.parse(await fs.readFile(mcpPath, 'utf8'));
+  assert.deepEqual(Object.keys(config.mcpServers), ['cap']);
+  assert.deepEqual(result.changed[0].providers, ['github']);
 });

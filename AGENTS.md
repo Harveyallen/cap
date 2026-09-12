@@ -18,9 +18,10 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/search.js` | Intent/keyword capability search |
 | `src/registry.js` | Catalog + `~/.cap/registry.json` state |
 | `src/use.js` | Execute managed providers (git / ripgrep builtins) |
-| `src/inspector.js` | Scan Claude Code / Codex MCP + Skills; Context Health (budget / pressure / funnel) |
-| `src/optimize.js` | Preview / apply MCP consolidation |
+| `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
+| `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
+| `src/mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection |
 | `src/web-server.js` | Local Discover UI + JSON APIs |
 | `src/paths.js` | `CAP_HOME` / package root |
 | `src/catalog-schema.js` | Zero-dep catalog JSON Schema checks |
