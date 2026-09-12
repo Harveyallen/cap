@@ -59,9 +59,10 @@ test('inspect counts MCP tools, skills, and context', async (t) => {
 test('budget env overrides and pressure bands', async (t) => {
   const options = await fixture();
   t.after(() => fs.rm(options.root, {recursive: true, force: true}));
-  const tight = await inspectLocal({...options, env: {CAP_NOMINAL_WINDOW: '1000000', CAP_EFFECTIVE_BUDGET: '100'}});
+  const tight = await inspectLocal({...options, env: {CAP_NOMINAL_WINDOW: '1000000', CAP_EFFECTIVE_BUDGET: '1'}});
   assert.equal(tight.budget.nominalWindow, 1_000_000);
-  assert.equal(tight.budget.effectiveBudget, 100);
+  assert.equal(tight.budget.effectiveBudget, 1);
+  assert.ok(tight.pressure.percent >= 85);
   assert.equal(tight.pressure.band, 'emergency');
   assert.equal(tight.pressure.healthScore, 0);
   assert.equal(resolveBudget({nominalWindow: 200000, harnessSoftLimit: 200000, reserveTokens: 32000, env: {}}).effectiveBudget, 168000);
