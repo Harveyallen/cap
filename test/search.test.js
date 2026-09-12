@@ -51,5 +51,6 @@ test('web API add replaces acquire', async (t) => {
   assert.equal(added.status, 201);
   const html = await (await fetch(`http://127.0.0.1:${port}/`)).text();
   assert.match(html, /Search、Add、Use/);
+  assert.match(html, /onclick="add\(\\''\+x\.capability_id\+'\\'\)">添加/);
   assert.doesNotMatch(html, /Acquire|\/api\/acquire|acquire\(/);
 });
