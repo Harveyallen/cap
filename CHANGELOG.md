@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Validate the seed catalog against `data/catalog.schema.json` with a zero-dependency checker (required, enum, id pattern, minItems, reject extra fields).
+- Narrowed the `src/index.js` public surface to `searchCapabilities`, `acquireCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, and `loadState`.
+
 ## 0.1.1
 
 - Added AI-oriented repo docs: `AGENTS.md`, `llms.txt`, `docs/architecture.md`, Claude/Cursor/Copilot pointers.

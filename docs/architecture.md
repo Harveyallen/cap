@@ -38,7 +38,7 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 
 ## Data contracts
 
-- Seed catalog: `data/catalog.json` validated by `data/catalog.schema.json`.
+- Seed catalog: `data/catalog.json` validated by `data/catalog.schema.json` (required fields, enums, id patterns, minItems, no extra properties) on `loadCatalog` and in tests.
 - Registry default path: `$CAP_HOME/registry.json` or `~/.cap/registry.json`.
 - Context footprint: character/4 estimate, not a vendor tokenizer.
 

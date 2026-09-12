@@ -128,7 +128,7 @@ CAP Core ── Search ── Catalog
 | [`docs/architecture.md`](./docs/architecture.md) | 模块边界与数据流 |
 | [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills |
 | [`.mcp.json`](./.mcp.json) | 项目级 CAP MCP（dogfood） |
-| [`src/index.js`](./src/index.js) | 稳定程序化 API |
+| [`src/index.js`](./src/index.js) | 稳定程序化 API：`searchCapabilities` / `acquireCapability` / `useCapability` / `inspectLocal` / `loadCatalog` / `loadState` |
 | [`data/catalog.schema.json`](./data/catalog.schema.json) | Catalog 结构约束 |
 
 Claude Code / Cursor / Copilot 等也会读取 `CLAUDE.md`、`.cursor/rules/`、`.github/copilot-instructions.md`，内容以 `AGENTS.md` 为准。

@@ -15,7 +15,7 @@
 - CLI: `bin/cap.js` → `src/cli.js`
 - MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools: `cap.search`, `cap.acquire`, `cap.use`; optional `cap.inspect`)
 - Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`
-- Library: `src/index.js`
+- Library: `src/index.js` (`searchCapabilities`, `acquireCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, `loadState`)
 
 ## Agent skills
 

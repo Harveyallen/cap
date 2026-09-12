@@ -1,10 +1,14 @@
 /** Catalog loading, CAP Registry persistence, and acquire. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { validateCatalog } from './catalog-schema.js';
 import { capHome, packageRoot } from './paths.js';
 
 export async function loadCatalog() {
-  return JSON.parse(await fs.readFile(path.join(packageRoot(), 'data', 'catalog.json'), 'utf8'));
+  const root = packageRoot();
+  const catalog = JSON.parse(await fs.readFile(path.join(root, 'data', 'catalog.json'), 'utf8'));
+  const schema = JSON.parse(await fs.readFile(path.join(root, 'data', 'catalog.schema.json'), 'utf8'));
+  return validateCatalog(catalog, schema);
 }
 
 export async function loadState(options = {}) {

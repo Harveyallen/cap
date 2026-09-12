@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadCatalog } from '../src/registry.js';
 import { inspectLocal } from '../src/inspector.js';
+import { validateCatalog } from '../src/catalog-schema.js';
 import * as api from '../src/index.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -13,6 +14,7 @@ test('catalog matches schema contract and bidirectional refs', async () => {
   const catalog = await loadCatalog();
   const schema = JSON.parse(await fs.readFile(path.join(root, 'data', 'catalog.schema.json'), 'utf8'));
   assert.equal(schema.title, 'CAP Catalog');
+  validateCatalog(catalog, schema);
   assert.ok(catalog.capabilities.length > 0);
   assert.ok(catalog.providers.length > 0);
 
@@ -38,8 +40,45 @@ test('catalog matches schema contract and bidirectional refs', async () => {
   }
 });
 
-test('public API exports stable entry points', () => {
-  for (const name of ['runCli', 'searchCapabilities', 'acquireCapability', 'useCapability', 'inspectLocal', 'handleMcpMessage']) {
+test('schema rejects broken catalog fields', async () => {
+  const catalog = await loadCatalog();
+  const schema = JSON.parse(await fs.readFile(path.join(root, 'data', 'catalog.schema.json'), 'utf8'));
+
+  const missingRequired = structuredClone(catalog);
+  delete missingRequired.capabilities[0].risk;
+  assert.throws(() => validateCatalog(missingRequired, schema), /missing required risk/);
+
+  const extraField = structuredClone(catalog);
+  extraField.capabilities[0].unexpected = true;
+  assert.throws(() => validateCatalog(extraField, schema), /unexpected field unexpected/);
+
+  const badEnum = structuredClone(catalog);
+  badEnum.capabilities[0].risk = 'critical';
+  assert.throws(() => validateCatalog(badEnum, schema), /expected one of low, medium, high/);
+
+  const badId = structuredClone(catalog);
+  badId.capabilities[0].capability_id = 'Git.Status';
+  assert.throws(() => validateCatalog(badId, schema), /does not match/);
+
+  const emptyIntents = structuredClone(catalog);
+  emptyIntents.capabilities[0].intents = [];
+  assert.throws(() => validateCatalog(emptyIntents, schema), /fewer than minItems 1/);
+
+  const emptyProviderRefs = structuredClone(catalog);
+  emptyProviderRefs.capabilities[0].provider_refs = [];
+  assert.throws(() => validateCatalog(emptyProviderRefs, schema), /fewer than minItems 1/);
+});
+
+test('public API exports only the read/main path', () => {
+  assert.deepEqual(Object.keys(api), [
+    'searchCapabilities',
+    'acquireCapability',
+    'useCapability',
+    'inspectLocal',
+    'loadCatalog',
+    'loadState'
+  ]);
+  for (const name of Object.keys(api)) {
     assert.equal(typeof api[name], 'function');
   }
 });

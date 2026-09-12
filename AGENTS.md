@@ -23,7 +23,8 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/mcp-server.js` | MCP JSON-RPC tools |
 | `src/web-server.js` | Local Discover UI + JSON APIs |
 | `src/paths.js` | `CAP_HOME` / package root |
-| `src/index.js` | Public programmatic API |
+| `src/catalog-schema.js` | Zero-dep catalog JSON Schema checks |
+| `src/index.js` | Public programmatic API (read / main path) |
 | `data/catalog.json` | Seed capabilities + providers |
 | `data/catalog.schema.json` | Catalog JSON Schema |
 | `test/*.test.js` | Node test suite |
@@ -45,6 +46,21 @@ node ./bin/cap-mcp.js   # stdio MCP; optional CAP_MCP_INSPECT=1
 ```
 
 Prefer `--json` when parsing CLI output. Prefer `CAP_HOME=<tmpdir>` in tests so state never touches the real `~/.cap`.
+
+Project `.mcp.json` uses a relative `./bin/cap-mcp.js` path. Start the MCP server from the package root so that path resolves.
+
+## Public API
+
+`src/index.js` (package root export) is the read / main path only:
+
+- `searchCapabilities`
+- `acquireCapability`
+- `useCapability`
+- `inspectLocal`
+- `loadCatalog`
+- `loadState`
+
+Registry writes, optimize apply, and MCP/web server starters stay in their modules. Do not re-export them from the package root.
 
 ## Always do
 
