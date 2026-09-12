@@ -53,4 +53,11 @@ test('web API add replaces acquire', async (t) => {
   assert.match(html, /Search、Add、Use/);
   assert.match(html, /onclick="add\(\\''\+x\.capability_id\+'\\'\)">添加/);
   assert.doesNotMatch(html, /Acquire|\/api\/acquire|acquire\(/);
+  assert.match(html, /Capability Health/);
+  assert.match(html, /问题与建议/);
+  const inspect = await fetch(`http://127.0.0.1:${port}/api/inspect`);
+  const report = await inspect.json();
+  assert.equal(typeof report.pressure.band, 'string');
+  assert.equal(typeof report.funnel.installed, 'number');
+  assert.ok(report.budget.effectiveBudget > 0);
 });

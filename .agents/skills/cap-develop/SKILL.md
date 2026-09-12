@@ -8,8 +8,9 @@ description: Develop or debug the CAP repository itself (CLI, MCP, registry, sea
 ## Before coding
 
 1. Read root `AGENTS.md` and `docs/architecture.md`.
-2. Identify the owning module from the map; keep domain logic out of `cli.js` / `web-server.js`.
+2. Identify the owning module from the map; keep domain logic out of `cli.js` / `web-server.js`. Context Health math lives in `inspector.js`; CLI/Web only format it.
 3. Prefer extending existing functions over new files unless a clear boundary appears.
+4. Inspect output is additive: keep existing `summary` fields and add `budget` / `pressure` / `funnel`. Do not connect to third-party MCP servers. Product rules: `docs/context-health.md`.
 
 ## Verify loop
 

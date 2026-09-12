@@ -1,4 +1,6 @@
 /** CLI command routing and human/JSON formatting. */
+import os from 'node:os';
+import path from 'node:path';
 import { inspectLocal } from './inspector.js';
 import { searchCapabilities } from './search.js';
 import { addCapability, loadState } from './registry.js';
@@ -6,7 +8,8 @@ import { useCapability } from './use.js';
 import { applyOptimization, buildOptimizationPlan, writeOptimizationPlan } from './optimize.js';
 import { startWebServer } from './web-server.js';
 
-const help = `CAP 0.1 — discover more capabilities, expose fewer tools
+const help = `CAP 0.1 — Capability & Context Control Plane
+用最小能力集，换最大有效上下文。
 
 Usage:
   cap inspect [--json]
@@ -38,10 +41,116 @@ function print(value, json) {
   else console.log(value);
 }
 
-function inspectText(report) {
+function colorEnabled() {
+  return Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
+}
+
+function paint(code, text) {
+  return colorEnabled() ? `\x1b[${code}m${text}\x1b[0m` : text;
+}
+
+export function compactTokens(value) {
+  const n = Math.round(Number(value) || 0);
+  if (Math.abs(n) >= 1000) return `~${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+  return `~${n}`;
+}
+
+function stamp(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function shortPath(file, home = os.homedir(), cwd = process.cwd()) {
+  if (!file) return '';
+  if (file === home || file.startsWith(`${home}${path.sep}`)) return `~${file.slice(home.length)}`;
+  const relative = path.relative(cwd, file);
+  if (relative && !relative.startsWith(`..${path.sep}`) && relative !== '..') return relative;
+  return file;
+}
+
+function reductionBar(percent, width = 22) {
+  const filled = Math.round(Math.min(100, Math.max(0, percent)) / 100 * width);
+  return `${'█'.repeat(filled)}${'░'.repeat(width - filled)}`;
+}
+
+function pressureTone(band) {
+  if (band === 'healthy') return 32;
+  if (band === 'moderate') return 33;
+  if (band === 'high') return 33;
+  return 31;
+}
+
+function statusLabel(item) {
+  if (item.status === 'managed' || item.direct === false) return 'Managed';
+  if (item.status === 'estimated' || item.toolCountEstimated) return '~est';
+  return 'Direct';
+}
+
+function kindMark(item) {
+  return item.kind === 'skill' ? '○' : '●';
+}
+
+export function inspectText(report, options = {}) {
   const s = report.summary;
+  const pressure = report.pressure ?? {};
+  const budget = report.budget ?? {};
+  const funnel = report.funnel ?? {};
+  const home = options.userHome ?? os.homedir();
+  const cwd = options.projectRoot ?? process.cwd();
+  const rel = (file) => shortPath(file, home, cwd);
   const agents = [...new Set(report.items.filter((item) => item.agent).map((item) => item.agent))].join(' / ') || 'No Agent configuration found';
-  return `${agents}\n  MCP Servers       ${s.mcpServers}\n  Skills            ${s.skills}\n  Direct Tools      ${s.directTools}${report.items.some((x) => x.toolCountEstimated) ? ' (minimum estimate)' : ''}\n  Estimated Schema  ${s.contextTokens.toLocaleString()} tokens\n\nPotential consolidation\n  ${s.directTools} tools → ${s.directTools ? 3 : 0} CAP entry tools\n  Estimated reduction: ${s.estimatedReductionPercent}%\n  Migration candidates: ${report.recommendations.length}`;
+  const estimateNote = report.items.some((item) => item.toolCountEstimated) ? ' (minimum estimate)' : '';
+  const band = pressure.band ?? 'healthy';
+  const used = funnel.usedUnknown || funnel.used == null ? 'used unknown' : `${funnel.used} used`;
+  const rule = '─'.repeat(56);
+  const lines = [
+    paint(1, `CAP Inspect · ${stamp(report.generatedAt)}`),
+    agents,
+    rule,
+    `${s.mcpServers} MCP · ${s.skills} Skills · ${s.directTools} tools${estimateNote} · ${compactTokens(s.contextTokens)} tokens`,
+    `${reductionBar(s.estimatedReductionPercent)}  →  ${s.directTools ? s.capEntryTools : 0} CAP entry tools (−${s.estimatedReductionPercent}%)`,
+    `Pressure  ${paint(pressureTone(band), band[0].toUpperCase() + band.slice(1))}  ${pressure.percent ?? 0}% · health ${pressure.healthScore ?? ''} · effective ${compactTokens(budget.effectiveBudget)} / nominal ${compactTokens(budget.nominalWindow)}`,
+    `Funnel    ${funnel.installed ?? 0} installed → ${funnel.enabled ?? 0} enabled → ${funnel.injected ?? 0} injected → ${used}`,
+    `${paint(33, '⚠')} ${s.warnings ?? 0} warnings · ${s.duplicateGroups} duplicates · ${paint(32, '✓')} ${s.managed ?? 0} managed`
+  ];
+
+  const warnings = report.items.filter((item) => item.kind === 'warning');
+  if (warnings.length) {
+    lines.push(rule, '警告');
+    for (const item of warnings) lines.push(`  ● ${item.message}  ${rel(item.source)}`);
+  }
+
+  if (report.duplicates.length) {
+    lines.push(rule, '重复项');
+    for (const group of report.duplicates) lines.push(`  ● ${group.name}  ${group.sources.map(rel).join(' + ')}`);
+  }
+
+  if (report.recommendations.length) {
+    lines.push(rule, '建议迁移（按省 token）');
+    report.recommendations.forEach((item, index) => {
+      lines.push(`  ${index + 1}. ${item.provider.padEnd(18)} ${compactTokens(item.estimatedTokensSaved).padStart(7)} tok  Move → CAP`);
+      lines.push(`     ${rel(item.source)}`);
+    });
+  }
+
+  const inventory = report.items.filter((item) => item.kind !== 'warning');
+  const order = ['Claude Code', 'Codex', 'Shared'];
+  const agentsPresent = [...new Set(inventory.map((item) => item.agent))];
+  agentsPresent.sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b));
+  for (const agent of agentsPresent) {
+    const rows = inventory.filter((item) => item.agent === agent);
+    lines.push(rule, `MCP / Skills（${agent}）`);
+    for (const item of rows) {
+      const tools = item.kind === 'skill' ? 'skill' : `~${item.toolCount} tools`;
+      lines.push(`  ${kindMark(item)} ${item.name.padEnd(18)} ${tools.padEnd(12)} ${compactTokens(item.contextTokens).padStart(7)} tok  ${statusLabel(item).padEnd(8)}  ${rel(item.source)}`);
+    }
+  }
+
+  if (!inventory.length && !warnings.length) lines.push(rule, '  未发现本地 MCP / Skills 配置。');
+  lines.push(rule, paint(2, 'tip: cap optimize · 或 cap search 搜索任务'));
+  return lines.join('\n');
 }
 
 function searchText(results) {
@@ -56,7 +165,7 @@ export async function main(args, options = {}) {
   if (command === 'help' || command === '--help' || command === '-h') return print(help, false);
   if (command === 'inspect') {
     const report = await inspectLocal(options);
-    return print(json ? report : inspectText(report), json);
+    return print(json ? report : inspectText(report, options), json);
   }
   if (command === 'search') {
     const query = positional(rest).join(' ');

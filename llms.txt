@@ -7,6 +7,7 @@
 - [README](README.md): human quick start and product overview
 - [AGENTS.md](AGENTS.md): instructions for coding agents
 - [Architecture](docs/architecture.md): module boundaries and data flow
+- [Context Health](docs/context-health.md): pressure, funnel, and inspect/Health contract
 - [Catalog schema](data/catalog.schema.json): seed catalog contract
 - [Changelog](CHANGELOG.md)
 

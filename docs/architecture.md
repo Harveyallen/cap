@@ -30,7 +30,7 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 | `search.js` | Hybrid keyword/intent scoring | Persist state |
 | `registry.js` | Catalog load + registry R/W + add | Execute providers |
 | `use.js` | Execute managed builtins | Discover/search |
-| `inspector.js` | Read local Agent configs/skills, estimate footprint | Connect to MCP servers |
+| `inspector.js` | Read local Agent configs/skills, estimate footprint, derive Context Health | Connect to MCP servers |
 | `optimize.js` | Plan + guarded JSON MCP migration | Mutate TOML in v0.1 |
 | `mcp-server.js` | JSON-RPC stdio tool surface | Dump downstream schemas |
 | `web-server.js` | Discover UI + thin JSON APIs | Own business logic |
@@ -41,6 +41,8 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 - Seed catalog: `data/catalog.json` validated by `data/catalog.schema.json` (required fields, enums, id patterns, minItems, no extra properties) on `loadCatalog` and in tests.
 - Registry default path: `$CAP_HOME/registry.json` or `~/.cap/registry.json`.
 - Context footprint: character/4 estimate, not a vendor tokenizer.
+- Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Product rules: [context-health.md](./context-health.md).
+- Budget env: `CAP_NOMINAL_WINDOW`, `CAP_HARNESS_SOFT_LIMIT`, `CAP_RESERVE_TOKENS`, `CAP_EFFECTIVE_BUDGET`.
 
 ## Agent integration
 
