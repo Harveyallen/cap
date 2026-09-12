@@ -27,6 +27,7 @@ $ cap search "分析 PostgreSQL 慢查询"
 
 ## V0.1 已实现
 
+- `cap setup`：备份并写入 Claude Code / Codex 的 CAP MCP 与 `cap-context-health` Skill，然后跑一次 `cap inspect`。
 - `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），用人话输出健康分数、常驻占用和清单。`cap-mcp` 不会被建议再迁走。详见 [docs/context-health.md](./docs/context-health.md)。
 - `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。
 - `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
@@ -36,45 +37,31 @@ $ cap search "分析 PostgreSQL 慢查询"
 - `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.add`、`cap.use`；可选暴露 `cap.inspect`。
 - Activity：记录 Add/Use 结果，为后续 CapabilityBench 积累基础数据。
 
-## 快速开始
-
-要求 Node.js 20 或更高版本，无第三方运行时依赖。
+## 安装
 
 ```bash
-npm link
-cap inspect
-cap search "review GitHub PR security"
-cap add git.repository.status
-cap use git.repository.status --input '{"path":"."}'
-cap web
+npx -y @capability-layer/cap setup
 ```
 
-打开 `http://127.0.0.1:4173` 使用 Web Search。
-
-也可以不安装，直接运行：
+`@capability-layer/cap` **尚未发布到 npm**，上面这条现在会 404。仓库 `Harveyallen/cap` 是私有的；有访问权限时可以用已验证可用的 GitHub 入口：
 
 ```bash
-node ./bin/cap.js inspect
-node ./bin/cap.js web --port 4173
+npx -y github:Harveyallen/cap setup
 ```
 
-## 接入 Agent
+或克隆后本地执行：`node ./bin/cap.js setup`。
 
-MCP 命令为仓库内 `bin/cap-mcp.js` 的绝对路径。例如 Claude Code 配置：
+Agent 可粘贴：
 
-```json
-{
-  "mcpServers": {
-    "cap": {
-      "command": "node",
-      "args": ["/absolute/path/to/cap/bin/cap-mcp.js"]
-    }
-  }
-}
+```text
+请安装 CAP（npx -y @capability-layer/cap setup；未发布到 npm 时用 npx -y github:Harveyallen/cap setup，或克隆后 node ./bin/cap.js setup）。
+然后运行 cap inspect，用中文汇报 Context Pressure、漏斗（installed → enabled → injected → used）和可回收 token。
+之后凡是「上下文占用 / MCP 是否过多」的问题，优先使用 cap.inspect / cap inspect。
 ```
 
-服务使用 MCP JSON-RPC stdio，每行一条消息。它不会把下游 Provider 的完整 Tool Schema 暴露给 Agent。
-如需让 Agent 自助诊断，可为 MCP 进程设置 `CAP_MCP_INSPECT=1`；默认保持 3 个入口。
+用法示例：帮我看看当前上下文占用情况
+
+`setup` 会备份并写入 Claude Code / Codex 的 MCP（`cap.search` / `cap.add` / `cap.use`；`cap.inspect` 需进程环境 `CAP_MCP_INSPECT=1`）、安装 `cap-context-health` Skill，并跑一次 inspect。`--agent auto|claude|codex`（默认 auto）。Codex TOML 无法安全改写时会打印手动片段，但仍会装 Skill 并 inspect。
 
 ## 安全迁移
 
@@ -139,6 +126,9 @@ Claude Code / Cursor / Copilot 等也会读取 `CLAUDE.md`、`.cursor/rules/`、
 ```bash
 npm test
 npm run check
+node ./bin/cap.js setup --agent auto
+node ./bin/cap.js inspect
+node ./bin/cap.js web --port 4173
 ```
 
 种子 Catalog 位于 `data/catalog.json`，结构见 `data/catalog.schema.json`。添加记录时保持 `capability_id` 稳定，并在 `provider_refs` 与 Provider 的 `capabilities` 中双向声明。Agent 侧可直接按 `.agents/skills/add-capability/SKILL.md` 执行。

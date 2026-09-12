@@ -13,7 +13,7 @@
 
 ## Entry points
 
-- CLI: `bin/cap.js` → `src/cli.js`
+- CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `add` / `use` / `optimize` / `web`)
 - MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect`)
 - Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`
 - Library: `src/index.js` (`searchCapabilities`, `addCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, `loadState`)
@@ -22,6 +22,7 @@
 
 - `.agents/skills/cap-develop/SKILL.md`
 - `.agents/skills/add-capability/SKILL.md`
+- `cap setup` writes user-level `cap-context-health` (not shipped under `.agents/skills`)
 
 ## Verify
 

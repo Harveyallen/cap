@@ -125,6 +125,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 ## 相关命令
 
 ```bash
+cap setup --agent auto
 cap inspect
 cap inspect --json
 CAP_NOMINAL_WINDOW=1000000 cap inspect --json

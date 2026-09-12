@@ -6,12 +6,14 @@ import { searchCapabilities } from './search.js';
 import { addCapability, loadState } from './registry.js';
 import { useCapability } from './use.js';
 import { applyOptimization, buildOptimizationPlan, writeOptimizationPlan } from './optimize.js';
+import { setupCap } from './setup.js';
 import { startWebServer } from './web-server.js';
 
 const help = `CAP 0.1 — Capability & Context Control Plane
 用最小能力集，换最大有效上下文。
 
 Usage:
+  cap setup [--agent auto|claude|codex] [--json]
   cap inspect [--json]
   cap search <task> [--json]
   cap add <capability-id> [--provider <provider-id>] [--json]
@@ -175,6 +177,29 @@ export function inspectText(report, options = {}) {
   return lines.join('\n');
 }
 
+export function setupText(result, options = {}) {
+  const home = options.userHome ?? os.homedir();
+  const cwd = options.projectRoot ?? process.cwd();
+  const rel = (file) => shortPath(file, home, cwd);
+  const lines = [
+    paint(1, 'CAP Setup'),
+    `Agent  ${result.agent} → ${result.targets.join(', ')}`
+  ];
+  for (const item of result.writes) {
+    const backup = item.backup ? `  备份 ${rel(item.backup)}` : '';
+    lines.push(`写入  ${rel(item.path)}${backup}`);
+  }
+  for (const item of result.skipped) lines.push(`跳过  ${rel(item.path)}  ${item.reason}`);
+  for (const item of result.manual) {
+    lines.push(`无法安全写入 ${rel(item.path)}${item.reason ? `（${item.reason}）` : ''}，请手动添加：`);
+    lines.push(item.snippet.trimEnd());
+  }
+  if (result.inspection) {
+    lines.push('', inspectText(result.inspection, options));
+  }
+  return lines.join('\n');
+}
+
 function searchText(results) {
   if (!results.length) return 'No matching capability found.';
   return results.map((item, index) => `${index + 1}. ${item.name}  ${item.installed ? '[CAP Managed]' : '[Available]'}\n   ${item.capability_id}\n   ${item.summary}\n   Providers: ${item.providers.map((p) => `${p.name} (${p.status})`).join(', ')}\n   Context: ~${item.context_cost} tokens · Risk: ${item.risk}`).join('\n\n');
@@ -185,6 +210,10 @@ export async function main(args, options = {}) {
   const rest = args.slice(1);
   const json = rest.includes('--json');
   if (command === 'help' || command === '--help' || command === '-h') return print(help, false);
+  if (command === 'setup') {
+    const result = await setupCap({...options, agent: flag(rest, '--agent') ?? 'auto'});
+    return print(json ? result : setupText(result, options), json);
+  }
   if (command === 'inspect') {
     const report = await inspectLocal(options);
     return print(json ? report : inspectText(report, options), json);
