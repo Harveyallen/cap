@@ -280,6 +280,7 @@ export async function inspectLocal(options = {}) {
       managed: managed.length,
       duplicateGroups: duplicateGroups.length,
       capSurface,
+      registryCapabilities: state.managed_capabilities.length,
       capEntryTools,
       estimatedReductionPercent: migrateableTools > capEntryTools ? Math.round((1 - capEntryTools / migrateableTools) * 100) : 0
     },

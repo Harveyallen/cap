@@ -99,7 +99,7 @@ test('skill body is on-demand and excluded from injected tokens', async (t) => {
   assert.equal(result.summary.contextTokens, injected);
   assert.ok(result.summary.contextTokens < injected + skill.cost.instructionTokens);
   assert.ok(result.summary.contextTokens < skill.cost.totalTokens + result.items.filter((item) => item.name !== 'reviewer' && item.direct).reduce((sum, item) => sum + item.contextTokens, 0));
-  assert.match(inspectText(result, options), /on-demand/);
+  assert.match(inspectText(result, options), /用到这个 Skill 时才加载/);
 });
 
 test('funnel.installed is local scan names, not seed catalog', async (t) => {
@@ -119,18 +119,19 @@ test('CLI inspect prints Context Health sections', async (t) => {
   const report = await inspectLocal(options);
   const text = inspectText(report, options);
   assert.match(text, /CAP Inspect · /);
-  assert.match(text, /Pressure\s+Healthy/);
-  assert.match(text, /Funnel\s+\d+ local installed → 3 enabled → 3 configured \(scan\) → used unknown/);
-  assert.match(text, /建议迁移/);
-  assert.match(text, /MCP \/ Skills（Claude Code）/);
-  assert.match(text, /config scan/);
+  assert.match(text, /健康\s+.*很好/);
+  assert.match(text, /漏斗\s+本地发现 \d+ → 写进配置 3 → 会暴露 3 → 实际调用 未知/);
+  assert.match(text, /这些 MCP 现在直接暴露/);
+  assert.match(text, /迁到 CAP/);
+  assert.match(text, /Claude Code/);
+  assert.match(text, /只读本地配置，未连接 MCP/);
   assert.equal(compactTokens(37800), '~37.8k');
   const logs = [];
   const original = console.log;
   console.log = (value) => logs.push(value);
   t.after(() => { console.log = original; });
   await main(['inspect'], options);
-  assert.match(logs.join('\n'), /3 CAP entry tools/);
+  assert.match(logs.join('\n'), /只留 3 个入口工具|已是 CAP/);
 });
 
 test('optimize backs up JSON config and moves providers into CAP state', async (t) => {
@@ -214,12 +215,12 @@ test('CLI inspect treats project CAP as the surface', async (t) => {
     env: {}
   });
   const text = inspectText(report, options);
-  assert.match(text, /already on CAP/);
-  assert.match(text, /CAP surface/);
-  assert.doesNotMatch(text, /建议迁移/);
-  assert.match(text, /3 tools/);
-  assert.match(text, /configured \(scan\)/);
-  assert.match(text, /MCP \/ Skills（Project）/);
+  assert.match(text, /已是 CAP/);
+  assert.match(text, /不用把 cap 再迁走/);
+  assert.doesNotMatch(text, /这些 MCP 现在直接暴露/);
+  assert.match(text, /3 个工具/);
+  assert.match(text, /会暴露/);
+  assert.match(text, /Project/);
 });
 
 test('optimize keeps the CAP mcp entry and migrates the rest', async (t) => {

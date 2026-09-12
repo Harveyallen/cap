@@ -55,9 +55,9 @@ test('web API add replaces acquire', async (t) => {
   assert.doesNotMatch(html, /Acquire|\/api\/acquire|acquire\(/);
   assert.match(html, /Capability Health/);
   assert.match(html, /问题与建议/);
-  assert.match(html, /configured \(scan\)/);
-  assert.match(html, /already on CAP/);
-  assert.match(html, /config scan/);
+  assert.match(html, /会暴露/);
+  assert.match(html, /已是 CAP 入口/);
+  assert.match(html, /只读本地配置/);
   const inspect = await fetch(`http://127.0.0.1:${port}/api/inspect`);
   const report = await inspect.json();
   assert.equal(typeof report.pressure.band, 'string');

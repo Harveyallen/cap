@@ -70,22 +70,28 @@ function shortPath(file, home = os.homedir(), cwd = process.cwd()) {
   return file;
 }
 
-function reductionBar(percent, width = 22) {
-  const filled = Math.round(Math.min(100, Math.max(0, percent)) / 100 * width);
-  return `${'█'.repeat(filled)}${'░'.repeat(width - filled)}`;
-}
-
 function pressureTone(band) {
   if (band === 'healthy') return 32;
   if (band === 'moderate' || band === 'high' || band === 'unknown') return 33;
   return 31;
 }
 
-function statusLabel(item) {
-  if (item.status === 'cap' || item.capSurface) return 'CAP';
-  if (item.status === 'managed' || item.direct === false) return 'Managed';
-  if (item.status === 'estimated' || item.toolCountEstimated) return '~est';
-  return 'Direct';
+function bandPhrase(band) {
+  return {
+    healthy: '很好',
+    moderate: '一般',
+    high: '偏高',
+    critical: '很高',
+    emergency: '紧急',
+    unknown: '无法计算'
+  }[band] ?? band;
+}
+
+function roleLabel(item) {
+  if (item.status === 'cap' || item.capSurface) return 'CAP 入口（search / add / use）';
+  if (item.status === 'managed' || item.direct === false) return '已托管（走 cap.use）';
+  if (item.status === 'estimated' || item.toolCountEstimated) return '直接暴露（工具数是估算）';
+  return '直接暴露';
 }
 
 function kindMark(item) {
@@ -100,28 +106,32 @@ export function inspectText(report, options = {}) {
   const home = options.userHome ?? os.homedir();
   const cwd = options.projectRoot ?? process.cwd();
   const rel = (file) => shortPath(file, home, cwd);
-  const agents = [...new Set(report.items.filter((item) => item.agent).map((item) => item.agent))].join(' / ') || 'No Agent configuration found';
-  const estimateNote = report.items.some((item) => item.toolCountEstimated && !item.capSurface) ? ' (minimum estimate)' : '';
+  const agents = [...new Set(report.items.filter((item) => item.agent).map((item) => item.agent))].join(' / ') || '未发现 Agent 配置';
+  const estimateNote = report.items.some((item) => item.toolCountEstimated && !item.capSurface) ? '（部分工具数是估算）' : '';
   const band = pressure.band ?? 'healthy';
-  const used = funnel.usedUnknown || funnel.used == null ? 'used unknown' : `${funnel.used} used`;
+  const usedUnknown = funnel.usedUnknown || funnel.used == null;
   const configured = funnel.configured ?? funnel.injected ?? 0;
   const capSurface = Boolean(s.capSurface) || report.items.some((item) => item.capSurface);
   const rule = '─'.repeat(56);
-  const surfaceLine = report.recommendations.length
-    ? `${reductionBar(s.estimatedReductionPercent)}  →  ${s.capEntryTools} CAP entry tools (−${s.estimatedReductionPercent}%)`
+  const healthLine = band === 'unknown'
+    ? '健康  无法计算 · 有效预算无效（检查 CAP_EFFECTIVE_BUDGET）'
+    : `健康  ${paint(pressureTone(band), `${pressure.healthScore ?? '—'} / 100 · ${bandPhrase(band)}`)} · 常驻占用了有效预算的 ${pressure.percent ?? 0}%`;
+  const entryLine = report.recommendations.length
+    ? `入口  把下面的 MCP 收到 CAP 后，Agent 只留 ${s.capEntryTools} 个入口工具${s.estimatedReductionPercent ? `（约少 ${s.estimatedReductionPercent}% 工具）` : ''}`
     : capSurface
-      ? `Surface   ${s.capEntryTools} CAP entry tools · already on CAP`
-      : `${reductionBar(0)}  →  0 CAP entry tools (−0%)`;
+      ? `入口  已是 CAP（${s.capEntryTools} 个工具：search / add / use），不用把 cap 再迁走`
+      : '入口  还没有 CAP。用 cap add，或把现有 MCP 迁过来。';
   const lines = [
     paint(1, `CAP Inspect · ${stamp(report.generatedAt)}`),
-    agents,
+    `范围  ${agents} · 只读本地配置，未连接 MCP`,
     rule,
-    `${s.mcpServers} MCP · ${s.skills} Skills · ${s.directTools} tools${estimateNote} · ${compactTokens(s.contextTokens)} tokens`,
-    `Pressure  ${paint(pressureTone(band), band[0].toUpperCase() + band.slice(1))}  ${pressure.percent ?? 0}% · health ${pressure.healthScore ?? ''} · effective ${compactTokens(budget.effectiveBudget)} / nominal ${compactTokens(budget.nominalWindow)}`,
-    `${reductionBar(pressure.percent ?? 0)}  ${pressure.percent ?? 0}% of effective (config scan)`,
-    surfaceLine,
-    `Funnel    ${funnel.installed ?? 0} local installed → ${funnel.enabled ?? 0} enabled → ${configured} configured (scan) → ${used}`,
-    `${paint(33, '⚠')} ${s.warnings ?? 0} warnings · ${s.duplicateGroups} duplicates · ${capSurface ? 'CAP surface · ' : ''}${paint(32, '✓')} ${s.managed ?? 0} managed`
+    `${s.mcpServers} 个 MCP · ${s.skills} 个 Skill · ${s.directTools} 个暴露工具${estimateNote} · 常驻 ${compactTokens(s.contextTokens)} tok`,
+    healthLine,
+    `占用  常驻 ${compactTokens(s.contextTokens)} tok / 有效预算 ${compactTokens(budget.effectiveBudget)}（厂商标称 ${compactTokens(budget.nominalWindow)}）`,
+    entryLine,
+    `漏斗  本地发现 ${funnel.installed ?? 0} → 写进配置 ${funnel.enabled ?? 0} → 会暴露 ${configured} → 实际调用 ${usedUnknown ? '未知' : funnel.used}`,
+    '      前三列看配置文件；实际调用只统计成功的 cap use。',
+    `状态  ${s.warnings ?? 0} 个警告 · ${s.duplicateGroups} 组重复 · 已迁入 CAP 的 MCP ${s.managed ?? 0} 个 · Registry 已 add ${s.registryCapabilities ?? 0} 个能力`
   ];
 
   const warnings = report.items.filter((item) => item.kind === 'warning');
@@ -135,32 +145,44 @@ export function inspectText(report, options = {}) {
     for (const group of report.duplicates) lines.push(`  ● ${group.name}  ${group.sources.map(rel).join(' + ')}`);
   }
 
-  if (report.recommendations.length) {
-    lines.push(rule, '建议迁移（按省 token）');
-    report.recommendations.forEach((item, index) => {
-      lines.push(`  ${index + 1}. ${item.provider.padEnd(18)} ${compactTokens(item.estimatedTokensSaved).padStart(7)} tok  Move → CAP`);
-      lines.push(`     ${rel(item.source)}`);
-    });
-  }
-
   const inventory = report.items.filter((item) => item.kind !== 'warning');
   const order = ['Claude Code', 'Codex', 'Project', 'Shared'];
   const agentsPresent = [...new Set(inventory.map((item) => item.agent))];
   agentsPresent.sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b));
-  for (const agent of agentsPresent) {
-    const rows = inventory.filter((item) => item.agent === agent);
-    lines.push(rule, `MCP / Skills（${agent}）`);
-    for (const item of rows) {
-      const tools = item.kind === 'skill' ? 'skill' : `${item.toolCountEstimated ? '~' : ''}${item.toolCount} tools`;
-      const onDemand = item.cost?.instructionOnDemand && item.cost.instructionTokens
-        ? ` (+${item.cost.instructionTokens} on-demand)`
-        : '';
-      lines.push(`  ${kindMark(item)} ${item.name.padEnd(18)} ${tools.padEnd(12)} ${compactTokens(item.contextTokens).padStart(7)} tok${onDemand}  ${statusLabel(item).padEnd(8)}  ${rel(item.source)}`);
+  if (inventory.length) {
+    lines.push(rule, '清单');
+    for (const agent of agentsPresent) {
+      const rows = inventory.filter((item) => item.agent === agent);
+      lines.push(`  ${agent}`);
+      for (const item of rows) {
+        const kind = item.kind === 'skill' ? 'Skill' : 'MCP';
+        const tools = item.kind === 'skill' ? '' : ` · ${item.toolCountEstimated ? '约 ' : ''}${item.toolCount} 个工具`;
+        lines.push(`  ${kindMark(item)} ${item.name}`);
+        lines.push(`      ${kind}${tools} · 常驻 ${compactTokens(item.contextTokens)} tok · ${roleLabel(item)}`);
+        if (item.cost?.instructionOnDemand && item.cost.instructionTokens) {
+          lines.push(`      正文约 ${item.cost.instructionTokens} tok，用到这个 Skill 时才加载`);
+        }
+        lines.push(`      ${rel(item.source)}`);
+      }
     }
   }
 
+  lines.push(rule, '建议');
+  if (report.recommendations.length) {
+    lines.push('  这些 MCP 现在直接暴露给 Agent。迁到 CAP 后可少占上下文：');
+    report.recommendations.forEach((item, index) => {
+      lines.push(`  ${index + 1}. ${item.provider}  约可回收 ${compactTokens(item.estimatedTokensSaved)}`);
+      lines.push(`     ${rel(item.source)}`);
+    });
+  } else if (capSurface) {
+    lines.push('  没有需要迁走的第三方 MCP。');
+    lines.push('  还没有托管能力的话：cap search <任务>，再 cap add。');
+  } else {
+    lines.push('  还没有 CAP 入口。先 cap add，或 cap optimize 预览迁移。');
+  }
+
   if (!inventory.length && !warnings.length) lines.push(rule, '  未发现本地 MCP / Skills 配置。');
-  lines.push(rule, paint(2, 'tip: inspect is a config scan (does not connect to MCP) · cap optimize · cap search'));
+  lines.push(rule, paint(2, '下一步  cap search <任务>  ·  cap optimize（仅预览）'));
   return lines.join('\n');
 }
 

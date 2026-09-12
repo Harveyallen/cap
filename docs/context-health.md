@@ -120,7 +120,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 
 每条 inventory item 增加 `status`（`direct` | `managed` | `estimated` | `cap`）和 `cost`。项目 `.mcp.json` 的 `agent` 为 `Project`（Cursor 与 Claude Code 都会读）。
 
-人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染：压力带（进度条按 pressure%）、漏斗（configured/scan）、重复项、按 token 排序的迁移建议（不含 CAP surface）、按 Agent 分组的清单。Skill 行额外显示 on-demand 正文 token。
+人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染，但人体输出用带标签的中文：健康分数、常驻占用 / 有效预算、入口是否已是 CAP、漏斗（本地发现 → 写进配置 → 会暴露 → 实际调用）、清单角色、建议。JSON 字段名不变。`summary.registryCapabilities` 是 Registry 里已 `add` 的能力数；`summary.managed` 仍是已迁入 CAP 的 MCP 条目数。
 
 人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染：压力带、漏斗、重复项、按 token 排序的迁移建议、按 Agent 分组的清单。
 

@@ -115,6 +115,7 @@ test('project .mcp.json is CAP surface not a migrate target', async () => {
   assert.equal(result.recommendations.length, 0);
   assert.equal(result.summary.reclaimableTokens, 0);
   assert.equal(result.summary.capSurface, true);
+  assert.equal(result.summary.registryCapabilities, 0);
 });
 
 test('agent orientation docs exist', async () => {
