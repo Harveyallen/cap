@@ -158,6 +158,25 @@ export function inspectText(report, options = {}) {
     }
   }
 
+  const profiler = report.profiler;
+  if (profiler && profiler.tracked > 0) {
+    lines.push(rule, '价值');
+    lines.push(`  Registry 跟踪 ${profiler.tracked} 个能力 · 用过 ${profiler.used} 个 · 未使用 ${profiler.unusedManaged} 个 · ${profiler.useAttempts} 次 use`);
+    if (profiler.ranked.length) {
+      lines.push('  性价比最高（value / context_cost）：');
+      profiler.ranked.slice(0, 5).forEach((item, index) => {
+        lines.push(`  ${index + 1}. ${item.capability_id}  value ${item.value} · vpc ${item.valuePerCost} · ${item.successes} uses / ${item.sessions} sessions · ~${item.contextCost} tok`);
+      });
+    }
+    if (profiler.underused.length) {
+      lines.push('  高成本或未使用（可考虑卸载 / 勿常驻注入）：');
+      profiler.underused.slice(0, 5).forEach((item) => {
+        const signal = item.successes ? `value ${item.value} · vpc ${item.valuePerCost}` : '未使用';
+        lines.push(`  ● ${item.capability_id}  ${signal} · ~${item.contextCost} tok`);
+      });
+    }
+  }
+
   lines.push(rule, '建议');
   if (report.recommendations.length) {
     lines.push('  这些 MCP 现在直接暴露给 Agent。迁到 CAP 后可少占上下文：');

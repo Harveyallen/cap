@@ -19,6 +19,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/registry.js` | Catalog + `~/.cap/registry.json` state |
 | `src/use.js` | Execute managed providers (git / ripgrep builtins) |
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
+| `src/profiler.js` | V3 Capability Context Profiler (activity → value / valuePerCost / underused) |
 | `src/setup.js` | `cap setup`: write CAP MCP + Context Health Skill, then inspect |
 | `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
@@ -32,7 +33,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `test/*.test.js` | Node test suite |
 | `.agents/skills/` | Shared agent skills (also scanned by `cap inspect`) |
 
-Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Capability Context Profiler is documented only — do not implement runtime yet). LLM index: `llms.txt`.
+Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Capability Context Profiler runtime ships in Unreleased via `src/profiler.js`; 0.2.0 was docs-only). LLM index: `llms.txt`.
 
 ## Commands
 

@@ -2,8 +2,9 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { loadState } from './registry.js';
+import { loadCatalog, loadState } from './registry.js';
 import { exposedCapTools, isCapMcpConfig } from './mcp-tools.js';
+import { buildProfiler } from './profiler.js';
 
 const TOKEN_CHARS = 4;
 const DEFAULT_NOMINAL_WINDOW = 200_000;
@@ -83,7 +84,8 @@ export function classifyPressure(injectedTokens, effectiveBudget) {
 export function buildFunnel({items, activity}) {
   const inventory = items.filter((item) => item.kind !== 'warning');
   const names = new Set(inventory.map((item) => item.name.toLowerCase()));
-  const usedIds = new Set((activity ?? []).filter((row) => row.action === 'use' && row.success).map((row) => row.capability_id));
+  const useRows = (activity ?? []).filter((row) => row.action === 'use');
+  const usedIds = new Set(useRows.filter((row) => row.success).map((row) => row.capability_id));
   const injected = inventory.filter((item) => item.direct).length;
   return {
     installed: names.size,
@@ -91,8 +93,9 @@ export function buildFunnel({items, activity}) {
     injected,
     configured: injected,
     used: usedIds.size,
-    usedUnknown: usedIds.size === 0,
-    notes: 'Config/skill scan only. Inspect does not connect to MCP servers or measure the live session.'
+    usedUnknown: useRows.length === 0,
+    useAttempts: useRows.length,
+    notes: 'Config/skill scan only. Inspect does not connect to MCP servers or measure the live session. used comes from Registry activity; usedUnknown is true only when no use attempts were recorded.'
   };
 }
 
@@ -267,6 +270,8 @@ export async function inspectLocal(options = {}) {
   const budget = resolveBudget(options);
   const pressure = classifyPressure(contextTokens, budget.effectiveBudget);
   const funnel = buildFunnel({items, activity: state.activity});
+  const catalog = await loadCatalog();
+  const profiler = buildProfiler({catalog, state, items});
   return {
     generatedAt: new Date().toISOString(),
     summary: {
@@ -282,11 +287,14 @@ export async function inspectLocal(options = {}) {
       capSurface,
       registryCapabilities: state.managed_capabilities.length,
       capEntryTools,
-      estimatedReductionPercent: migrateableTools > capEntryTools ? Math.round((1 - capEntryTools / migrateableTools) * 100) : 0
+      estimatedReductionPercent: migrateableTools > capEntryTools ? Math.round((1 - capEntryTools / migrateableTools) * 100) : 0,
+      profilerTracked: profiler.tracked,
+      profilerUsed: profiler.used
     },
     budget,
     pressure,
     funnel,
+    profiler,
     items,
     duplicates: duplicateGroups.map((group) => ({name: group[0].name, sources: group.map((item) => item.source)})),
     recommendations

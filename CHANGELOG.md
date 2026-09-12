@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Context Health / Profiler
+
+- **V3 Capability Context Profiler (runtime):** `cap inspect` / `--json` / Web Health include a `profiler` block derived from Registry activity (successful uses + distinct UTC days as sessions). Fills `cost.value` / `cost.valuePerCost` when linkable; ranks value-per-cost; lists underused managed capabilities (`src/profiler.js`).
+- Funnel `usedUnknown` is true only when no `use` attempts exist (failed / `connection_required` attempts count as observed). Adds `useAttempts`.
+- `cap use` records `connection_required` attempts in activity (`success: false`) so the profiler can see demand without a live MCP connection.
+- Human `cap inspect` adds a **价值** section; Web Health shows a Profiler panel.
+- This is the runtime that follows the docs-only V3 note in **0.2.0** — 0.2.0 did not ship the profiler.
+
 ## 0.2.0
 
 Rollup of work shipped after 0.1.x. npm registry publish remains deferred; install via `npx -y github:Harveyallen/cap setup` (or clone + `node ./bin/cap.js setup`).
@@ -18,7 +26,7 @@ Rollup of work shipped after 0.1.x. npm registry publish remains deferred; insta
 - Inspect recognizes the local `cap-mcp` entry as the CAP surface: real default tool count/schemas (3, or 4 when `CAP_MCP_INSPECT=1`), status `cap`, excluded from Move → CAP / `reclaimableTokens`. A server merely named `cap` is not treated as the surface. `optimize --apply` keeps `cap-mcp` and only migrates other JSON MCP servers.
 - Skill Pressure / `contextTokens` count only name + description; skill body is `instructionTokens` and on-demand. `funnel.installed` is local scanned names only (not the seed catalog). `effectiveBudget <= 0` yields pressure band `unknown`. `reclaimableTokens` is a gross estimate and does not subtract the 3 CAP entry tools. `summary.registryCapabilities` is the Registry `add` count.
 - Budget defaults: nominal 200000, harness soft limit 200000, reserve 32000; override with `CAP_NOMINAL_WINDOW` / `CAP_HARNESS_SOFT_LIMIT` / `CAP_RESERVE_TOKENS` / `CAP_EFFECTIVE_BUDGET`.
-- V3 Capability Context Profiler is documented only (per-capability Activity usage, Value/Cost, lazy-loading candidates). No V3 runtime in this release.
+- V3 Capability Context Profiler is **documented only** in this release (per-capability Activity usage, Value/Cost, lazy-loading candidates). **No V3 runtime in 0.2.0.**
 
 ### Setup
 
