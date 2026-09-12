@@ -41,7 +41,7 @@ body[data-view="health"] .discover,body[data-view="owned"] .discover{display:non
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),#4ea2ff)}
 .funnel{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted);font-size:13px;margin:2px 0 16px}
 .cols{display:grid;grid-template-columns:minmax(280px,.9fr) 1.2fr;gap:14px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;overflow-x:auto}
 .panel h3{margin:0 0 12px;font-size:15px}
 .issue{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #24304d}
 .issue:last-child{border-bottom:0}
@@ -51,9 +51,9 @@ body[data-view="health"] .discover,body[data-view="owned"] .discover{display:non
 .agent{margin-top:14px}.agent:first-child{margin-top:0}
 .agent h4{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:650}
 table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--muted);font-weight:600;padding:6px 8px}td{padding:8px;border-top:1px solid #22304c;vertical-align:top}
-.path{color:var(--muted);font:11px ui-monospace,SFMono-Regular,monospace}
+.path{color:var(--muted);font:11px ui-monospace,SFMono-Regular,monospace;word-break:break-all}
 .foot{color:var(--muted);margin-top:16px;font-size:13px}
-@media(max-width:900px){.hero,.tiles,.cols{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}.metric{display:none}}
+@media(max-width:900px){.hero,.tiles,.cols{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}.metric{display:none}table{font-size:12px}th,td{padding:6px}}
 </style></head>
 <body data-view="search">
 <header class="top"><div class="eyebrow">Agent Capability Layer</div>
