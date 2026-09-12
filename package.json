@@ -27,7 +27,7 @@
     "web": "node ./bin/cap.js web",
     "mcp": "node ./bin/cap-mcp.js",
     "test": "node --test",
-    "check": "node --check src/cli.js && node --check src/mcp-server.js && node --check src/mcp-tools.js && node --check src/index.js && node --check src/catalog-schema.js && node --test"
+    "check": "node --check src/cli.js && node --check src/mcp-server.js && node --check src/mcp-tools.js && node --check src/setup.js && node --check src/index.js && node --check src/catalog-schema.js && node --test"
   },
   "keywords": [
     "ai",

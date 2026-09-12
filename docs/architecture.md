@@ -32,6 +32,7 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 | `use.js` | Execute managed builtins | Discover/search |
 | `inspector.js` | Read local Agent configs/skills, estimate footprint, derive Context Health | Connect to MCP servers |
 | `mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection | Talk to the network |
+| `setup.js` | Write CAP MCP + Context Health Skill into Claude / Codex | Wipe existing servers or mutate unsafe TOML |
 | `optimize.js` | Plan + guarded JSON MCP migration (keeps `cap-mcp`) | Mutate TOML in v0.1 |
 | `mcp-server.js` | JSON-RPC stdio tool surface | Dump downstream schemas |
 | `web-server.js` | Discover UI + thin JSON APIs | Own business logic |
@@ -47,4 +48,4 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 
 ## Agent integration
 
-Project `.mcp.json` exposes CAP as an MCP server for local dogfooding. Coding agents should load `AGENTS.md` and optional skills under `.agents/skills/`.
+`cap setup` writes user-level Claude Code / Codex MCP so Agents see `cap.search` / `cap.add` / `cap.use` (and `cap.inspect` when `CAP_MCP_INSPECT=1`). Project `.mcp.json` is local dogfood, not a migrate/wipe target. Coding agents should load `AGENTS.md` and optional skills under `.agents/skills/`.

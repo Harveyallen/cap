@@ -19,6 +19,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/registry.js` | Catalog + `~/.cap/registry.json` state |
 | `src/use.js` | Execute managed providers (git / ripgrep builtins) |
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
+| `src/setup.js` | `cap setup`: write CAP MCP + Context Health Skill, then inspect |
 | `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
 | `src/mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection |
@@ -38,6 +39,7 @@ Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Contex
 ```bash
 npm test
 npm run check
+node ./bin/cap.js setup --agent auto
 node ./bin/cap.js inspect
 node ./bin/cap.js search "分析 PostgreSQL 慢查询" --json
 node ./bin/cap.js add git.repository.status
