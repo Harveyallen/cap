@@ -25,7 +25,7 @@ $ cap search "分析 PostgreSQL 慢查询"
    Providers: PostgreSQL MCP (Discovered)
 ```
 
-## V0.1 已实现
+## V0.2 已实现
 
 - `cap setup`：备份并写入 Claude Code / Codex 的 CAP MCP 与 `cap-context-health` Skill，然后跑一次 `cap inspect`。
 - `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），用人话输出健康分数、常驻占用和清单。`cap-mcp` 不会被建议再迁走。详见 [docs/context-health.md](./docs/context-health.md)。
@@ -39,22 +39,18 @@ $ cap search "分析 PostgreSQL 慢查询"
 
 ## 安装
 
-```bash
-npx -y @capability-layer/cap setup
-```
-
-`@capability-layer/cap` **尚未发布到 npm**，上面这条现在会 404。仓库 `Harveyallen/cap` 是私有的；有访问权限时可以用已验证可用的 GitHub 入口：
+`@capability-layer/cap` **尚未发布到 npm**（registry publish 仍推迟）。请用 GitHub 入口：
 
 ```bash
 npx -y github:Harveyallen/cap setup
 ```
 
-或克隆后本地执行：`node ./bin/cap.js setup`。
+仓库 `Harveyallen/cap` 是私有的，需要有访问权限。也可以克隆后本地执行：`node ./bin/cap.js setup`。`npx -y @capability-layer/cap setup` 现在会 404，等发布后再用。
 
 Agent 可粘贴：
 
 ```text
-请安装 CAP（npx -y @capability-layer/cap setup；未发布到 npm 时用 npx -y github:Harveyallen/cap setup，或克隆后 node ./bin/cap.js setup）。
+请安装 CAP（npx -y github:Harveyallen/cap setup；包尚未发布到 npm。也可克隆后 node ./bin/cap.js setup）。
 然后运行 cap inspect，用中文汇报 Context Pressure、漏斗（installed → enabled → injected → used）和可回收 token。
 之后凡是「上下文占用 / MCP 是否过多」的问题，优先使用 cap.inspect / cap inspect。
 ```
@@ -78,7 +74,7 @@ cap optimize --write-plan .cap/optimization-plan.json
 cap optimize --apply --yes
 ```
 
-当前执行迁移仅支持 JSON 中的 `mcpServers` / `mcp_servers`。每个源配置会先复制为 `*.cap-backup`，Provider 配置再写入权限为 `0600` 的 CAP Registry。TOML 配置在 V0.1 中只检查、不自动修改。
+当前执行迁移仅支持 JSON 中的 `mcpServers` / `mcp_servers`。每个源配置会先复制为 `*.cap-backup`，Provider 配置再写入权限为 `0600` 的 CAP Registry。TOML 配置在 V0.2 中只检查、不自动修改。
 
 ## 扫描范围
 
@@ -133,9 +129,14 @@ node ./bin/cap.js web --port 4173
 
 种子 Catalog 位于 `data/catalog.json`，结构见 `data/catalog.schema.json`。添加记录时保持 `capability_id` 稳定，并在 `provider_refs` 与 Provider 的 `capabilities` 中双向声明。Agent 侧可直接按 `.agents/skills/add-capability/SKILL.md` 执行。
 
-## V0.1 边界
+## 下一步 V3
+
+Capability Context Profiler（**仅文档，尚未实现运行时**）：从 Activity 统计每条 Capability 的使用，计算 Value/Cost，标出适合懒加载的候选。详见 [docs/context-health.md](./docs/context-health.md)。
+
+## V0.2 边界
 
 - 公共 Registry/GitHub 的在线抓取、语义向量检索与 OAuth 连接尚未实现；当前使用本地 curated Catalog 和可解释的混合关键词评分。
 - 非内置 Provider 可以添加，但 Use 会返回 `connection_required`，不会伪装成已执行。
 - Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。高 Context Pressure 不会突然「触发幻觉」，但会造成注意力稀释、召回变差、选错工具和指令冲突（Lost in the Middle）。
-- 首版优先验证开发者闭环，不包含 Desktop、企业权限和团队治理。
+- V3 Profiler 只写在文档里：不伪造 `cost.value`、不按会话引用、不自动标懒加载候选。
+- 本版优先验证开发者闭环，不包含 Desktop、企业权限、团队治理，也不发布 npm。

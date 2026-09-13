@@ -32,7 +32,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `test/*.test.js` | Node test suite |
 | `.agents/skills/` | Shared agent skills (also scanned by `cap inspect`) |
 
-Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md`. LLM index: `llms.txt`.
+Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Capability Context Profiler is documented only — do not implement runtime yet). LLM index: `llms.txt`.
 
 ## Commands
 

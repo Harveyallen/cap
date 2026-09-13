@@ -1,6 +1,6 @@
 {
   "name": "@capability-layer/cap",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Intent-first capability discovery and consolidation for AI agents",
   "type": "module",
   "bin": {
