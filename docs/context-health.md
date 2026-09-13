@@ -71,7 +71,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 3. **每条 Capability 的 Context Cost**  
    尽量拆成 `schema` / `description` / `instructions` / `total`。全部标记 `estimated`。  
    Skill：常驻注入只有 **name + description**（frontmatter 身份）。正文进入 `cost.instructionTokens`，并标 `instructionOnDemand: true`，**不计入** `contextTokens` / `pressure.injectedTokens` / Pressure 分子。`cost.totalTokens` 可以是各分段之和（潜在总成本）。  
-   `value` / Value-per-Cost 由 V3 Capability Context Profiler 从 Registry activity 计算（成功 use + UTC 日会话）；无信号时仍为 `null`。
+   `value` / Value-per-Cost 由 V3 价值分析（Value Analysis）从 Registry activity 计算（成功 use + UTC 日会话）；无信号时仍为 `null`。
 
 4. **Monitor → advise → auto-govern**  
    见下方路线图。V2 做到可视化 + 建议；自动驱逐与动态注入是后续版本。
@@ -82,13 +82,13 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 |------|------|------|
 | V1 | Token 可视化 | 已有：`contextTokens`、reduction % |
 | V2 | Context Health | 本版：budget / pressure / funnel / 更完整清单 |
-| V3 | Capability Context Profiler | **Unreleased 运行时**：activity → value / valuePerCost、会话日引用、underused 列表（0.2.0 仅文档） |
+| V3 | Value Analysis / 价值分析 | **Unreleased 运行时**：activity → value / valuePerCost、会话日引用、建议减负列表（0.2.0 仅文档；内部模块 `profiler.js`） |
 | V4 | Dynamic Injection | 按任务装载 MCP / Skill，而非常驻 |
 | V5 | Context Control Plane | 策略、SLO、自动 eviction / 压缩建议 |
 
-## V3：Capability Context Profiler（Unreleased 运行时）
+## V3：价值分析 / Value Analysis（Unreleased 运行时）
 
-0.2.0 只把 V3 写在文档里；**本变更实现运行时**（`src/profiler.js`），挂在 `cap inspect` / `--json` / Web Health 的 `profiler` 上。
+0.2.0 只把 V3 写在文档里；**本变更实现运行时**（内部模块 `src/profiler.js`），挂在 `cap inspect` / `--json` / Web Health 的 `profiler` 上（JSON 字段名保持兼容）。
 
 1. **Usage from Activity**  
    从 Registry Activity 按 `capability_id` 聚合 `use`（成功次数、失败 / `connection_required`、最近尝试、UTC 日会话）。`funnel.used` 仍是成功 use 的去重能力数；`funnel.useAttempts` 是全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`。
@@ -96,8 +96,8 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 2. **Value / Cost**  
    有信号时填写 `cost.value`（0–100，由成功 use + 会话日解释）与 `cost.valuePerCost`（`value / catalog context_cost`）；无信号时仍为 `null`。不要把这当成当前会话的实测注入量。
 
-3. **Rank + underused**  
-   `profiler.ranked` 按 value-per-cost 排序；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力，供人类决定是否卸载或留给 V4 Dynamic Injection。CAP surface（`cap-mcp`）不是候选。
+3. **性价比排行 + 建议减负**  
+   `profiler.ranked` 按 value-per-cost 排序（人体：性价比排行）；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力（人体：建议减负），供人类决定是否卸载或留给 V4 Dynamic Injection。CAP surface（`cap-mcp`）不是候选。
 
 输入仍是本地 Activity + inspect 估算，不连接第三方 MCP。
 
@@ -144,7 +144,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 
 每条 inventory item 增加 `status`（`direct` | `managed` | `estimated` | `cap`）和 `cost`。项目 `.mcp.json` 的 `agent` 为 `Project`（Cursor 与 Claude Code 都会读）。
 
-人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染，但人体输出不展示入口 / 漏斗（这两项只在 `--json` / `/api/inspect`）。人体用带标签的中文：健康分数、常驻占用 / 有效预算、清单角色、建议。`summary.registryCapabilities` 是 Registry 里已 `add` 的能力数；`summary.managed` 仍是已迁入 CAP 的 MCP 条目数。
+人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染，但人体输出不展示入口 / 漏斗（这两项只在 `--json` / `/api/inspect`）。人体用带标签的中文：健康分数、常驻占用 / 有效预算、清单角色、价值分析、建议。`summary.registryCapabilities` 是 Registry 里已 `add` 的能力数；`summary.managed` 仍是已迁入 CAP 的 MCP 条目数。
 
 ## 相关命令
 

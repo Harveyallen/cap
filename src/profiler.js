@@ -1,4 +1,5 @@
-/** Capability Context Profiler — value / cost from Registry activity. */
+/** Capability Context Profiler — value / cost from Registry activity.
+ *  User-facing name: Value Analysis / 价值分析. JSON key stays `profiler`. */
 
 /** UTC calendar day used as a coarse session key. */
 export function sessionKey(iso) {
@@ -139,6 +140,6 @@ export function buildProfiler({catalog, state, items = []}) {
     capabilities,
     ranked: ranked.slice(0, 10),
     underused: underused.slice(0, 10),
-    notes: 'Value is derived from Registry activity (successful uses + distinct UTC days as sessions). valuePerCost = value / catalog context_cost. Not a live-session profiler.'
+    notes: 'Value Analysis is derived from Registry activity (successful uses + distinct UTC days as sessions). valuePerCost = value / catalog context_cost. Not a live-session measurement.'
   };
 }

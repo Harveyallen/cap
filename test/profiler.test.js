@@ -103,9 +103,10 @@ test('inspectLocal attaches profiler and fills cost.value after use', async (t) 
   assert.ok(git.valuePerCost > 0);
 
   const text = inspectText(report, options);
-  assert.match(text, /价值/);
+  assert.match(text, /价值分析/);
   assert.match(text, /git\.repository\.status/);
-  assert.match(text, /性价比最高/);
+  assert.match(text, /性价比排行/);
+  assert.match(text, /建议减负/);
 });
 
 test('profiler leaves cost.value null without activity', async (t) => {
