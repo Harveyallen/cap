@@ -65,13 +65,13 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
    - `installed`：本地扫描到的 MCP / Skill **名称去重**（本地 inventory）。**不含**种子 Catalog 里从未扫到的 Provider
    - `enabled`：出现在 Agent 配置里的 MCP + Skills（配置条目数，重复项分别计数）
    - `injected` / `configured`：`direct=true`（配置里会暴露给 Agent 的项；`configured` 是同一数字的诚实别名）
-   - `used`：来自 Registry activity 的成功 `use`；若没有则 `0` 且 `usedUnknown: true`
+   - `used`：来自 Registry activity 的成功 `use` 去重数；`useAttempts` 为全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`
    - `notes`：说明以上是 config scan
 
 3. **每条 Capability 的 Context Cost**  
    尽量拆成 `schema` / `description` / `instructions` / `total`。全部标记 `estimated`。  
    Skill：常驻注入只有 **name + description**（frontmatter 身份）。正文进入 `cost.instructionTokens`，并标 `instructionOnDemand: true`，**不计入** `contextTokens` / `pressure.injectedTokens` / Pressure 分子。`cost.totalTokens` 可以是各分段之和（潜在总成本）。  
-   `value` / Value-per-Cost 在 V2 先留空（`value: null`），供 V3 Profiler 使用。
+   `value` / Value-per-Cost 由 V3 Capability Context Profiler 从 Registry activity 计算（成功 use + UTC 日会话）；无信号时仍为 `null`。
 
 4. **Monitor → advise → auto-govern**  
    见下方路线图。V2 做到可视化 + 建议；自动驱逐与动态注入是后续版本。
@@ -82,24 +82,24 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 |------|------|------|
 | V1 | Token 可视化 | 已有：`contextTokens`、reduction % |
 | V2 | Context Health | 本版：budget / pressure / funnel / 更完整清单 |
-| V3 | Capability Context Profiler | 下一步（仅文档，本版不实现运行时） |
+| V3 | Capability Context Profiler | **Unreleased 运行时**：activity → value / valuePerCost、会话日引用、underused 列表（0.2.0 仅文档） |
 | V4 | Dynamic Injection | 按任务装载 MCP / Skill，而非常驻 |
 | V5 | Context Control Plane | 策略、SLO、自动 eviction / 压缩建议 |
 
-## 下一步 V3：Capability Context Profiler
+## V3：Capability Context Profiler（Unreleased 运行时）
 
-V3 **只写在文档里**，本版不实现运行时。规划是把 V2 的库存/压力视图推进到「每条 Capability 值不值得常驻」。
+0.2.0 只把 V3 写在文档里；**本变更实现运行时**（`src/profiler.js`），挂在 `cap inspect` / `--json` / Web Health 的 `profiler` 上。
 
 1. **Usage from Activity**  
-   从 Registry Activity 按 `capability_id` 聚合成功 `use`（次数、最近使用、失败）。V2 的 `funnel.used` 只是去重后的成功 use 数量，且无 activity 时 `usedUnknown: true`。V3 要落到单条能力，而不是再扫一遍配置。
+   从 Registry Activity 按 `capability_id` 聚合 `use`（成功次数、失败 / `connection_required`、最近尝试、UTC 日会话）。`funnel.used` 仍是成功 use 的去重能力数；`funnel.useAttempts` 是全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`。
 
 2. **Value / Cost**  
-   V2 每条 `cost.value` 仍为 `null`。V3 用使用频率（以及后续可加的成功率 / 任务命中）填 `value`，再算 Value-per-Cost。不要在 V2 inspect 里伪造会话级引用或价值分。
+   有信号时填写 `cost.value`（0–100，由成功 use + 会话日解释）与 `cost.valuePerCost`（`value / catalog context_cost`）；无信号时仍为 `null`。不要把这当成当前会话的实测注入量。
 
-3. **Promote lazy-loading candidates**  
-   高 `cost.totalTokens`、低/零 usage 的 Direct MCP / Skill 标成懒加载候选，供人类决定是否卸载或留给 V4 Dynamic Injection。CAP surface（`cap-mcp`）不是候选。
+3. **Rank + underused**  
+   `profiler.ranked` 按 value-per-cost 排序；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力，供人类决定是否卸载或留给 V4 Dynamic Injection。CAP surface（`cap-mcp`）不是候选。
 
-输入仍是本地 Activity + inspect 估算，不连接第三方 MCP，也不假装测量当前会话是否真的注入了这些项。
+输入仍是本地 Activity + inspect 估算，不连接第三方 MCP。
 
 ## Inspect 输出（CLI / `--json` / `GET /api/inspect`）
 
@@ -126,7 +126,16 @@ V3 **只写在文档里**，本版不实现运行时。规划是把 V2 的库存
     "configured": 3,
     "used": 0,
     "usedUnknown": true,
+    "useAttempts": 0,
     "notes": "Config/skill scan only. Inspect does not connect to MCP servers or measure the live session."
+  },
+  "profiler": {
+    "version": 3,
+    "tracked": 0,
+    "used": 0,
+    "unusedManaged": 0,
+    "ranked": [],
+    "underused": []
   }
 }
 ```

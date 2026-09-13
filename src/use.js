@@ -28,6 +28,16 @@ export async function useCapability(capabilityId, input = {}, options = {}) {
   const providerId = capability.provider_refs.find((id) => state.managed_providers.includes(id));
   const provider = catalog.providers.find((item) => item.provider_id === providerId);
   if (!provider?.executable) {
+    state.activity.unshift({
+      at: new Date().toISOString(),
+      action: 'use',
+      capability_id: capabilityId,
+      provider_id: providerId,
+      success: false,
+      status: 'connection_required'
+    });
+    state.activity = state.activity.slice(0, 100);
+    await saveState(state, options);
     return {status: 'connection_required', capability_id: capabilityId, provider_id: providerId, permissions: capability.permissions, message: 'The provider is registered but needs its MCP/OAuth connection before use.'};
   }
   let result;

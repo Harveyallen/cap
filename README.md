@@ -129,14 +129,14 @@ node ./bin/cap.js web --port 4173
 
 种子 Catalog 位于 `data/catalog.json`，结构见 `data/catalog.schema.json`。添加记录时保持 `capability_id` 稳定，并在 `provider_refs` 与 Provider 的 `capabilities` 中双向声明。Agent 侧可直接按 `.agents/skills/add-capability/SKILL.md` 执行。
 
-## 下一步 V3
+## V3 Capability Context Profiler
 
-Capability Context Profiler（**仅文档，尚未实现运行时**）：从 Activity 统计每条 Capability 的使用，计算 Value/Cost，标出适合懒加载的候选。详见 [docs/context-health.md](./docs/context-health.md)。
+Unreleased 运行时（0.2.0 仅文档）：从 Registry Activity 统计每条 Capability 的使用，计算 Value/Cost，在 `cap inspect` / Web Health 展示 ranked + underused。详见 [docs/context-health.md](./docs/context-health.md)。
 
 ## V0.2 边界
 
 - 公共 Registry/GitHub 的在线抓取、语义向量检索与 OAuth 连接尚未实现；当前使用本地 curated Catalog 和可解释的混合关键词评分。
 - 非内置 Provider 可以添加，但 Use 会返回 `connection_required`，不会伪装成已执行。
 - Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。高 Context Pressure 不会突然「触发幻觉」，但会造成注意力稀释、召回变差、选错工具和指令冲突（Lost in the Middle）。
-- V3 Profiler 只写在文档里：不伪造 `cost.value`、不按会话引用、不自动标懒加载候选。
+- V3 Profiler 运行时已在 Unreleased（`src/profiler.js`）：`cost.value` 来自 Activity 信号，无信号时仍为 `null`；不假装测量当前会话注入。
 - 本版优先验证开发者闭环，不包含 Desktop、企业权限、团队治理，也不发布 npm。

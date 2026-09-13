@@ -7,13 +7,14 @@
 - [README](README.md): human quick start and product overview
 - [AGENTS.md](AGENTS.md): instructions for coding agents
 - [Architecture](docs/architecture.md): module boundaries and data flow
-- [Context Health](docs/context-health.md): pressure, funnel, inspect/Health contract, and documented-only V3 Profiler
+- [Context Health](docs/context-health.md): pressure, funnel, V3 profiler runtime (value/cost), inspect/Health contract
 - [Catalog schema](data/catalog.schema.json): seed catalog contract
 - [Changelog](CHANGELOG.md)
 
 ## Entry points
 
 - CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `add` / `use` / `optimize` / `web`)
+- Profiler: `src/profiler.js` (V3 value/cost from activity)
 - MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect`)
 - Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`
 - Library: `src/index.js` (`searchCapabilities`, `addCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, `loadState`)
