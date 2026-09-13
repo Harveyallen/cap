@@ -43,7 +43,7 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 - Seed catalog: `data/catalog.json` validated by `data/catalog.schema.json` (required fields, enums, id patterns, minItems, no extra properties) on `loadCatalog` and in tests.
 - Registry default path: `$CAP_HOME/registry.json` or `~/.cap/registry.json`.
 - Context footprint: character/4 estimate, not a vendor tokenizer.
-- Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Skill `contextTokens` are name+description only. `funnel.installed` is local scan names, not catalog size. `funnel.configured` aliases `injected` (config scan, not live session). `cap-mcp` is the CAP surface (`status: cap`), priced from known entry schemas, excluded from Move → CAP. `effectiveBudget <= 0` → pressure `unknown`. Product rules: [context-health.md](./context-health.md).
+- Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Skill `contextTokens` are name+description only. `funnel.installed` is local scan names, not catalog size. `funnel.configured` aliases `injected` (config scan, not live session). `cap-mcp` is the CAP surface (`status: cap`), priced from known entry schemas, excluded from Move → CAP. `effectiveBudget <= 0` → pressure `unknown`. `cost.value` stays `null` until V3 (documented only; no Profiler runtime). Product rules: [context-health.md](./context-health.md).
 - Budget env: `CAP_NOMINAL_WINDOW`, `CAP_HARNESS_SOFT_LIMIT`, `CAP_RESERVE_TOKENS`, `CAP_EFFECTIVE_BUDGET`.
 
 ## Agent integration

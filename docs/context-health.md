@@ -82,9 +82,24 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 |------|------|------|
 | V1 | Token 可视化 | 已有：`contextTokens`、reduction % |
 | V2 | Context Health | 本版：budget / pressure / funnel / 更完整清单 |
-| V3 | Capability Context Profiler | 真实 value/cost、按会话引用 |
+| V3 | Capability Context Profiler | 下一步（仅文档，本版不实现运行时） |
 | V4 | Dynamic Injection | 按任务装载 MCP / Skill，而非常驻 |
 | V5 | Context Control Plane | 策略、SLO、自动 eviction / 压缩建议 |
+
+## 下一步 V3：Capability Context Profiler
+
+V3 **只写在文档里**，本版不实现运行时。规划是把 V2 的库存/压力视图推进到「每条 Capability 值不值得常驻」。
+
+1. **Usage from Activity**  
+   从 Registry Activity 按 `capability_id` 聚合成功 `use`（次数、最近使用、失败）。V2 的 `funnel.used` 只是去重后的成功 use 数量，且无 activity 时 `usedUnknown: true`。V3 要落到单条能力，而不是再扫一遍配置。
+
+2. **Value / Cost**  
+   V2 每条 `cost.value` 仍为 `null`。V3 用使用频率（以及后续可加的成功率 / 任务命中）填 `value`，再算 Value-per-Cost。不要在 V2 inspect 里伪造会话级引用或价值分。
+
+3. **Promote lazy-loading candidates**  
+   高 `cost.totalTokens`、低/零 usage 的 Direct MCP / Skill 标成懒加载候选，供人类决定是否卸载或留给 V4 Dynamic Injection。CAP surface（`cap-mcp`）不是候选。
+
+输入仍是本地 Activity + inspect 估算，不连接第三方 MCP，也不假装测量当前会话是否真的注入了这些项。
 
 ## Inspect 输出（CLI / `--json` / `GET /api/inspect`）
 
