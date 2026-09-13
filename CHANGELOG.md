@@ -2,13 +2,14 @@
 
 ## Unreleased
 
-### Context Health / Profiler
+### Context Health / Value Analysis
 
-- **V3 Capability Context Profiler (runtime):** `cap inspect` / `--json` / Web Health include a `profiler` block derived from Registry activity (successful uses + distinct UTC days as sessions). Fills `cost.value` / `cost.valuePerCost` when linkable; ranks value-per-cost; lists underused managed capabilities (`src/profiler.js`).
+- **V3 Value Analysis (runtime):** `cap inspect` / `--json` / Web Health include a `profiler` block derived from Registry activity (successful uses + distinct UTC days as sessions). Fills `cost.value` / `cost.valuePerCost` when linkable; ranks value-per-cost; lists underused managed capabilities (`src/profiler.js`). JSON key `profiler` is unchanged.
 - Funnel `usedUnknown` is true only when no `use` attempts exist (failed / `connection_required` attempts count as observed). Adds `useAttempts`.
-- `cap use` records `connection_required` attempts in activity (`success: false`) so the profiler can see demand without a live MCP connection.
-- Human `cap inspect` adds a **价值** section; Web Health shows a Profiler panel.
-- This is the runtime that follows the docs-only V3 note in **0.2.0** — 0.2.0 did not ship the profiler.
+- `cap use` records `connection_required` attempts in activity (`success: false`) so Value Analysis can see demand without a live MCP connection.
+- Human `cap inspect` adds a **价值分析** section (性价比排行 / 建议减负); Web Health shows a **价值分析** panel.
+- User-facing copy uses **Value Analysis** / **价值分析**. Internal identifiers (`profiler.js`, `buildProfiler`, JSON `profiler`) stay as-is.
+- This is the runtime that follows the docs-only V3 note in **0.2.0** — 0.2.0 did not ship Value Analysis.
 
 ## 0.2.0
 
