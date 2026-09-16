@@ -4,7 +4,7 @@
 
 ### Agent skills
 
-- Added the Matt Pocock engineering skill set (plus the productivity primitives those skills invoke) under `.agents/skills/`, sourced from [`mattpocock/skills`](https://github.com/mattpocock/skills) via `npx skills add`. Includes `setup-matt-pocock-skills`. Per-repo `/setup-matt-pocock-skills` was **not** run in this change (issue-tracker choice needs a human). After merge, run `/setup-matt-pocock-skills` in Cursor/Agent against this repo and select **GitHub Issues**.
+- Added the full [`mattpocock/skills`](https://github.com/mattpocock/skills) pack (37 skills, including `setup-matt-pocock-skills`) under `.agents/skills/` via `npx skills@latest add mattpocock/skills -s '*' -a cursor -y --copy`. Per-repo `/setup-matt-pocock-skills` was **not** run in this change (issue-tracker choice needs a human). After merge, run `/setup-matt-pocock-skills` in Cursor/Agent against this repo and select **GitHub Issues**.
 
 ### Context Health / Value Analysis
 

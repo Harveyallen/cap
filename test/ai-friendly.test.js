@@ -87,20 +87,29 @@ test('public API exports only the read/main path', () => {
 const capSkills = ['add-capability', 'cap-develop'];
 const mattPocockSkills = [
   'ask-matt',
+  'claude-handoff',
   'code-review',
   'codebase-design',
   'diagnosing-bugs',
   'domain-modeling',
+  'git-guardrails-claude-code',
   'grill-me',
   'grill-with-docs',
   'grilling',
   'handoff',
   'implement',
+  'implement-spec',
   'improve-codebase-architecture',
+  'loop-me',
+  'migrate-to-shoehorn',
   'prototype',
   'research',
   'resolving-merge-conflicts',
+  'retro',
+  'scaffold-exercises',
   'setup-matt-pocock-skills',
+  'setup-pre-commit',
+  'setup-ts-deep-modules',
   'tdd',
   'teach',
   'to-questionnaire',
@@ -110,7 +119,10 @@ const mattPocockSkills = [
   'wait-what',
   'wayfinder',
   'wizard',
-  'writing-for-agents'
+  'writing-beats',
+  'writing-for-agents',
+  'writing-fragments',
+  'writing-shape'
 ];
 
 test('project ships shared agent skills discoverable by inspect', async () => {
