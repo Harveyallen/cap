@@ -22,8 +22,8 @@
 ## Agent skills
 
 - CAP: `.agents/skills/cap-develop/SKILL.md`, `.agents/skills/add-capability/SKILL.md`
-- Full `mattpocock/skills` pack (37 skills, lockfile `skills-lock.json`) under `.agents/skills/`, including `setup-matt-pocock-skills`. See `skills-lock.json` for the complete name list.
-- After clone/merge, run `/setup-matt-pocock-skills` once in Cursor/Agent and select GitHub Issues. That step is not done in-tree yet.
+- Engineering-core `mattpocock/skills` subset (lockfile `skills-lock.json`): `setup-matt-pocock-skills`, `grill-with-docs`, `implement`, `tdd`, `code-review`, `triage`, `to-spec`, `to-tickets`, `diagnosing-bugs`, `wayfinder`. Not the full 37-pack.
+- `/setup-matt-pocock-skills` is **not** default dogfood and was not run in-tree.
 - `cap setup` writes user-level `cap-context-health` (not shipped under `.agents/skills`)
 
 ## Verify

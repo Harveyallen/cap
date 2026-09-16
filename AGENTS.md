@@ -31,7 +31,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `data/catalog.json` | Seed capabilities + providers |
 | `data/catalog.schema.json` | Catalog JSON Schema |
 | `test/*.test.js` | Node test suite |
-| `.agents/skills/` | Shared agent skills: CAP (`add-capability`, `cap-develop`) plus the full `mattpocock/skills` pack (also scanned by `cap inspect`) |
+| `.agents/skills/` | Shared agent skills scanned by `cap inspect`: CAP (`add-capability`, `cap-develop`) plus an engineering-core subset of `mattpocock/skills` (lockfile `skills-lock.json`) |
 
 Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime ships in Unreleased via `src/profiler.js`; 0.2.0 was docs-only). LLM index: `llms.txt`.
 
@@ -81,6 +81,7 @@ Registry writes, optimize apply, and MCP/web server starters stay in their modul
 - Changing MCP tool names or the default 3-tool surface
 - Auto-editing Agent configs without dual confirmation (`--apply` and `--yes`)
 - Expanding `optimize` to mutate TOML (currently inspect-only)
+- Vendoring additional Matt Pocock / shared skills beyond the engineering-core allowlist
 
 ## Never do
 

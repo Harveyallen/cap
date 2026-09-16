@@ -4,7 +4,9 @@
 
 ### Agent skills
 
-- Added the full [`mattpocock/skills`](https://github.com/mattpocock/skills) pack (37 skills, including `setup-matt-pocock-skills`) under `.agents/skills/` via `npx skills@latest add mattpocock/skills -s '*' -a cursor -y --copy`. Per-repo `/setup-matt-pocock-skills` was **not** run in this change (issue-tracker choice needs a human). After merge, run `/setup-matt-pocock-skills` in Cursor/Agent against this repo and select **GitHub Issues**.
+- Default shared skills are CAP's two (`add-capability`, `cap-develop`) plus an engineering-core subset of [`mattpocock/skills`](https://github.com/mattpocock/skills) (10): `setup-matt-pocock-skills`, `grill-with-docs`, `implement`, `tdd`, `code-review`, `triage`, `to-spec`, `to-tickets`, `diagnosing-bugs`, `wayfinder`. Follow-up to #10: dropped in-progress / writing / misc / productivity side-paths so dogfood matches **Install more. Expose less**.
+- Context Health baseline (inspect identity = chars/4 of skill name+description; body stays on-demand): skill count **39 → 12**; identity **~1536 → ~537** tok (Matt pack **~1484 → ~485**). Skills-only pressure stays `healthy` (~0.9% → ~0.3% of the 168k default effective budget); the win is identity surface, not a band change.
+- Per-repo `/setup-matt-pocock-skills` was **not** run and is **not** default dogfood. Package version is unchanged.
 
 ### Context Health / Value Analysis
 

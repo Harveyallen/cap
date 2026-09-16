@@ -85,45 +85,21 @@ test('public API exports only the read/main path', () => {
 });
 
 const capSkills = ['add-capability', 'cap-develop'];
-const mattPocockSkills = [
-  'ask-matt',
-  'claude-handoff',
+/** Ceiling for default-dogfood Matt skills. Subset + count, not a frozen pack snapshot. */
+const mattPocockAllowlist = [
   'code-review',
-  'codebase-design',
   'diagnosing-bugs',
-  'domain-modeling',
-  'git-guardrails-claude-code',
-  'grill-me',
   'grill-with-docs',
-  'grilling',
-  'handoff',
   'implement',
-  'implement-spec',
-  'improve-codebase-architecture',
-  'loop-me',
-  'migrate-to-shoehorn',
-  'prototype',
-  'research',
-  'resolving-merge-conflicts',
-  'retro',
-  'scaffold-exercises',
   'setup-matt-pocock-skills',
-  'setup-pre-commit',
-  'setup-ts-deep-modules',
   'tdd',
-  'teach',
-  'to-questionnaire',
   'to-spec',
   'to-tickets',
   'triage',
-  'wait-what',
-  'wayfinder',
-  'wizard',
-  'writing-beats',
-  'writing-for-agents',
-  'writing-fragments',
-  'writing-shape'
+  'wayfinder'
 ];
+/** Inspect identity = chars/4 of skill name+description. Keep-set baseline ≈537; full 37-pack was ≈1536. */
+const MAX_SHARED_SKILL_IDENTITY_TOKENS = 600;
 
 test('project ships shared agent skills discoverable by inspect', async () => {
   const result = await inspectLocal({
@@ -134,10 +110,26 @@ test('project ships shared agent skills discoverable by inspect', async () => {
     skillRoots: [[path.join(root, '.agents', 'skills'), 'Shared']],
     codexConfig: path.join(root, '.missing-codex.toml')
   });
-  const expected = [...capSkills, ...mattPocockSkills].sort();
-  assert.ok(result.summary.skills >= expected.length);
   const names = result.items.filter((item) => item.kind === 'skill').map((item) => item.name).sort();
-  assert.deepEqual(names, expected);
+  assert.equal(result.summary.skills, names.length);
+  for (const name of capSkills) {
+    assert.ok(names.includes(name), `missing CAP skill ${name}`);
+  }
+  const mattNames = names.filter((name) => !capSkills.includes(name));
+  assert.ok(mattNames.length <= mattPocockAllowlist.length, `Matt skill count ${mattNames.length} exceeds allowlist ${mattPocockAllowlist.length}`);
+  for (const name of mattNames) {
+    assert.ok(mattPocockAllowlist.includes(name), `unexpected Matt skill ${name}`);
+  }
+  const identity = result.items.filter((item) => item.kind === 'skill').reduce((sum, item) => sum + item.contextTokens, 0);
+  assert.ok(identity <= MAX_SHARED_SKILL_IDENTITY_TOKENS, `skill identity tokens ${identity} exceed ceiling ${MAX_SHARED_SKILL_IDENTITY_TOKENS}`);
+  assert.equal(result.pressure.band, 'healthy');
+
+  const lock = JSON.parse(await fs.readFile(path.join(root, 'skills-lock.json'), 'utf8'));
+  const locked = Object.keys(lock.skills);
+  assert.ok(locked.length <= mattPocockAllowlist.length);
+  for (const name of locked) {
+    assert.ok(mattPocockAllowlist.includes(name), `lockfile has non-allowlist skill ${name}`);
+  }
 });
 
 test('project .mcp.json is CAP surface not a migrate target', async () => {
