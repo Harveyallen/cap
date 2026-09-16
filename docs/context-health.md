@@ -109,7 +109,7 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
    `cap inject <任务>`（`--json`）复用 `searchCapabilities` 的关键词/意图评分，再用相对分数门槛丢掉弱子串命中（例如 `"PDF to markdown"` 不应装载 `git.repository.status`）。默认最多 3 条。`keepResident` 始终是 CAP 入口三件套（`cap.search` / `cap.add` / `cap.use`）。
 
 2. **defer 其余**  
-   种子 catalog 里未入选的能力进入 `defer`（本任务不注入）。对照 `comparison.savedVsCatalog`（全量 `context_cost` − 装载 `context_cost`）。若本地 inspect 扫到 Direct MCP，再给 `savedVsResident`（常驻 inspect 估算 − CAP 入口 − 装载成本）。单位不同，全部 `estimated`。
+   种子 catalog 里未入选的能力进入 `defer`（本任务不注入）。对照 `comparison.savedVsCatalog`（全量 `context_cost` − 装载 `context_cost`）。若本地 inspect 扫到 Direct MCP，再给 `savedVsResident`（常驻 inspect 估算 − CAP 入口）。装载能力走 `cap.use`，不把 Provider schema 加进常驻分子。单位不同，全部 `estimated`。
 
 3. **只出计划**  
    `mutates: false`。不改 Agent 配置、不连接第三方 MCP、不自动 `add`。下一步仍是 `cap add` / `cap use`。MCP 工具 `cap.inject` 需 `CAP_MCP_INJECT=1`（或 `exposeInject`），**不**加入默认三工具表面。

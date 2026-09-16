@@ -67,7 +67,7 @@ export async function planInjection(query, options = {}) {
   const loadTokens = load.reduce((sum, item) => sum + item.context_cost, 0);
   const catalogTokens = catalog.capabilities.reduce((sum, item) => sum + item.context_cost, 0);
   const residentTokens = inspection.pressure.injectedTokens;
-  const afterTokens = capSurfaceTokens + loadTokens;
+  const afterTokens = capSurfaceTokens;
 
   return {
     version: INJECT_VERSION,
@@ -92,7 +92,7 @@ export async function planInjection(query, options = {}) {
       afterTokens,
       savedVsResident: Math.max(0, residentTokens - afterTokens),
       estimated: true,
-      notes: 'catalog tokens are seed context_cost. resident tokens are inspect estimates (config scan). after = CAP surface + load context_cost. Not a live-session measurement.'
+      notes: 'catalog tokens are seed context_cost (load vs full catalog). resident/after tokens are inspect estimates: after is CAP surface only because task capabilities go through cap.use, not extra resident schemas. Not a live-session measurement.'
     }
   };
 }

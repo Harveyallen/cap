@@ -107,9 +107,14 @@ test('resident MCP larger than the task set reports savings vs inspect', async (
   const userHome = path.join(root, 'user');
   await fs.mkdir(userHome, {recursive: true});
   const claudeJson = path.join(userHome, '.claude.json');
+  const fatTools = Array.from({length: 20}, (_, i) => ({
+    name: `tool_${i}`,
+    description: 'Direct-exposed schema that bloats resident context. '.repeat(8),
+    inputSchema: {type: 'object', properties: {query: {type: 'string'}, path: {type: 'string'}}}
+  }));
   await fs.writeFile(claudeJson, JSON.stringify({mcpServers: {
-    github: {command: 'github-mcp', tools: [{name: 'get_pr'}, {name: 'comment_pr'}]},
-    postgres: {command: 'postgres-mcp', toolCount: 12}
+    github: {command: 'github-mcp', tools: fatTools},
+    postgres: {command: 'postgres-mcp', tools: fatTools}
   }}, null, 2));
   const options = {
     home: path.join(root, 'state'),
@@ -124,6 +129,7 @@ test('resident MCP larger than the task set reports savings vs inspect', async (
   assert.equal(plan.load[0].capability_id, 'postgres.query.explain');
   assert.ok(plan.comparison.residentTokens > plan.comparison.afterTokens);
   assert.ok(plan.comparison.savedVsResident > 0);
+  assert.equal(plan.comparison.afterTokens, plan.keepResident.contextTokens);
 });
 
 test('CLI inject --json returns the plan', async (t) => {

@@ -237,8 +237,8 @@ export function injectText(plan) {
     `入口  ${(plan.keepResident?.tools ?? []).join(' / ') || 'cap.search / cap.add / cap.use'} 保持常驻`,
     paint(2, '只出计划，不改 Agent 配置，也不连接第三方 MCP')
   ];
-  if (cmp.residentTokens > 0) {
-    lines.push(`对照  当前常驻 ${compactTokens(cmp.residentTokens)} → 按任务 ${compactTokens(cmp.afterTokens)} · 可少占 ${compactTokens(cmp.savedVsResident)} tok`);
+  if (cmp.residentTokens > cmp.afterTokens) {
+    lines.push(`对照  当前常驻 ${compactTokens(cmp.residentTokens)} → CAP 入口 ${compactTokens(cmp.afterTokens)} · 可少占 ${compactTokens(cmp.savedVsResident)} tok`);
   }
   lines.push(rule, '装载');
   if (!plan.load?.length) {
