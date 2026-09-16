@@ -31,7 +31,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `data/catalog.json` | Seed capabilities + providers |
 | `data/catalog.schema.json` | Catalog JSON Schema |
 | `test/*.test.js` | Node test suite |
-| `.agents/skills/` | Shared agent skills (also scanned by `cap inspect`) |
+| `.agents/skills/` | Shared agent skills: CAP (`add-capability`, `cap-develop`) plus the Matt Pocock engineering set (also scanned by `cap inspect`) |
 
 Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime ships in Unreleased via `src/profiler.js`; 0.2.0 was docs-only). LLM index: `llms.txt`.
 

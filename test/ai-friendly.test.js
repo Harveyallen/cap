@@ -84,6 +84,35 @@ test('public API exports only the read/main path', () => {
   assert.equal(api.acquireCapability, undefined);
 });
 
+const capSkills = ['add-capability', 'cap-develop'];
+const mattPocockSkills = [
+  'ask-matt',
+  'code-review',
+  'codebase-design',
+  'diagnosing-bugs',
+  'domain-modeling',
+  'grill-me',
+  'grill-with-docs',
+  'grilling',
+  'handoff',
+  'implement',
+  'improve-codebase-architecture',
+  'prototype',
+  'research',
+  'resolving-merge-conflicts',
+  'setup-matt-pocock-skills',
+  'tdd',
+  'teach',
+  'to-questionnaire',
+  'to-spec',
+  'to-tickets',
+  'triage',
+  'wait-what',
+  'wayfinder',
+  'wizard',
+  'writing-for-agents'
+];
+
 test('project ships shared agent skills discoverable by inspect', async () => {
   const result = await inspectLocal({
     projectRoot: root,
@@ -93,9 +122,10 @@ test('project ships shared agent skills discoverable by inspect', async () => {
     skillRoots: [[path.join(root, '.agents', 'skills'), 'Shared']],
     codexConfig: path.join(root, '.missing-codex.toml')
   });
-  assert.ok(result.summary.skills >= 2);
+  const expected = [...capSkills, ...mattPocockSkills].sort();
+  assert.ok(result.summary.skills >= expected.length);
   const names = result.items.filter((item) => item.kind === 'skill').map((item) => item.name).sort();
-  assert.deepEqual(names, ['add-capability', 'cap-develop']);
+  assert.deepEqual(names, expected);
 });
 
 test('project .mcp.json is CAP surface not a migrate target', async () => {
