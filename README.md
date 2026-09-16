@@ -110,7 +110,7 @@ CAP Core ── Search ── Catalog
 | [`llms.txt`](./llms.txt) | LLM / Agent 文档索引 |
 | [`docs/architecture.md`](./docs/architecture.md) | 模块边界与数据流 |
 | [`docs/context-health.md`](./docs/context-health.md) | Context Pressure、漏斗与 Health 产品说明 |
-| [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills |
+| [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills（CAP + full `mattpocock/skills` pack） |
 | [`.mcp.json`](./.mcp.json) | 项目级 CAP MCP（dogfood） |
 | [`src/index.js`](./src/index.js) | 稳定程序化 API：`searchCapabilities` / `addCapability` / `useCapability` / `inspectLocal` / `loadCatalog` / `loadState` |
 | [`data/catalog.schema.json`](./data/catalog.schema.json) | Catalog 结构约束 |

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Agent skills
+
+- Added the full [`mattpocock/skills`](https://github.com/mattpocock/skills) pack (37 skills, including `setup-matt-pocock-skills`) under `.agents/skills/` via `npx skills@latest add mattpocock/skills -s '*' -a cursor -y --copy`. Per-repo `/setup-matt-pocock-skills` was **not** run in this change (issue-tracker choice needs a human). After merge, run `/setup-matt-pocock-skills` in Cursor/Agent against this repo and select **GitHub Issues**.
+
 ### Context Health / Value Analysis
 
 - **V3 Value Analysis (runtime):** `cap inspect` / `--json` / Web Health include a `profiler` block derived from Registry activity (successful uses + distinct UTC days as sessions). Fills `cost.value` / `cost.valuePerCost` when linkable; ranks value-per-cost; lists underused managed capabilities (`src/profiler.js`). JSON key `profiler` is unchanged.

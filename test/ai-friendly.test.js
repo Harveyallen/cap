@@ -84,6 +84,47 @@ test('public API exports only the read/main path', () => {
   assert.equal(api.acquireCapability, undefined);
 });
 
+const capSkills = ['add-capability', 'cap-develop'];
+const mattPocockSkills = [
+  'ask-matt',
+  'claude-handoff',
+  'code-review',
+  'codebase-design',
+  'diagnosing-bugs',
+  'domain-modeling',
+  'git-guardrails-claude-code',
+  'grill-me',
+  'grill-with-docs',
+  'grilling',
+  'handoff',
+  'implement',
+  'implement-spec',
+  'improve-codebase-architecture',
+  'loop-me',
+  'migrate-to-shoehorn',
+  'prototype',
+  'research',
+  'resolving-merge-conflicts',
+  'retro',
+  'scaffold-exercises',
+  'setup-matt-pocock-skills',
+  'setup-pre-commit',
+  'setup-ts-deep-modules',
+  'tdd',
+  'teach',
+  'to-questionnaire',
+  'to-spec',
+  'to-tickets',
+  'triage',
+  'wait-what',
+  'wayfinder',
+  'wizard',
+  'writing-beats',
+  'writing-for-agents',
+  'writing-fragments',
+  'writing-shape'
+];
+
 test('project ships shared agent skills discoverable by inspect', async () => {
   const result = await inspectLocal({
     projectRoot: root,
@@ -93,9 +134,10 @@ test('project ships shared agent skills discoverable by inspect', async () => {
     skillRoots: [[path.join(root, '.agents', 'skills'), 'Shared']],
     codexConfig: path.join(root, '.missing-codex.toml')
   });
-  assert.ok(result.summary.skills >= 2);
+  const expected = [...capSkills, ...mattPocockSkills].sort();
+  assert.ok(result.summary.skills >= expected.length);
   const names = result.items.filter((item) => item.kind === 'skill').map((item) => item.name).sort();
-  assert.deepEqual(names, ['add-capability', 'cap-develop']);
+  assert.deepEqual(names, expected);
 });
 
 test('project .mcp.json is CAP surface not a migrate target', async () => {
