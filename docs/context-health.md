@@ -74,7 +74,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
    `value` / Value-per-Cost 由 V3 价值分析（Value Analysis）从 Registry activity 计算（成功 use + UTC 日会话）；无信号时仍为 `null`。
 
 4. **Monitor → advise → auto-govern**  
-   见下方路线图。V2 做到可视化 + 建议；自动驱逐与动态注入是后续版本。
+   见下方路线图。V2 做到可视化 + 建议；V4 第一刀是按任务的装载**计划**（不自动改配置）；自动驱逐仍是后续版本。
 
 ## 路线图
 
@@ -83,7 +83,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 | V1 | Token 可视化 | 已有：`contextTokens`、reduction % |
 | V2 | Context Health | 本版：budget / pressure / funnel / 更完整清单 |
 | V3 | Value Analysis / 价值分析 | **Unreleased 运行时**：activity → value / valuePerCost、会话日引用、建议减负列表（0.2.0 仅文档；内部模块 `profiler.js`） |
-| V4 | Dynamic Injection | 按任务装载 MCP / Skill，而非常驻 |
+| V4 | Dynamic Injection | **Unreleased 运行时（本切片）**：按任务给出最小装载计划，而非常驻全量 catalog / Direct MCP |
 | V5 | Context Control Plane | 策略、SLO、自动 eviction / 压缩建议 |
 
 ## V3：价值分析 / Value Analysis（Unreleased 运行时）
@@ -97,9 +97,42 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
    有信号时填写 `cost.value`（0–100，由成功 use + 会话日解释）与 `cost.valuePerCost`（`value / catalog context_cost`）；无信号时仍为 `null`。不要把这当成当前会话的实测注入量。
 
 3. **性价比排行 + 建议减负**  
-   `profiler.ranked` 按 value-per-cost 排序（人体：性价比排行）；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力（人体：建议减负），供人类决定是否卸载或留给 V4 Dynamic Injection。CAP surface（`cap-mcp`）不是候选。
+   `profiler.ranked` 按 value-per-cost 排序（人体：性价比排行）；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力（人体：建议减负），供人类决定是否卸载或交给 V4 Dynamic Injection（`cap inject <任务>`）。CAP surface（`cap-mcp`）不是候选。
 
 输入仍是本地 Activity + inspect 估算，不连接第三方 MCP。
+
+## V4：Dynamic Injection（Unreleased 运行时）
+
+V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第一刀是：**给定一个任务，给出最小能力集装载计划**，而不是假设 catalog / Direct MCP 全部注入。
+
+1. **按任务选 load**  
+   `cap inject <任务>`（`--json`）复用 `searchCapabilities` 的关键词/意图评分，再用相对分数门槛丢掉弱子串命中（例如 `"PDF to markdown"` 不应装载 `git.repository.status`）。默认最多 3 条。`keepResident` 始终是 CAP 入口三件套（`cap.search` / `cap.add` / `cap.use`）。
+
+2. **defer 其余**  
+   种子 catalog 里未入选的能力进入 `defer`（本任务不注入）。对照 `comparison.savedVsCatalog`（全量 `context_cost` − 装载 `context_cost`）。若本地 inspect 扫到 Direct MCP，再给 `savedVsResident`（常驻 inspect 估算 − CAP 入口 − 装载成本）。单位不同，全部 `estimated`。
+
+3. **只出计划**  
+   `mutates: false`。不改 Agent 配置、不连接第三方 MCP、不自动 `add`。下一步仍是 `cap add` / `cap use`。MCP 工具 `cap.inject` 需 `CAP_MCP_INJECT=1`（或 `exposeInject`），**不**加入默认三工具表面。
+
+仓库 `.agents/skills` 的 Matt Pocock pack 是开发 CAP 的 dogfood，不是终端用户表面，V4 不修剪它。
+
+```json
+{
+  "version": 4,
+  "task": "分析 PostgreSQL 慢查询",
+  "mutates": false,
+  "load": [{"capability_id": "postgres.query.explain", "context_cost": 740}],
+  "defer": [{"capability_id": "git.repository.status", "reason": "not relevant to this task"}],
+  "keepResident": {"kind": "cap-surface", "tools": ["cap.search", "cap.add", "cap.use"]},
+  "comparison": {
+    "loadCount": 1,
+    "catalogCount": 6,
+    "loadTokens": 740,
+    "catalogTokens": 3360,
+    "savedVsCatalog": 2620
+  }
+}
+```
 
 ## Inspect 输出（CLI / `--json` / `GET /api/inspect`）
 
@@ -140,7 +173,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 }
 ```
 
-`summary` 增加 `warnings`、`managed`、`reclaimableTokens`、`capSurface`。`reclaimableTokens` 是把 **非 CAP** Direct MCP 迁到 CAP 后可回收的毛估，**不含** `cap-mcp` 自身。识别规则是启动命令/参数指向 `cap-mcp` / `cap-mcp.js`，不是服务器名叫 `cap`。对 CAP surface：用已知入口工具 schema 估价（默认 3；`CAP_MCP_INSPECT=1` 时 4），`status: "cap"`，`toolCountEstimated: false`。第三方 MCP 仍不连接，工具数继续是 minimum estimate。
+`summary` 增加 `warnings`、`managed`、`reclaimableTokens`、`capSurface`。`reclaimableTokens` 是把 **非 CAP** Direct MCP 迁到 CAP 后可回收的毛估，**不含** `cap-mcp` 自身。识别规则是启动命令/参数指向 `cap-mcp` / `cap-mcp.js`，不是服务器名叫 `cap`。对 CAP surface：用已知入口工具 schema 估价（默认 3；`CAP_MCP_INSPECT=1` 加 inspect，`CAP_MCP_INJECT=1` 加 inject），`status: "cap"`，`toolCountEstimated: false`。第三方 MCP 仍不连接，工具数继续是 minimum estimate。
 
 每条 inventory item 增加 `status`（`direct` | `managed` | `estimated` | `cap`）和 `cost`。项目 `.mcp.json` 的 `agent` 为 `Project`（Cursor 与 Claude Code 都会读）。
 
@@ -153,5 +186,7 @@ cap setup --agent auto
 cap inspect
 cap inspect --json
 CAP_NOMINAL_WINDOW=1000000 cap inspect --json
+cap inject "分析 PostgreSQL 慢查询"
+cap inject "分析 PostgreSQL 慢查询" --json
 cap optimize          # 预览；写入仍需 --apply --yes
 ```

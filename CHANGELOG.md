@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Context Health / Dynamic Injection
+
+- **V4 Dynamic Injection (runtime, plan-only):** `cap inject <task>` (`--json`) builds a minimal load/defer plan for that task instead of assuming the full catalog or Direct MCP surface is resident. Ranking reuses `searchCapabilities` with a relative score floor; CAP entry tools stay in `keepResident`. Does not mutate Agent configs (`mutates: false`). MCP tool `cap.inject` is opt-in (`CAP_MCP_INJECT=1`), so the default 3-tool surface is unchanged.
+- Human `cap inspect` next-step line points at `cap inject <任务>`.
+
 ### Agent skills
 
 - Added the full [`mattpocock/skills`](https://github.com/mattpocock/skills) pack (37 skills, including `setup-matt-pocock-skills`) under `.agents/skills/` via `npx skills@latest add mattpocock/skills -s '*' -a cursor -y --copy`. Per-repo `/setup-matt-pocock-skills` was **not** run in this change (issue-tracker choice needs a human). After merge, run `/setup-matt-pocock-skills` in Cursor/Agent against this repo and select **GitHub Issues**.

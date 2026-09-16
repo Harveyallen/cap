@@ -7,15 +7,16 @@
 - [README](README.md): human quick start and product overview
 - [AGENTS.md](AGENTS.md): instructions for coding agents
 - [Architecture](docs/architecture.md): module boundaries and data flow
-- [Context Health](docs/context-health.md): pressure, funnel, V3 Value Analysis runtime (value/cost), inspect/Health contract
+- [Context Health](docs/context-health.md): pressure, funnel, V3 Value Analysis runtime (value/cost), V4 Dynamic Injection plan, inspect/Health contract
 - [Catalog schema](data/catalog.schema.json): seed catalog contract
 - [Changelog](CHANGELOG.md)
 
 ## Entry points
 
-- CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `add` / `use` / `optimize` / `web`)
+- CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `inject` / `add` / `use` / `optimize` / `web`)
 - Value Analysis: `src/profiler.js` (V3 value/cost from activity; internally the profiler module)
-- MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect`)
+- Dynamic Injection: `src/inject.js` (V4 task → load/defer plan; CLI `cap inject`; MCP `cap.inject` via `CAP_MCP_INJECT=1`)
+- MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect` / `cap.inject`)
 - Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`
 - Library: `src/index.js` (`searchCapabilities`, `addCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, `loadState`)
 

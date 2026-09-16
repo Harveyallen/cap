@@ -32,6 +32,7 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 | `use.js` | Execute managed builtins | Discover/search |
 | `inspector.js` | Read local Agent configs/skills, estimate footprint, derive Context Health | Connect to MCP servers |
 | `profiler.js` | Score capability value / valuePerCost from Registry activity | Execute providers |
+| `inject.js` | Task → minimal load/defer injection plan (reuses search ranking) | Mutate Agent configs, connect to MCP, embeddings |
 | `mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection | Talk to the network |
 | `setup.js` | Write CAP MCP + Context Health Skill into Claude / Codex | Wipe existing servers or mutate unsafe TOML |
 | `optimize.js` | Plan + guarded JSON MCP migration (keeps `cap-mcp`) | Mutate TOML in v0.1 |
@@ -45,8 +46,9 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 - Registry default path: `$CAP_HOME/registry.json` or `~/.cap/registry.json`.
 - Context footprint: character/4 estimate, not a vendor tokenizer.
 - Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Skill `contextTokens` are name+description only. `funnel.installed` is local scan names, not catalog size. `funnel.configured` aliases `injected` (config scan, not live session). `cap-mcp` is the CAP surface (`status: cap`), priced from known entry schemas, excluded from Move → CAP. `effectiveBudget <= 0` → pressure `unknown`. `cost.value` / `valuePerCost` are filled by V3 Value Analysis (`src/profiler.js`, Unreleased runtime) from Registry activity; remain `null` when there is no signal. 0.2.0 documented V3 only. Product rules: [context-health.md](./context-health.md).
+- Injection plan (V4, Unreleased): `planInjection(task)` returns `load` / `defer` / `keepResident` / `comparison`. Ranking reuses `searchCapabilities` with a relative score floor so weak substring hits are not loaded. `mutates: false` — plan only. Token comparison mixes catalog `context_cost` (load/defer) with inspect estimates (resident). Default MCP surface stays 3 tools; `cap.inject` is opt-in (`CAP_MCP_INJECT=1`).
 - Budget env: `CAP_NOMINAL_WINDOW`, `CAP_HARNESS_SOFT_LIMIT`, `CAP_RESERVE_TOKENS`, `CAP_EFFECTIVE_BUDGET`.
 
 ## Agent integration
 
-`cap setup` writes user-level Claude Code / Codex MCP so Agents see `cap.search` / `cap.add` / `cap.use` (and `cap.inspect` when `CAP_MCP_INSPECT=1`). Project `.mcp.json` is local dogfood, not a migrate/wipe target. Coding agents should load `AGENTS.md` and skills under `.agents/skills/` (CAP plus the full `mattpocock/skills` pack). Per-repo `/setup-matt-pocock-skills` is a human step after install; it is not applied by `cap setup`.
+`cap setup` writes user-level Claude Code / Codex MCP so Agents see `cap.search` / `cap.add` / `cap.use` (and `cap.inspect` when `CAP_MCP_INSPECT=1`, `cap.inject` when `CAP_MCP_INJECT=1`). Project `.mcp.json` is local dogfood, not a migrate/wipe target. Coding agents should load `AGENTS.md` and skills under `.agents/skills/` (CAP plus the full `mattpocock/skills` pack). Per-repo `/setup-matt-pocock-skills` is a human step after install; it is not applied by `cap setup`. The Matt pack is repo dogfood for developing CAP, not an end-user V4 prune target.

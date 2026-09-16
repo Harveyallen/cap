@@ -20,6 +20,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/use.js` | Execute managed providers (git / ripgrep builtins) |
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
 | `src/profiler.js` | V3 Value Analysis (internally: profiler module; activity → value / valuePerCost / underused) |
+| `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
 | `src/setup.js` | `cap setup`: write CAP MCP + Context Health Skill, then inspect |
 | `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
@@ -33,7 +34,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `test/*.test.js` | Node test suite |
 | `.agents/skills/` | Shared agent skills: CAP (`add-capability`, `cap-develop`) plus the full `mattpocock/skills` pack (also scanned by `cap inspect`) |
 
-Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime ships in Unreleased via `src/profiler.js`; 0.2.0 was docs-only). LLM index: `llms.txt`.
+Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime in `src/profiler.js`; V4 Dynamic Injection plan in `src/inject.js`; 0.2.0 was docs-only for V3). LLM index: `llms.txt`.
 
 ## Commands
 
@@ -43,10 +44,11 @@ npm run check
 node ./bin/cap.js setup --agent auto
 node ./bin/cap.js inspect
 node ./bin/cap.js search "分析 PostgreSQL 慢查询" --json
+node ./bin/cap.js inject "分析 PostgreSQL 慢查询" --json
 node ./bin/cap.js add git.repository.status
 node ./bin/cap.js use git.repository.status --input '{"path":"."}' --json
 node ./bin/cap.js optimize
-node ./bin/cap-mcp.js   # stdio MCP; optional CAP_MCP_INSPECT=1
+node ./bin/cap-mcp.js   # stdio MCP; optional CAP_MCP_INSPECT=1 / CAP_MCP_INJECT=1
 ```
 
 Prefer `--json` when parsing CLI output. Prefer `CAP_HOME=<tmpdir>` in tests so state never touches the real `~/.cap`.
@@ -64,7 +66,7 @@ Project `.mcp.json` uses a relative `./bin/cap-mcp.js` path. Start the MCP serve
 - `loadCatalog`
 - `loadState`
 
-Registry writes, optimize apply, and MCP/web server starters stay in their modules. Do not re-export them from the package root.
+Registry writes, optimize apply, MCP/web server starters, Value Analysis (`profiler.js`), and Dynamic Injection (`planInjection` in `inject.js`) stay in their modules. Do not re-export them from the package root.
 
 ## Always do
 

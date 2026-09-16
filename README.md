@@ -30,11 +30,12 @@ $ cap search "分析 PostgreSQL 慢查询"
 - `cap setup`：备份并写入 Claude Code / Codex 的 CAP MCP 与 `cap-context-health` Skill，然后跑一次 `cap inspect`。
 - `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），用人话输出健康分数、常驻占用和清单。`cap-mcp` 不会被建议再迁走。详见 [docs/context-health.md](./docs/context-health.md)。
 - `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。
+- `cap inject`：按任务给出 V4 最小装载计划（load / defer），对照全量 catalog 与当前常驻占用。
 - `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
 - `cap use`：通过 Capability 抽象调用已登记的本地 Provider；初版内置 Git 状态与 ripgrep 搜索。
 - `cap optimize`：展示 Before / After；显式使用 `--apply --yes` 时迁移 JSON MCP 配置，并先生成时间戳备份。
 - `cap web`：轻量 Discover、My Capabilities、Context Health 仪表盘。
-- `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.add`、`cap.use`；可选暴露 `cap.inspect`。
+- `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.add`、`cap.use`；可选暴露 `cap.inspect`、`cap.inject`。
 - Activity：记录 Add/Use 结果，为后续 CapabilityBench 积累基础数据。
 
 ## 安装
@@ -124,10 +125,24 @@ npm test
 npm run check
 node ./bin/cap.js setup --agent auto
 node ./bin/cap.js inspect
+node ./bin/cap.js inject "分析 PostgreSQL 慢查询" --json
 node ./bin/cap.js web --port 4173
 ```
 
 种子 Catalog 位于 `data/catalog.json`，结构见 `data/catalog.schema.json`。添加记录时保持 `capability_id` 稳定，并在 `provider_refs` 与 Provider 的 `capabilities` 中双向声明。Agent 侧可直接按 `.agents/skills/add-capability/SKILL.md` 执行。
+
+## V4 Dynamic Injection
+
+Unreleased 运行时：`cap inject <任务>` 按任务给出最小装载计划（load / defer / CAP 入口常驻），对照全量 catalog（以及当前 inspect 常驻占用）。只出计划，不改 Agent 配置。MCP 工具 `cap.inject` 需 `CAP_MCP_INJECT=1`。默认 Agent 表面仍是 `cap.search` / `cap.add` / `cap.use`。详见 [docs/context-health.md](./docs/context-health.md)。
+
+```console
+$ cap inject "分析 PostgreSQL 慢查询"
+CAP Inject · 按任务装载
+任务  分析 PostgreSQL 慢查询
+装载  1 / 6 个能力 · ~740 tok（全量 catalog ~3.4k）
+推迟  5 个 · 相对全量 catalog 少占 ~2.6k tok
+入口  cap.search / cap.add / cap.use 保持常驻
+```
 
 ## V3 价值分析（Value Analysis）
 
@@ -139,4 +154,5 @@ Unreleased 运行时（0.2.0 仅文档）：从 Registry Activity 统计每条 C
 - 非内置 Provider 可以添加，但 Use 会返回 `connection_required`，不会伪装成已执行。
 - Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。高 Context Pressure 不会突然「触发幻觉」，但会造成注意力稀释、召回变差、选错工具和指令冲突（Lost in the Middle）。
 - V3 价值分析运行时已在 Unreleased（`src/profiler.js`）：`cost.value` 来自 Activity 信号，无信号时仍为 `null`；不假装测量当前会话注入。
+- V4 Dynamic Injection 运行时已在 Unreleased（`src/inject.js`）：`cap inject` 给出按任务的最小装载计划；不自动改 MCP 配置，也不把 `cap.inject` 加入默认三工具表面。
 - 本版优先验证开发者闭环，不包含 Desktop、企业权限、团队治理，也不发布 npm。

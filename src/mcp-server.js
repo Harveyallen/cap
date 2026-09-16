@@ -4,12 +4,14 @@ import { searchCapabilities } from './search.js';
 import { addCapability } from './registry.js';
 import { useCapability } from './use.js';
 import { inspectLocal } from './inspector.js';
+import { planInjection } from './inject.js';
 import { exposedCapTools } from './mcp-tools.js';
 
 async function callTool(name, args, options) {
   if (name === 'cap.search') return searchCapabilities(args.query, {...options, limit: args.limit});
   if (name === 'cap.add') return addCapability(args.capability_id, args.provider_id, options);
   if (name === 'cap.use') return useCapability(args.capability_id, args.input, options);
+  if (name === 'cap.inject') return planInjection(args.query, {...options, limit: args.limit});
   if (name === 'cap.inspect') return inspectLocal(options);
   throw new Error(`Unknown tool: ${name}`);
 }
