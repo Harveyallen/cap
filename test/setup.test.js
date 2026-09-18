@@ -40,7 +40,7 @@ async function fixture() {
 
 test('isCapMcpConfig keys off cap-mcp, not a server named cap', () => {
   assert.equal(isCapMcpConfig({command: 'node', args: [path.join(repoRoot, 'bin', 'cap-mcp.js')]}), true);
-  assert.equal(isCapMcpConfig({command: 'npx', args: ['-y', '-p', '@capability-layer/cap', 'cap-mcp']}), true);
+  assert.equal(isCapMcpConfig({command: 'npx', args: ['-y', '-p', '@harveyallen/cap', 'cap-mcp']}), true);
   assert.equal(isCapMcpConfig({command: 'other-cap', args: ['--name', 'cap']}), false);
   assert.equal(isCapMcpConfig({}, '[mcp_servers.cap]\ncommand = "node"\nargs = ["/tmp/bin/cap-mcp.js"]\n'), true);
   assert.equal(isCapMcpConfig({}, '[mcp_servers.cap]\ncommand = "other"\n'), false);
