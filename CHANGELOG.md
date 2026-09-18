@@ -10,6 +10,7 @@
 - Missing launch or `mcp_tool` still returns `connection_required` with a `reason` (`missing_launch` / `missing_mcp_tool` / `unsupported_transport` / `unsupported_type`). Spawn/protocol errors return `failed`. No fake success.
 - Seed catalog: `mcp_server` on MCP providers; `mcp_tool` on GitHub / Postgres / DingTalk capabilities. DingTalk is a stub (`dingtalk.im.message.send` → tool `send_message`, server key `dingtalk`). Real DingTalk OAuth is out of scope. See [docs/mcp-gateway.md](./docs/mcp-gateway.md).
 - `cap add --server <mcp-name>` (MCP `cap.add` optional `server`) pins which local server to bind. Add/use results list `envKeys` only; env values stay in the 0600 registry file and are not logged.
+- **On-demand `input_schema`:** `cap.search` / `cap.add` (CLI, MCP, programmatic) attach JSON Schema for that capability’s `cap.use` `input`, plus `schema_source`: `"mcp"` from a brief downstream `tools/list` when a stdio launch exists, otherwise `"catalog"` (including git / ripgrep builtins). Catalog `inputs` are upgraded beyond stringly types (`path`, `secret`, `number`, `object`, …). Default Agent `tools/list` stays 3 tools — downstream schemas are not re-injected. `cap inject` does not spawn MCP for schemas. See [docs/mcp-gateway.md](./docs/mcp-gateway.md).
 
 ### Context Health / Dynamic Injection
 

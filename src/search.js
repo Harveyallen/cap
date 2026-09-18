@@ -1,4 +1,5 @@
 /** Intent/keyword capability ranking over the seed catalog. */
+import { attachInputSchemas } from './input-schema.js';
 import { loadCatalog, loadState } from './registry.js';
 
 function terms(value) {
@@ -29,7 +30,7 @@ export async function searchCapabilities(query, options = {}) {
   if (!query?.trim()) throw new Error('Search query is required');
   const [catalog, state] = await Promise.all([loadCatalog(), loadState(options)]);
   const providers = new Map(catalog.providers.map((item) => [item.provider_id, item]));
-  return catalog.capabilities
+  const ranked = catalog.capabilities
     .map((capability) => ({
       ...capability,
       score: scoreCapability(query, capability),
@@ -39,4 +40,5 @@ export async function searchCapabilities(query, options = {}) {
     .filter((item) => item.score >= 4)
     .sort((a, b) => b.score - a.score || a.context_cost - b.context_cost)
     .slice(0, options.limit ?? 5);
+  return attachInputSchemas(ranked, {catalog, state, options});
 }

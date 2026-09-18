@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {searchCapabilities} from '../src/search.js';
 import {addCapability, loadState} from '../src/registry.js';
 import {useCapability} from '../src/use.js';
 import {handleMcpMessage} from '../src/mcp-server.js';
@@ -134,6 +135,51 @@ test('wrong downstream tool is failed, not fake success', async (t) => {
   assert.match(result.message, /Unknown tool: send_message/);
 });
 
+test('add/search return live MCP input_schema when bound; catalog when not', async (t) => {
+  const options = await isolated(t);
+  const unbound = await searchCapabilities('发送钉钉消息', options);
+  assert.equal(unbound[0].capability_id, 'dingtalk.im.message.send');
+  assert.equal(unbound[0].schema_source, 'catalog');
+  assert.equal(unbound[0].input_schema.properties.msgKey.enum, undefined);
+
+  const added = await addCapability('dingtalk.im.message.send', undefined, {
+    ...options,
+    launch: mockLaunch({CAP_MOCK_MCP_TOOL: 'send_message'})
+  });
+  assert.equal(added.schema_source, 'mcp');
+  assert.equal(added.capability.schema_source, 'mcp');
+  assert.deepEqual(added.input_schema.properties.msgKey.enum, ['sampleText']);
+  assert.deepEqual(added.input_schema.required, ['id', 'msgKey', 'msgParam']);
+  assert.equal(added.input_schema.properties.msgParam.properties.content.type, 'string');
+
+  const hits = await searchCapabilities('发送钉钉消息', options);
+  assert.equal(hits[0].schema_source, 'mcp');
+  assert.deepEqual(hits[0].input_schema.properties.msgKey.enum, ['sampleText']);
+
+  const viaMcp = await handleMcpMessage({
+    jsonrpc: '2.0',
+    id: 9,
+    method: 'tools/call',
+    params: {name: 'cap.search', arguments: {query: '发送钉钉消息'}}
+  }, options);
+  assert.equal(viaMcp.result.structuredContent[0].schema_source, 'mcp');
+  assert.deepEqual(viaMcp.result.structuredContent[0].input_schema.properties.msgKey.enum, ['sampleText']);
+
+  const listed = await handleMcpMessage({jsonrpc: '2.0', id: 10, method: 'tools/list'}, {...options, env: {}});
+  assert.deepEqual(listed.result.tools.map((tool) => tool.name), ['cap.search', 'cap.add', 'cap.use']);
+});
+
+test('MCP schema falls back to catalog when mapped tool is missing', async (t) => {
+  const options = await isolated(t);
+  const added = await addCapability('dingtalk.im.message.send', undefined, {
+    ...options,
+    launch: mockLaunch({CAP_MOCK_MCP_TOOL: 'other_tool'})
+  });
+  assert.equal(added.schema_source, 'catalog');
+  assert.equal(added.input_schema.properties.msgKey.enum, undefined);
+  assert.equal(added.input_schema.properties.payload, undefined);
+});
+
 test('CLI --server selects a local MCP entry', async (t) => {
   const options = await isolated(t);
   const claudeJson = path.join(options.userHome, '.claude.json');
@@ -152,6 +198,8 @@ test('CLI --server selects a local MCP entry', async (t) => {
   }
   const added = JSON.parse(chunks.join('\n'));
   assert.equal(added.binding.server, 'dingtalk');
+  assert.equal(added.schema_source, 'mcp');
+  assert.deepEqual(added.input_schema.properties.msgKey.enum, ['sampleText']);
   const result = await useCapability('dingtalk.im.message.send', {ok: true}, options);
   assert.equal(result.status, 'completed');
 });

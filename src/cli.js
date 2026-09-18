@@ -224,7 +224,13 @@ export function setupText(result, options = {}) {
 
 function searchText(results) {
   if (!results.length) return 'No matching capability found.';
-  return results.map((item, index) => `${index + 1}. ${item.name}  ${item.installed ? '[CAP Managed]' : '[Available]'}\n   ${item.capability_id}\n   ${item.summary}\n   Providers: ${item.providers.map((p) => `${p.name} (${p.status})`).join(', ')}\n   Context: ~${item.context_cost} tokens · Risk: ${item.risk}`).join('\n\n');
+  return results.map((item, index) => {
+    const required = item.input_schema?.required?.join(', ');
+    const schemaLine = item.schema_source
+      ? `\n   cap.use input_schema: ${item.schema_source}${required ? ` · required ${required}` : ''}`
+      : '';
+    return `${index + 1}. ${item.name}  ${item.installed ? '[CAP Managed]' : '[Available]'}\n   ${item.capability_id}\n   ${item.summary}\n   Providers: ${item.providers.map((p) => `${p.name} (${p.status})`).join(', ')}\n   Context: ~${item.context_cost} tokens · Risk: ${item.risk}${schemaLine}`;
+  }).join('\n\n');
 }
 
 export function injectText(plan) {

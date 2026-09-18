@@ -7,6 +7,21 @@ if (process.env.NODE_TEST_CONTEXT) process.exit(0);
 
 const toolName = process.env.CAP_MOCK_MCP_TOOL || 'send_message';
 
+function toolSchema(name) {
+  if (name === 'send_message') {
+    return {
+      type: 'object',
+      properties: {
+        id: {type: 'string', description: 'Receiver id'},
+        msgKey: {type: 'string', enum: ['sampleText']},
+        msgParam: {type: 'object', properties: {content: {type: 'string'}}, required: ['content']}
+      },
+      required: ['id', 'msgKey', 'msgParam']
+    };
+  }
+  return {type: 'object', properties: {payload: {type: 'string'}}, required: ['payload']};
+}
+
 async function handle(message) {
   const base = {jsonrpc: '2.0', id: message.id};
   if (message.method === 'initialize') {
@@ -15,7 +30,7 @@ async function handle(message) {
   if (message.method === 'notifications/initialized') return null;
   if (message.method === 'ping') return {...base, result: {}};
   if (message.method === 'tools/list') {
-    return {...base, result: {tools: [{name: toolName, description: 'Mock downstream MCP tool', inputSchema: {type: 'object'}}]}};
+    return {...base, result: {tools: [{name: toolName, description: 'Mock downstream MCP tool', inputSchema: toolSchema(toolName)}]}};
   }
   if (message.method === 'tools/call') {
     const name = message.params?.name;
