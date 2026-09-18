@@ -27,6 +27,7 @@ test('builtin search exposes catalog JSON Schema for cap.use', async (t) => {
   assert.equal(git.capability_id, 'git.repository.status');
   assert.equal(git.schema_source, 'catalog');
   assert.equal(git.input_schema.properties.path.type, 'string');
+  assert.equal(git.input_schema.properties.path.description, 'Filesystem path');
   assert.equal(git.input_schema.required, undefined);
 
   const [files] = await searchCapabilities('search files', {home});

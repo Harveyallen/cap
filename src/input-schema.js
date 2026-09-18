@@ -17,17 +17,24 @@ function isSchemaObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-function propertyFromSpec(spec) {
+function propertyFromSpec(name, spec) {
   if (isSchemaObject(spec) && spec.type) return spec;
   const key = String(spec ?? 'string').toLowerCase();
-  return {...(CATALOG_TYPES[key] ?? {type: 'string'})};
+  const base = {...(CATALOG_TYPES[key] ?? {type: 'string'})};
+  if (key === 'path' || name === 'path' || name === 'file') {
+    return {type: 'string', description: base.description ?? 'Filesystem path'};
+  }
+  if (key === 'secret' || name === 'connection') {
+    return {type: 'string', description: base.description ?? 'Secret; do not log'};
+  }
+  return base;
 }
 
 export function schemaFromCatalogInputs(inputs = {}) {
   const properties = {};
   const required = [];
   for (const [name, spec] of Object.entries(inputs ?? {})) {
-    properties[name] = propertyFromSpec(spec);
+    properties[name] = propertyFromSpec(name, spec);
     if (name !== 'path') required.push(name);
   }
   const schema = {type: 'object', properties};
