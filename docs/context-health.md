@@ -83,7 +83,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 | V1 | Token 可视化 | 已有：`contextTokens`、reduction % |
 | V2 | Context Health | 0.2.0：budget / pressure / funnel / 更完整清单 |
 | V3 | Value Analysis / 价值分析 | **0.3.0 运行时**：activity → value / valuePerCost、会话日引用、建议减负列表（0.2.0 仅文档；内部模块 `profiler.js`） |
-| V4 | Dynamic Injection | **Unreleased 运行时（本切片）**：按任务给出最小装载计划，而非常驻全量 catalog / Direct MCP |
+| V4 | Dynamic Injection | **0.4.0 运行时**：按任务给出最小装载计划，而非常驻全量 catalog / Direct MCP |
 | V5 | Context Control Plane | 策略、SLO、自动 eviction / 压缩建议 |
 
 ## V3：价值分析 / Value Analysis（0.3.0 运行时）
@@ -101,7 +101,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 
 输入仍是本地 Activity + inspect 估算，不连接第三方 MCP。
 
-## V4：Dynamic Injection（Unreleased 运行时）
+## V4：Dynamic Injection（0.4.0 运行时）
 
 V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第一刀是：**给定一个任务，给出最小能力集装载计划**，而不是假设 catalog / Direct MCP 全部注入。
 
