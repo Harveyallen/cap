@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Published npm name is `@harveyallen/cap` (first registry publish of 0.3.0). Install with `npx -y @harveyallen/cap setup`; `npx -y github:Harveyallen/cap setup` remains a fallback.
+
 ### Context Health / Dynamic Injection
 
 - **V4 Dynamic Injection (runtime, plan-only):** `cap inject <task>` (`--json`) builds a minimal load/defer plan for that task instead of assuming the full catalog or Direct MCP surface is resident. Ranking reuses `searchCapabilities` with a relative score floor; CAP entry tools stay in `keepResident`. `savedVsCatalog` uses seed `context_cost`; `savedVsResident` uses inspect estimates with after = CAP surface only (`cap.use` does not add provider schemas to the resident window). Does not mutate Agent configs (`mutates: false`). MCP tool `cap.inject` is opt-in (`CAP_MCP_INJECT=1`), so the default 3-tool surface is unchanged.
@@ -9,7 +11,7 @@
 
 ## 0.3.0
 
-Cuts **V3 Value Analysis** as a shipped runtime. npm registry publish remains deferred; install via `npx -y github:Harveyallen/cap setup` (or clone + `node ./bin/cap.js setup`). No git tags or GitHub Releases in this repo yet.
+Cuts **V3 Value Analysis** as a shipped runtime. First npm registry publish uses `@harveyallen/cap` (`npx -y @harveyallen/cap setup`; GitHub `npx -y github:Harveyallen/cap setup` remains a fallback). No git tags or GitHub Releases in this repo yet.
 
 ### Context Health / Value Analysis
 
@@ -26,6 +28,7 @@ Cuts **V3 Value Analysis** as a shipped runtime. npm registry publish remains de
 
 ### Version surface
 
+- Package name is `@harveyallen/cap` for the first npm registry publish (version stays `0.3.0`). `publishConfig.access` is `public` so the scoped package can be published to the public registry.
 - CLI help/banner and MCP `initialize` `serverInfo.version` read `package.json` so they cannot drift (banner was still `CAP 0.1`; MCP was hardcoded `0.2.0`).
 
 ## 0.2.0

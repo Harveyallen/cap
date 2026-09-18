@@ -1,5 +1,5 @@
 {
-  "name": "@capability-layer/cap",
+  "name": "@harveyallen/cap",
   "version": "0.3.0",
   "description": "Intent-first capability discovery and consolidation for AI agents",
   "type": "module",
@@ -41,6 +41,9 @@
   ],
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "license": "MIT"
 }
