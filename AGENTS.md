@@ -37,7 +37,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `test/*.test.js` | Node test suite |
 | `.agents/skills/` | Shared agent skills: CAP (`add-capability`, `cap-develop`) plus the full `mattpocock/skills` pack (also scanned by `cap inspect`) |
 
-Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime in `src/profiler.js`; V4 Dynamic Injection plan in `src/inject.js`; 0.2.0 was docs-only for V3). LLM index: `llms.txt`.
+Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime in `src/profiler.js`, 0.3.0; V4 Dynamic Injection plan in `src/inject.js`, 0.4.0; 0.2.0 was docs-only for V3). MCP gateway + on-demand `input_schema`: `docs/mcp-gateway.md` (0.4.0). LLM index: `llms.txt`.
 
 ## Commands
 
