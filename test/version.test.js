@@ -13,7 +13,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 test('CLI help, MCP serverInfo, and changelog agree with package.json', async () => {
   const pkg = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
-  assert.equal(pkg.name, '@harveyallen/cap');
+  assert.equal(pkg.name, '@harvey2008/cap');
+  assert.equal(pkg.publishConfig?.access, 'public');
   assert.equal(pkg.version, packageVersion());
   assert.match(pkg.version, /^\d+\.\d+\.\d+$/);
 

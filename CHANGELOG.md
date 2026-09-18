@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Published npm name is `@harveyallen/cap` (first registry publish of 0.3.0). Install with `npx -y @harveyallen/cap setup`; `npx -y github:Harveyallen/cap setup` remains a fallback.
+- Published npm name is `@harvey2008/cap` (first registry publish of 0.3.0; publisher `npm whoami` is `harvey2008`, so `@harveyallen/cap` cannot be used). Install with `npx -y @harvey2008/cap setup`; `npx -y github:Harveyallen/cap setup` remains a fallback. Version stays `0.3.0`. `publishConfig.access` is `public`.
 
 ### Context Health / Dynamic Injection
 
@@ -11,7 +11,7 @@
 
 ## 0.3.0
 
-Cuts **V3 Value Analysis** as a shipped runtime. First npm registry publish uses `@harveyallen/cap` (`npx -y @harveyallen/cap setup`; GitHub `npx -y github:Harveyallen/cap setup` remains a fallback). No git tags or GitHub Releases in this repo yet.
+Cuts **V3 Value Analysis** as a shipped runtime. First npm registry publish uses `@harvey2008/cap` (`npx -y @harvey2008/cap setup`; GitHub `npx -y github:Harveyallen/cap setup` remains a fallback). No git tags or GitHub Releases in this repo yet.
 
 ### Context Health / Value Analysis
 
@@ -28,7 +28,7 @@ Cuts **V3 Value Analysis** as a shipped runtime. First npm registry publish uses
 
 ### Version surface
 
-- Package name is `@harveyallen/cap` for the first npm registry publish (version stays `0.3.0`). `publishConfig.access` is `public` so the scoped package can be published to the public registry.
+- Package name is `@harvey2008/cap` for the first npm registry publish (version stays `0.3.0`). `publishConfig.access` is `public` so the scoped package can be published to the public registry.
 - CLI help/banner and MCP `initialize` `serverInfo.version` read `package.json` so they cannot drift (banner was still `CAP 0.1`; MCP was hardcoded `0.2.0`).
 
 ## 0.2.0
