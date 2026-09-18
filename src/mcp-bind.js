@@ -8,6 +8,23 @@ function normalizeName(value) {
   return String(value ?? '').trim().toLowerCase().replace(/\s+/g, '');
 }
 
+function compactName(value) {
+  return normalizeName(value).replace(/[-_.]/g, '');
+}
+
+export function namesMatch(candidateName, alias) {
+  const candidate = normalizeName(candidateName);
+  const expected = normalizeName(alias);
+  if (!candidate || !expected) return false;
+  if (candidate === expected) return true;
+  const compactCandidate = compactName(candidateName);
+  const compactAlias = compactName(alias);
+  if (compactCandidate === compactAlias) return true;
+  if (compactCandidate === `${compactAlias}mcp` || compactAlias === `${compactCandidate}mcp`) return true;
+  if (compactCandidate === `mcp${compactAlias}` || compactAlias === `mcp${compactCandidate}`) return true;
+  return false;
+}
+
 export function copyEnv(env) {
   if (!env || typeof env !== 'object' || Array.isArray(env)) return undefined;
   const out = {};
@@ -39,6 +56,10 @@ export function mcpServerAliases(provider = {}, preferred) {
     provider.name,
     String(provider.name ?? '').replace(/\s*MCP\s*$/i, '')
   ];
+  const blob = compactName(names.filter(Boolean).join(' '));
+  if (/dingtalk|dingding|钉钉/.test(blob)) {
+    names.push('dingtalk', 'dingtalk-mcp', 'dingtalk.mcp', 'dingding', '钉钉', 'ding ding');
+  }
   return new Set(names.filter(Boolean).map(normalizeName));
 }
 
@@ -136,10 +157,12 @@ async function scanCodexToml(file) {
   });
 }
 
-function defaultJsonConfigs(userHome, projectRoot) {
+export function defaultMcpJsonConfigs(userHome, projectRoot) {
   return [
     [path.join(userHome, '.claude.json'), 'Claude Code'],
     [path.join(userHome, '.claude', 'settings.json'), 'Claude Code'],
+    [path.join(userHome, '.cursor', 'mcp.json'), 'Cursor'],
+    [path.join(projectRoot, '.cursor', 'mcp.json'), 'Cursor'],
     [path.join(projectRoot, '.mcp.json'), 'Project']
   ];
 }
@@ -148,7 +171,7 @@ function defaultJsonConfigs(userHome, projectRoot) {
 export async function listMcpLaunchCandidates(options = {}, state = {}) {
   const userHome = options.userHome ?? os.homedir();
   const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
-  const jsonConfigs = options.jsonConfigs ?? defaultJsonConfigs(userHome, projectRoot);
+  const jsonConfigs = options.jsonConfigs ?? defaultMcpJsonConfigs(userHome, projectRoot);
   const fromRegistry = (state.external_providers ?? []).flatMap((item) => {
     if (item.type && item.type !== 'MCP') return [];
     if (isCapMcpConfig(item.config ?? {}, '')) return [];
@@ -164,12 +187,12 @@ export async function listMcpLaunchCandidates(options = {}, state = {}) {
 }
 
 function matchCandidate(candidates, provider, preferred) {
-  const aliases = mcpServerAliases(provider, preferred);
+  const aliases = [...mcpServerAliases(provider, preferred)];
   if (preferred) {
-    const exact = candidates.find((item) => normalizeName(item.name) === normalizeName(preferred));
-    if (exact) return exact;
+    const pinned = candidates.find((item) => namesMatch(item.name, preferred));
+    if (pinned) return pinned;
   }
-  return candidates.find((item) => aliases.has(normalizeName(item.name))) ?? null;
+  return candidates.find((item) => aliases.some((alias) => namesMatch(item.name, alias))) ?? null;
 }
 
 /**
@@ -209,8 +232,26 @@ export async function resolveMcpBinding(provider, options = {}, state = {}) {
   return null;
 }
 
-export function missingLaunchMessage(provider) {
+export function missingLaunchHint(provider, extras = {}) {
   const aliases = [...mcpServerAliases(provider)].filter(Boolean);
-  const hint = aliases.length ? aliases.join(', ') : provider?.provider_id;
-  return `The MCP provider is registered but CAP has no stdio launch binding (no matching mcpServers / migrated Registry entry). Tried aliases: ${hint}. Keep the server in Claude/Codex/project MCP config or pass --server, then cap add again.`;
+  const found = (extras.candidates ?? [])
+    .filter((item) => item?.command)
+    .map((item) => item.name)
+    .filter(Boolean);
+  const server = provider.mcp_server ?? aliases[0] ?? provider.provider_id;
+  const next_steps = [];
+  if (found.length) {
+    next_steps.push(`Found mcpServers (${found.join(', ')}) but none matched aliases: ${aliases.join(', ') || server}. Bind one with: cap add <capability_id> --server <name>`);
+  } else {
+    next_steps.push(`Add a stdio MCP server under mcpServers key "${server}" (aliases: ${aliases.join(', ') || server}) in ~/.claude.json, ~/.cursor/mcp.json, project .mcp.json / .cursor/mcp.json, or Codex config.toml.`);
+  }
+  next_steps.push('Or pass --server <mcp-name> to cap add, then cap use.');
+  next_steps.push('Keep credentials in that server env. See docs/mcp-gateway.md.');
+  return {reason: 'missing_launch', server, tried_aliases: aliases, found_servers: found, next_steps};
+}
+
+export function missingLaunchMessage(provider, extras = {}) {
+  const hint = missingLaunchHint(provider, extras);
+  const aliases = hint.tried_aliases.join(', ') || provider?.provider_id;
+  return `The MCP provider is registered but CAP has no stdio launch binding (no matching mcpServers / migrated Registry entry). Tried aliases: ${aliases}. ${hint.next_steps[0]}`;
 }

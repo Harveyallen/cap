@@ -20,6 +20,16 @@ test('intent-first search ranks DingTalk send first', async (t) => {
   assert.deepEqual(results[0].input_schema.required, ['id', 'msgKey', 'msgParam']);
 });
 
+test('natural DingTalk send phrasing still ranks the send capability first', async (t) => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'cap-search-dt-cjk-'));
+  t.after(() => fs.rm(home, {recursive: true, force: true}));
+  for (const query of ['帮我发钉钉消息', '发钉钉消息', '发送钉钉消息', '请帮我发一条钉钉消息']) {
+    const results = await searchCapabilities(query, {home});
+    assert.ok(results.length > 0, `expected a hit for ${query}`);
+    assert.equal(results[0].capability_id, 'dingtalk.im.message.send', query);
+  }
+});
+
 test('builtin search exposes catalog JSON Schema for cap.use', async (t) => {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), 'cap-search-git-schema-'));
   t.after(() => fs.rm(home, {recursive: true, force: true}));

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Agent path (DingTalk / CJK)
+
+- **`cap search` matches natural CJK send phrasing.** Catalog needles (keywords / intents) that appear inside the query are scored, so `帮我发钉钉消息` / `发钉钉消息` rank `dingtalk.im.message.send` the same way `发送钉钉消息` already did. Seed intents/keywords add those aliases. Latin matching is unchanged; short tokens like `im` / `pr` are not reverse-matched.
+- **`cap inject` follows search.** DingTalk-send intents now get a non-empty `load` for that capability. Still plan-only (`mutates: false`); default MCP surface stays search/add/use.
+- **Missing MCP launch is actionable.** `cap add` / `cap use` attach `next_steps`, `tried_aliases`, and `found_servers` (names only) when `binding.bound` is false / `reason: missing_launch`. Auto-bind accepts compact aliases (`dingtalk-mcp`, `dingding`, `钉钉`) and scans Cursor `~/.cursor/mcp.json` / project `.cursor/mcp.json` in addition to Claude / project `.mcp.json`. Remaining manual step: install a stdio DingTalk MCP and put credentials in that server’s `env` — see [docs/mcp-gateway.md](./docs/mcp-gateway.md).
+
 ## 0.4.0
 
 Cuts **MCP gateway** (`cap.use` calls third-party stdio tools), **on-demand `input_schema`** on search/add, DingTalk seed capability, and **V4 Dynamic Injection** (plan-only). Not a patch: Agents can now proxy MCP behind three tools and fill `cap.use` from a real schema. Install with `npx -y @harvey2008/cap@0.4.0 setup` (or `@harvey2008/cap` for current). GitHub `npx -y github:Harveyallen/cap setup` remains a fallback. npm publish / git tag / GitHub Release stay with the coordinator after merge.

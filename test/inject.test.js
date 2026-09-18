@@ -79,6 +79,18 @@ test('GitHub security task includes the high-relevance review ids', async (t) =>
   assert.equal(plan.defer.some((item) => item.capability_id === 'postgres.query.explain'), true);
 });
 
+test('DingTalk send intents recommend loading the send capability', async (t) => {
+  const options = await isolated(t);
+  for (const query of ['帮我发钉钉消息', '发钉钉消息', '发送钉钉消息']) {
+    const plan = await planInjection(query, options);
+    assert.equal(plan.mutates, false, query);
+    assert.ok(plan.load.length > 0, `expected a load recommendation for ${query}`);
+    assert.equal(plan.load[0].capability_id, 'dingtalk.im.message.send', query);
+    assert.equal(plan.defer.some((item) => item.capability_id === 'dingtalk.im.message.send'), false, query);
+    assert.ok(plan.load.length < plan.comparison.catalogCount, query);
+  }
+});
+
 test('unrelated task injects nothing extra', async (t) => {
   const options = await isolated(t);
   const plan = await planInjection('hello world xyzzy', options);

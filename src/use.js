@@ -2,7 +2,7 @@
 import {spawn} from 'node:child_process';
 import path from 'node:path';
 import {callMcpTool} from './mcp-client.js';
-import {describeBinding, missingLaunchMessage, resolveMcpBinding, storeBinding} from './mcp-bind.js';
+import {describeBinding, listMcpLaunchCandidates, missingLaunchHint, missingLaunchMessage, resolveMcpBinding, storeBinding} from './mcp-bind.js';
 import {loadCatalog, loadState, saveState} from './registry.js';
 
 function run(executable, args, options = {}) {
@@ -42,12 +42,13 @@ function connectionRequired({capability, providerId, reason, message}) {
 
 async function bindMcp(provider, state, options) {
   const stored = state.mcp_bindings?.[provider.provider_id];
-  if (stored?.command) return stored;
-  const resolved = await resolveMcpBinding(provider, options, state);
-  if (!resolved) return stored ?? null;
+  if (stored?.command) return {binding: stored, candidates: options.launchCandidates ?? []};
+  const candidates = options.launchCandidates ?? await listMcpLaunchCandidates(options, state);
+  const resolved = await resolveMcpBinding(provider, {...options, launchCandidates: candidates}, state);
+  if (!resolved) return {binding: stored ?? null, candidates};
   state.mcp_bindings ??= {};
   state.mcp_bindings[provider.provider_id] = storeBinding(resolved);
-  return state.mcp_bindings[provider.provider_id];
+  return {binding: state.mcp_bindings[provider.provider_id], candidates};
 }
 
 async function useBuiltin(capabilityId, provider, input) {
@@ -74,7 +75,7 @@ async function useMcp(capability, provider, input, state, options) {
     await record(state, {action: 'use', capability_id: capability.capability_id, provider_id: provider.provider_id, success: false, status: 'connection_required', reason: result.reason}, options);
     return result;
   }
-  const binding = await bindMcp(provider, state, options);
+  const {binding, candidates} = await bindMcp(provider, state, options);
   if (binding?.transport === 'http' && !binding.command) {
     const result = connectionRequired({
       capability,
@@ -86,12 +87,18 @@ async function useMcp(capability, provider, input, state, options) {
     return result;
   }
   if (!binding?.command) {
-    const result = connectionRequired({
-      capability,
-      providerId: provider.provider_id,
-      reason: 'missing_launch',
-      message: missingLaunchMessage(provider)
-    });
+    const hint = missingLaunchHint(provider, {candidates});
+    const result = {
+      ...connectionRequired({
+        capability,
+        providerId: provider.provider_id,
+        reason: 'missing_launch',
+        message: missingLaunchMessage(provider, {candidates})
+      }),
+      next_steps: hint.next_steps,
+      tried_aliases: hint.tried_aliases,
+      found_servers: hint.found_servers
+    };
     await record(state, {action: 'use', capability_id: capability.capability_id, provider_id: provider.provider_id, success: false, status: 'connection_required', reason: result.reason}, options);
     return result;
   }
