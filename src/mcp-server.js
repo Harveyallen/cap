@@ -6,6 +6,7 @@ import { useCapability } from './use.js';
 import { inspectLocal } from './inspector.js';
 import { planInjection } from './inject.js';
 import { exposedCapTools } from './mcp-tools.js';
+import { packageVersion } from './paths.js';
 
 async function callTool(name, args, options) {
   if (name === 'cap.search') return searchCapabilities(args.query, {...options, limit: args.limit});
@@ -19,7 +20,7 @@ async function callTool(name, args, options) {
 export async function handleMcpMessage(message, options = {}) {
   const base = {jsonrpc: '2.0', id: message.id};
   try {
-    if (message.method === 'initialize') return {...base, result: {protocolVersion: message.params?.protocolVersion ?? '2025-06-18', capabilities: {tools: {}}, serverInfo: {name: 'cap', version: '0.2.0'}}};
+    if (message.method === 'initialize') return {...base, result: {protocolVersion: message.params?.protocolVersion ?? '2025-06-18', capabilities: {tools: {}}, serverInfo: {name: 'cap', version: packageVersion()}}};
     if (message.method === 'notifications/initialized') return null;
     if (message.method === 'ping') return {...base, result: {}};
     if (message.method === 'tools/list') return {...base, result: {tools: exposedCapTools(options)}};

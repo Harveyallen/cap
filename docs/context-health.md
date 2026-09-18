@@ -81,14 +81,14 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 | 版本 | 名称 | 状态 |
 |------|------|------|
 | V1 | Token 可视化 | 已有：`contextTokens`、reduction % |
-| V2 | Context Health | 本版：budget / pressure / funnel / 更完整清单 |
-| V3 | Value Analysis / 价值分析 | **Unreleased 运行时**：activity → value / valuePerCost、会话日引用、建议减负列表（0.2.0 仅文档；内部模块 `profiler.js`） |
+| V2 | Context Health | 0.2.0：budget / pressure / funnel / 更完整清单 |
+| V3 | Value Analysis / 价值分析 | **0.3.0 运行时**：activity → value / valuePerCost、会话日引用、建议减负列表（0.2.0 仅文档；内部模块 `profiler.js`） |
 | V4 | Dynamic Injection | **Unreleased 运行时（本切片）**：按任务给出最小装载计划，而非常驻全量 catalog / Direct MCP |
 | V5 | Context Control Plane | 策略、SLO、自动 eviction / 压缩建议 |
 
-## V3：价值分析 / Value Analysis（Unreleased 运行时）
+## V3：价值分析 / Value Analysis（0.3.0 运行时）
 
-0.2.0 只把 V3 写在文档里；**本变更实现运行时**（内部模块 `src/profiler.js`），挂在 `cap inspect` / `--json` / Web Health 的 `profiler` 上（JSON 字段名保持兼容）。
+0.2.0 只把 V3 写在文档里；**0.3.0 交付运行时**（内部模块 `src/profiler.js`），挂在 `cap inspect` / `--json` / Web Health 的 `profiler` 上（JSON 字段名保持兼容）。
 
 1. **Usage from Activity**  
    从 Registry Activity 按 `capability_id` 聚合 `use`（成功次数、失败 / `connection_required`、最近尝试、UTC 日会话）。`funnel.used` 仍是成功 use 的去重能力数；`funnel.useAttempts` 是全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`。

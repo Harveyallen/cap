@@ -9,8 +9,9 @@ import { planInjection } from './inject.js';
 import { applyOptimization, buildOptimizationPlan, writeOptimizationPlan } from './optimize.js';
 import { setupCap } from './setup.js';
 import { startWebServer } from './web-server.js';
+import { packageVersion } from './paths.js';
 
-const help = `CAP — Capability & Context Control Plane
+const help = `CAP ${packageVersion()} — Capability & Context Control Plane
 用最小能力集，换最大有效上下文。
 
 Usage:
