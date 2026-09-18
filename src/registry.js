@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { validateCatalog } from './catalog-schema.js';
 import { resolveInputSchema } from './input-schema.js';
-import { describeBinding, resolveMcpBinding, storeBinding } from './mcp-bind.js';
+import { describeBinding, listMcpLaunchCandidates, missingLaunchHint, resolveMcpBinding, storeBinding } from './mcp-bind.js';
 import { capHome, packageRoot } from './paths.js';
 
 export async function loadCatalog() {
@@ -47,15 +47,18 @@ export async function addCapability(capabilityId, providerId, options = {}) {
   state.mcp_bindings ??= {};
   let binding = null;
   let launch = options.launch;
+  let hint = null;
   if (provider.type === 'MCP') {
-    const resolved = await resolveMcpBinding(provider, options, state);
+    const candidates = options.launchCandidates ?? await listMcpLaunchCandidates(options, state);
+    const resolved = await resolveMcpBinding(provider, {...options, launchCandidates: candidates}, state);
     if (resolved) {
       state.mcp_bindings[selected] = storeBinding(resolved);
       binding = describeBinding(state.mcp_bindings[selected]);
       launch = state.mcp_bindings[selected];
     } else {
       delete state.mcp_bindings[selected];
-      binding = describeBinding(null);
+      hint = missingLaunchHint(provider, {candidates});
+      binding = {...describeBinding(null), reason: hint.reason, server: hint.server};
       launch = undefined;
     }
   }
@@ -69,6 +72,7 @@ export async function addCapability(capabilityId, providerId, options = {}) {
     statePath,
     binding,
     input_schema: schema.input_schema,
-    schema_source: schema.schema_source
+    schema_source: schema.schema_source,
+    ...(hint ? {next_steps: hint.next_steps, tried_aliases: hint.tried_aliases, found_servers: hint.found_servers} : {})
   };
 }

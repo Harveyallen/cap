@@ -91,6 +91,7 @@ cap optimize --apply --yes
 ## 扫描范围
 
 - Claude Code：`~/.claude.json`、`~/.claude/settings.json`、项目 `.mcp.json`、Skills 目录
+- Cursor：`~/.cursor/mcp.json`、项目 `.cursor/mcp.json`（与 inspect / bind 同一份根；`optimize --apply` 只改扫描到的 JSON）
 - Codex：`~/.codex/config.toml`、`~/.codex/skills`
 - 共享项目 Skills：`.agents/skills`
 

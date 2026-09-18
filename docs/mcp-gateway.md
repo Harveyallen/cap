@@ -35,7 +35,7 @@ This does **not** expand `tools/list`. DingTalk’s 15 tools stay behind `cap.us
 2. `--server` / MCP `cap.add` argument `server` matching a local `mcpServers` name.
 3. Catalog `mcp_server`, then `provider_id` / first id segment / provider name (e.g. `github.mcp` → `github`).
 4. Registry `external_providers` left by `cap optimize --apply --yes`.
-5. Live JSON configs (same roots as inspect: `~/.claude.json`, `~/.claude/settings.json`, project `.mcp.json`) and a best-effort Codex TOML `command`/`args`.
+5. Live JSON configs (same roots as inspect: `~/.claude.json`, `~/.claude/settings.json`, `~/.cursor/mcp.json`, project `.cursor/mcp.json`, project `.mcp.json`) and a best-effort Codex TOML `command`/`args`.
 6. Catalog `command` + `args` when the seed itself knows a stdio launcher.
 
 `cap-mcp` is never used as a downstream provider. HTTP/`url`-only servers return `connection_required` with `reason: unsupported_transport` (stdio only in v1). Env values from MCP configs are copied into the 0600 registry file so the child can start; add/use **results** expose `envKeys` only — values are not logged.
@@ -46,10 +46,12 @@ Optional catalog `command`/`args` are for public stdio packages without secrets.
 
 Real DingTalk OAuth is out of scope. Plug-in path:
 
-1. Install a stdio DingTalk MCP locally. Put it in Claude/Codex/project MCP config under the key **`dingtalk`** (or pass `--server <that-key>`). Credentials stay in that server’s `env`.
+1. Install a stdio DingTalk MCP locally. Put it in Claude / Cursor / Codex / project MCP config. CAP auto-binds keys **`dingtalk`**, **`dingtalk-mcp`**, **`dingding`**, **`钉钉`** (and compact variants). If your key is unrelated, pass `--server <that-key>`. Credentials stay in that server’s `env`.
 2. Confirm the downstream tool name. Seed mapping is `dingtalk.im.message.send` → `send_message`. If your server uses another method, change catalog `mcp_tool` (or add a Capability that matches).
 3. `cap add dingtalk.im.message.send` (optionally after `cap optimize --apply --yes` so the Agent no longer lists DingTalk tools).
 4. Agent calls `cap.use` with `capability_id` + `input`. Cap starts the DingTalk MCP behind the scenes and returns the tool result.
+
+Remaining manual step: CAP does not install or authenticate the DingTalk MCP. You still place a **stdio** server in a scanned config (or pass `--server`) with credentials in that server’s `env`. Search / add / use stay the Agent surface — DingTalk’s tools are not dumped into context.
 
 ```bash
 # Isolated registry; point CAP at a local mock or real stdio server via mcpServers.
@@ -58,7 +60,7 @@ CAP_HOME=/tmp/cap-dt node ./bin/cap.js use dingtalk.im.message.send \
   --input '{"id":"user-1","msgKey":"sampleText","msgParam":{"content":"hello"}}' --json
 ```
 
-Without a matching launch: `status: "connection_required"`, `reason: "missing_launch"`. Tests use `test/fixtures/mock-mcp-server.js` (no DingTalk credentials).
+Without a matching launch: `status: "connection_required"`, `reason: "missing_launch"`, plus `next_steps` / `tried_aliases` / `found_servers` (names only; no env values). Tests use `test/fixtures/mock-mcp-server.js` (no DingTalk credentials).
 
 ## Limits
 

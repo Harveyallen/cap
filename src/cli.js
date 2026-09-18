@@ -297,7 +297,7 @@ export async function main(args, options = {}) {
     const bind = result.binding?.bound
       ? `MCP binding: ${result.binding.server} → ${result.binding.command} ${(result.binding.args ?? []).join(' ')}`.trim()
       : result.binding && result.provider.type === 'MCP'
-        ? 'MCP binding: not resolved (cap.use will return connection_required until a matching mcpServers entry exists)'
+        ? ['MCP binding: not resolved (cap.use will return connection_required until a matching mcpServers entry exists)', ...(result.next_steps ?? [])].join('\n  ')
         : null;
     return print(json ? result : [`Added ${result.capability.name} via ${result.provider.name}`, `Registry: ${result.statePath}`, bind].filter(Boolean).join('\n'), json);
   }
@@ -306,7 +306,7 @@ export async function main(args, options = {}) {
     if (!capabilityId) throw new Error('Capability id is required');
     const input = JSON.parse(flag(rest, '--input') ?? '{}');
     const result = await useCapability(capabilityId, input, options);
-    return print(json ? result : (result.stdout || result.message || JSON.stringify(result, null, 2)), json);
+    return print(json ? result : (result.stdout || [result.message, ...(result.next_steps ?? [])].filter(Boolean).join('\n') || JSON.stringify(result, null, 2)), json);
   }
   if (command === 'optimize') {
     if (rest.includes('--apply') && !rest.includes('--yes')) throw new Error('Refusing to edit Agent configs without both --apply and --yes');

@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { defaultMcpJsonConfigs } from './mcp-bind.js';
 import { loadCatalog, loadState } from './registry.js';
 import { exposedCapTools, isCapMcpConfig } from './mcp-tools.js';
 import { buildProfiler } from './profiler.js';
@@ -223,11 +224,7 @@ async function walkSkills(root, agent) {
 export async function inspectLocal(options = {}) {
   const home = options.userHome ?? os.homedir();
   const project = path.resolve(options.projectRoot ?? process.cwd());
-  const jsonConfigs = options.jsonConfigs ?? [
-    [path.join(home, '.claude.json'), 'Claude Code'],
-    [path.join(home, '.claude', 'settings.json'), 'Claude Code'],
-    [path.join(project, '.mcp.json'), 'Project']
-  ];
+  const jsonConfigs = options.jsonConfigs ?? defaultMcpJsonConfigs(home, project);
   const skillRoots = options.skillRoots ?? [
     [path.join(home, '.claude', 'skills'), 'Claude Code'],
     [path.join(home, '.codex', 'skills'), 'Codex'],
