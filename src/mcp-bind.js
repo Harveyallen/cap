@@ -189,7 +189,9 @@ export async function resolveMcpBinding(provider, options = {}, state = {}) {
       transport: 'stdio'
     };
   }
-  const candidates = await listMcpLaunchCandidates(options, state);
+  let candidates = options.launchCandidates;
+  if (typeof candidates === 'function') candidates = await candidates();
+  candidates ??= await listMcpLaunchCandidates(options, state);
   const matched = matchCandidate(candidates, provider, options.server);
   if (matched) {
     return {...matched, server: matched.name};

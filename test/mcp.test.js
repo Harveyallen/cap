@@ -34,6 +34,8 @@ test('MCP add registers a managed capability', async (t) => {
   const response = await handleMcpMessage({jsonrpc: '2.0', id: 6, method: 'tools/call', params: {name: 'cap.add', arguments: {capability_id: 'git.repository.status'}}}, {home});
   assert.equal(response.result.structuredContent.capability.capability_id, 'git.repository.status');
   assert.equal(response.result.structuredContent.provider.status, 'CAP Managed');
+  assert.equal(response.result.structuredContent.schema_source, 'catalog');
+  assert.equal(response.result.structuredContent.input_schema.properties.path.type, 'string');
 });
 
 test('MCP search returns structured capability results', async (t) => {
@@ -41,4 +43,7 @@ test('MCP search returns structured capability results', async (t) => {
   t.after(() => fs.rm(home, {recursive: true, force: true}));
   const response = await handleMcpMessage({jsonrpc: '2.0', id: 2, method: 'tools/call', params: {name: 'cap.search', arguments: {query: 'PDF to markdown'}}}, {home});
   assert.equal(response.result.structuredContent[0].capability_id, 'document.pdf.to_markdown');
+  assert.equal(response.result.structuredContent[0].schema_source, 'catalog');
+  assert.equal(response.result.structuredContent[0].input_schema.properties.file.type, 'string');
+  assert.equal(response.result.structuredContent[0].input_schema.properties.file.description, 'Filesystem path');
 });

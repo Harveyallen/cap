@@ -30,7 +30,7 @@ $ cap search "分析 PostgreSQL 慢查询"
 - `cap setup`：备份并写入 Claude Code / Codex 的 CAP MCP 与 `cap-context-health` Skill，然后跑一次 `cap inspect`。
 - `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），用人话输出健康分数、常驻占用、清单和 V3 价值分析。`cap-mcp` 不会被建议再迁走。详见 [docs/context-health.md](./docs/context-health.md)。
 - V3 价值分析：从 Registry Activity 计算 Value/Cost，在 `cap inspect` / Web Health 展示性价比排行与建议减负（`src/profiler.js`）。
-- `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。
+- `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。JSON 结果带 `input_schema`（`cap.use` 入参的 JSON Schema）和 `schema_source`（`mcp` 或 `catalog`）。
 - `cap inject`：按任务给出 V4 最小装载计划（load / defer），对照全量 catalog 与当前常驻占用。
 - `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
 - `cap use`：通过 Capability 抽象调用已登记的 Provider。内置 Git / ripgrep；MCP Provider 在有 stdio binding 时由 CAP 在幕后调用下游工具（Agent 仍只看到 `cap.search` / `cap.add` / `cap.use`）。详见 [docs/mcp-gateway.md](./docs/mcp-gateway.md)。

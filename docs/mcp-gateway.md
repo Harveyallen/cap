@@ -14,6 +14,21 @@ Three pieces have to line up. Missing any one is `connection_required` (or a pre
 
 `cap add` resolves the launch config (does not spawn) and stores it under `mcp_bindings[provider_id]`. `cap.use` spawns that command with `shell: false`, speaks line-delimited JSON-RPC (same framing as `cap-mcp`), calls **one** mapped tool with `input`, then stops the process.
 
+## On-demand `input_schema`
+
+Models cannot reliably fill `cap.use` from Catalog `inputs: {field: "string"}` alone. Search and add attach a real JSON Schema **on the result**, not as extra Agent tools:
+
+| Field | Meaning |
+| --- | --- |
+| `input_schema` | JSON Schema object for that capability’s `cap.use` `input` |
+| `schema_source` | `"mcp"` if the schema came from downstream `tools/list` for the mapped `mcp_tool`; `"catalog"` otherwise |
+
+Live fetch: when a stdio launch is already bound or resolvable (Registry `mcp_bindings`, `--server` / local `mcpServers`, explicit launch, catalog `command`), CAP briefly spawns that server, calls `tools/list`, picks the mapped tool’s `inputSchema`, then exits. Same client as the gateway. If the child cannot be reached or the mapped tool is missing, results fall back to a Catalog-derived schema (`string` / `number` / `object` / `array` / `boolean` / `integer`, plus `path` → string path and `secret` → unlogged string). `path` is omitted from `required` because builtins default it to cwd.
+
+Builtins (git / ripgrep) always use `schema_source: "catalog"`. `cap inject` ranking sets `liveSchema: false` so the plan does not connect to third-party MCP.
+
+This does **not** expand `tools/list`. DingTalk’s 15 tools stay behind `cap.use`.
+
 ### Launch resolution order
 
 1. Explicit `options.launch` (tests / programmatic).
@@ -49,5 +64,5 @@ Without a matching launch: `status: "connection_required"`, `reason: "missing_la
 
 - Per-`use` spawn (no long-lived pool).
 - Line-delimited JSON-RPC only (MCP spec stdio / same as `cap-mcp`).
-- Does not expand the default 3-tool surface; does not proxy `tools/list` schemas to the LLM.
+- Does not expand the default 3-tool surface; does not re-inject downstream tools. The **one** mapped tool’s `inputSchema` is returned on search/add results (`input_schema`), not on Agent `tools/list`.
 - Does not implement OAuth; if the child MCP cannot authenticate, `cap.use` returns `failed` with that error.

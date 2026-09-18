@@ -13,6 +13,27 @@ test('intent-first search ranks DingTalk send first', async (t) => {
   t.after(() => fs.rm(home, {recursive: true, force: true}));
   const results = await searchCapabilities('发送钉钉消息', {home});
   assert.equal(results[0].capability_id, 'dingtalk.im.message.send');
+  assert.equal(results[0].schema_source, 'catalog');
+  assert.equal(results[0].input_schema.type, 'object');
+  assert.equal(results[0].input_schema.properties.msgKey.type, 'string');
+  assert.equal(results[0].input_schema.properties.msgKey.enum, undefined);
+  assert.deepEqual(results[0].input_schema.required, ['id', 'msgKey', 'msgParam']);
+});
+
+test('builtin search exposes catalog JSON Schema for cap.use', async (t) => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'cap-search-git-schema-'));
+  t.after(() => fs.rm(home, {recursive: true, force: true}));
+  const [git] = await searchCapabilities('check git status', {home});
+  assert.equal(git.capability_id, 'git.repository.status');
+  assert.equal(git.schema_source, 'catalog');
+  assert.equal(git.input_schema.properties.path.type, 'string');
+  assert.equal(git.input_schema.required, undefined);
+
+  const [files] = await searchCapabilities('search files', {home});
+  assert.equal(files.capability_id, 'local.files.search');
+  assert.equal(files.schema_source, 'catalog');
+  assert.deepEqual(files.input_schema.required, ['query']);
+  assert.equal(files.input_schema.properties.path.description, 'Filesystem path');
 });
 
 test('intent-first search ranks PostgreSQL analysis first', async (t) => {
@@ -21,6 +42,11 @@ test('intent-first search ranks PostgreSQL analysis first', async (t) => {
   const results = await searchCapabilities('分析 PostgreSQL 慢查询', {home});
   assert.equal(results[0].capability_id, 'postgres.query.explain');
   assert.equal(results[0].installed, false);
+  assert.equal(results[0].schema_source, 'catalog');
+  assert.equal(results[0].input_schema.properties.query.type, 'string');
+  assert.equal(results[0].input_schema.properties.connection.type, 'string');
+  assert.equal(results[0].input_schema.properties.connection.description, 'Secret; do not log');
+  assert.deepEqual(results[0].input_schema.required, ['query', 'connection']);
 });
 
 test('add persists managed capability and affects search', async (t) => {

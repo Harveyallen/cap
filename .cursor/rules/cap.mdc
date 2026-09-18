@@ -6,7 +6,7 @@ alwaysApply: true
 Follow root `AGENTS.md`. Summary:
 
 - Node 20+ ESM, zero runtime deps by default
-- Domain logic in `src/{search,registry,use,mcp-bind,mcp-client,inspector,setup,optimize,inject,mcp-server,mcp-tools}.js`; keep CLI/Web thin
+- Domain logic in `src/{search,registry,use,mcp-bind,mcp-client,input-schema,inspector,setup,optimize,inject,mcp-server,mcp-tools}.js`; keep CLI/Web thin
 - Catalog edits must keep Capability↔Provider refs bidirectional; validate against `data/catalog.schema.json`
 - Prefer CLI `--json` and `CAP_HOME` temp dirs when testing
 - Never expand default MCP tools beyond search/add/use without opt-in

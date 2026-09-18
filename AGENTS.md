@@ -19,7 +19,8 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/registry.js` | Catalog + `~/.cap/registry.json` state |
 | `src/use.js` | Execute managed providers (git / ripgrep builtins, or stdio MCP gateway) |
 | `src/mcp-bind.js` | Resolve MCP stdio launch from catalog / local `mcpServers` / Registry |
-| `src/mcp-client.js` | Line-delimited JSON-RPC client used by `cap.use` (one tool call per use) |
+| `src/mcp-client.js` | Line-delimited JSON-RPC client (`tools/call` for `cap.use`, `tools/list` for on-demand input schema) |
+| `src/input-schema.js` | On-demand JSON Schema for `cap.use` input (live MCP `tools/list` or catalog) |
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
 | `src/profiler.js` | V3 Value Analysis (internally: profiler module; activity → value / valuePerCost / underused) |
 | `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
@@ -91,7 +92,7 @@ Registry writes, optimize apply, MCP/web server starters, Value Analysis (`profi
 - Connect to or execute scanned third-party MCP servers during `inspect`
 - Fake successful `use` for providers that still need connection (`connection_required`)
 - Commit `.cap/`, `node_modules/`, or real user Agent configs
-- Expose full downstream tool schemas through `cap-mcp` by default
+- Expose full downstream tool schemas through `cap-mcp` by default (search/add may return the **one** mapped tool’s `input_schema`; `tools/list` stays search/add/use)
 
 ## Catalog edits
 

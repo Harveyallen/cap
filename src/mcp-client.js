@@ -31,13 +31,13 @@ function rpcError(message, extra = {}) {
 }
 
 /**
- * Spawn a stdio MCP server, initialize, call one tool, then stop the process.
+ * Spawn a stdio MCP server, initialize, run one RPC sequence, then stop.
  * Does not log launch env (tokens often live there).
  */
-export async function callMcpTool(launch, toolName, toolArgs = {}, options = {}) {
+async function runMcpSession(launch, options, work) {
   if (!launch?.command) throw rpcError('MCP launch command is required');
-  if (!toolName) throw rpcError('MCP tool name is required');
   const timeout = options.timeout ?? 20_000;
+  const label = options.label ?? 'MCP';
   const args = Array.isArray(launch.args) ? launch.args.map(String) : [];
   const child = spawn(String(launch.command), args, {
     cwd: launch.cwd,
@@ -69,7 +69,7 @@ export async function callMcpTool(launch, toolName, toolArgs = {}, options = {})
 
   const session = new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(rpcError(`MCP timed out after ${timeout}ms waiting for ${toolName}`, {code: 'ETIMEDOUT'}));
+      reject(rpcError(`MCP timed out after ${timeout}ms waiting for ${label}`, {code: 'ETIMEDOUT'}));
       stop();
     }, timeout);
 
@@ -86,7 +86,7 @@ export async function callMcpTool(launch, toolName, toolArgs = {}, options = {})
     child.on('close', (code) => {
       if (pending.size) {
         const detail = stderr.trim() ? `: ${stderr.trim().slice(0, 500)}` : '';
-        fail(rpcError(`MCP exited (${code ?? 'null'}) before completing ${toolName}${detail}`, {code: 'EEXIT'}));
+        fail(rpcError(`MCP exited (${code ?? 'null'}) before completing ${label}${detail}`, {code: 'EEXIT'}));
       }
     });
 
@@ -130,7 +130,7 @@ export async function callMcpTool(launch, toolName, toolArgs = {}, options = {})
         clientInfo: {name: 'cap', version: packageVersion()}
       });
       send({jsonrpc: '2.0', method: 'notifications/initialized', params: {}});
-      const result = await request('tools/call', {name: toolName, arguments: toolArgs ?? {}});
+      const result = await work({request});
       clearTimeout(timer);
       pending.clear();
       stop();
@@ -139,17 +139,36 @@ export async function callMcpTool(launch, toolName, toolArgs = {}, options = {})
   });
 
   try {
-    const result = await session;
-    return {
-      tool: toolName,
-      result: result?.structuredContent ?? result,
-      content: result?.content,
-      isError: Boolean(result?.isError)
-    };
+    return await session;
   } finally {
     stop();
     const killer = setTimeout(() => child.kill('SIGKILL'), 1_000);
     await waitClose;
     clearTimeout(killer);
   }
+}
+
+/**
+ * Spawn a stdio MCP server, initialize, call one tool, then stop the process.
+ * Does not log launch env (tokens often live there).
+ */
+export async function callMcpTool(launch, toolName, toolArgs = {}, options = {}) {
+  if (!toolName) throw rpcError('MCP tool name is required');
+  const result = await runMcpSession(launch, {timeout: options.timeout, label: toolName}, async ({request}) => {
+    return request('tools/call', {name: toolName, arguments: toolArgs ?? {}});
+  });
+  return {
+    tool: toolName,
+    result: result?.structuredContent ?? result,
+    content: result?.content,
+    isError: Boolean(result?.isError)
+  };
+}
+
+/** Spawn, initialize, `tools/list`, then exit. Used for on-demand cap.use input_schema. */
+export async function listMcpTools(launch, options = {}) {
+  const result = await runMcpSession(launch, {timeout: options.timeout ?? 8_000, label: 'tools/list'}, async ({request}) => {
+    return request('tools/list', {});
+  });
+  return Array.isArray(result?.tools) ? result.tools : [];
 }
