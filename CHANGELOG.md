@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Context Health / Dynamic Injection
+
+- **V4 Dynamic Injection (runtime, plan-only):** `cap inject <task>` (`--json`) builds a minimal load/defer plan for that task instead of assuming the full catalog or Direct MCP surface is resident. Ranking reuses `searchCapabilities` with a relative score floor; CAP entry tools stay in `keepResident`. `savedVsCatalog` uses seed `context_cost`; `savedVsResident` uses inspect estimates with after = CAP surface only (`cap.use` does not add provider schemas to the resident window). Does not mutate Agent configs (`mutates: false`). MCP tool `cap.inject` is opt-in (`CAP_MCP_INJECT=1`), so the default 3-tool surface is unchanged.
+- Human `cap inspect` next-step line points at `cap inject <任务>`.
+
 ## 0.3.0
 
 Cuts **V3 Value Analysis** as a shipped runtime. npm registry publish remains deferred; install via `npx -y github:Harveyallen/cap setup` (or clone + `node ./bin/cap.js setup`). No git tags or GitHub Releases in this repo yet.

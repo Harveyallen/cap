@@ -5,6 +5,7 @@ import { inspectLocal } from './inspector.js';
 import { searchCapabilities } from './search.js';
 import { addCapability, loadState } from './registry.js';
 import { useCapability } from './use.js';
+import { planInjection } from './inject.js';
 import { applyOptimization, buildOptimizationPlan, writeOptimizationPlan } from './optimize.js';
 import { setupCap } from './setup.js';
 import { startWebServer } from './web-server.js';
@@ -17,6 +18,7 @@ Usage:
   cap setup [--agent auto|claude|codex] [--json]
   cap inspect [--json]
   cap search <task> [--json]
+  cap inject <task> [--json]
   cap add <capability-id> [--provider <provider-id>] [--json]
   cap use <capability-id> [--input <json>] [--json]
   cap optimize [--write-plan <file>] [--apply --yes] [--json]
@@ -193,7 +195,7 @@ export function inspectText(report, options = {}) {
   }
 
   if (!inventory.length && !warnings.length) lines.push(rule, '  未发现本地 MCP / Skills 配置。');
-  lines.push(rule, paint(2, '下一步  cap search <任务>  ·  cap optimize（仅预览）'));
+  lines.push(rule, paint(2, '下一步  cap inject <任务>  ·  cap search <任务>  ·  cap optimize（仅预览）'));
   return lines.join('\n');
 }
 
@@ -225,6 +227,40 @@ function searchText(results) {
   return results.map((item, index) => `${index + 1}. ${item.name}  ${item.installed ? '[CAP Managed]' : '[Available]'}\n   ${item.capability_id}\n   ${item.summary}\n   Providers: ${item.providers.map((p) => `${p.name} (${p.status})`).join(', ')}\n   Context: ~${item.context_cost} tokens · Risk: ${item.risk}`).join('\n\n');
 }
 
+export function injectText(plan) {
+  const cmp = plan.comparison ?? {};
+  const rule = '─'.repeat(56);
+  const lines = [
+    paint(1, 'CAP Inject · 按任务装载'),
+    `任务  ${plan.task}`,
+    `装载  ${cmp.loadCount ?? 0} / ${cmp.catalogCount ?? 0} 个能力 · ${compactTokens(cmp.loadTokens)} tok（全量 catalog ${compactTokens(cmp.catalogTokens)}）`,
+    `推迟  ${cmp.deferCount ?? 0} 个 · 相对全量 catalog 少占 ${compactTokens(cmp.savedVsCatalog)} tok`,
+    `入口  ${(plan.keepResident?.tools ?? []).join(' / ') || 'cap.search / cap.add / cap.use'} 保持常驻`,
+    paint(2, '只出计划，不改 Agent 配置，也不连接第三方 MCP')
+  ];
+  if (cmp.residentTokens > cmp.afterTokens) {
+    lines.push(`对照  当前常驻 ${compactTokens(cmp.residentTokens)} → CAP 入口 ${compactTokens(cmp.afterTokens)} · 可少占 ${compactTokens(cmp.savedVsResident)} tok`);
+  }
+  lines.push(rule, '装载');
+  if (!plan.load?.length) {
+    lines.push('  没有高相关能力。CAP 入口保持常驻，不要为这个任务注入 catalog 其余能力。');
+  } else {
+    plan.load.forEach((item, index) => {
+      const mark = item.installed ? '[CAP Managed]' : '[Available]';
+      lines.push(`  ${index + 1}. ${item.name}  ${mark}`);
+      lines.push(`     ${item.capability_id}  ${compactTokens(item.context_cost)} tok`);
+      if (item.next?.command) lines.push(`     下一步  ${item.next.command}`);
+    });
+  }
+  if (plan.defer?.length) {
+    lines.push(rule, '推迟（本任务不注入）');
+    for (const item of plan.defer) {
+      lines.push(`  · ${item.capability_id}  ${compactTokens(item.context_cost)} tok`);
+    }
+  }
+  return lines.join('\n');
+}
+
 export async function main(args, options = {}) {
   const command = args[0] ?? 'help';
   const rest = args.slice(1);
@@ -242,6 +278,11 @@ export async function main(args, options = {}) {
     const query = positional(rest).join(' ');
     const results = await searchCapabilities(query, options);
     return print(json ? results : searchText(results), json);
+  }
+  if (command === 'inject') {
+    const query = positional(rest).join(' ');
+    const plan = await planInjection(query, options);
+    return print(json ? plan : injectText(plan), json);
   }
   if (command === 'add') {
     const capabilityId = positional(rest)[0];
