@@ -41,10 +41,10 @@ $ cap search "分析 PostgreSQL 慢查询"
 
 ## 安装
 
-优先从 npm 安装（包名 `@harveyallen/cap`）：
+优先从 npm 安装（包名 `@harvey2008/cap`）：
 
 ```bash
-npx -y @harveyallen/cap setup
+npx -y @harvey2008/cap setup
 ```
 
 也可以从 GitHub 安装（仓库 `Harveyallen/cap` 若为私有需有访问权限），或克隆后本地执行 `node ./bin/cap.js setup`：
@@ -56,7 +56,7 @@ npx -y github:Harveyallen/cap setup
 Agent 可粘贴：
 
 ```text
-请安装 CAP（npx -y @harveyallen/cap setup。也可 npx -y github:Harveyallen/cap setup，或克隆后 node ./bin/cap.js setup）。
+请安装 CAP（npx -y @harvey2008/cap setup。也可 npx -y github:Harveyallen/cap setup，或克隆后 node ./bin/cap.js setup）。
 然后运行 cap inspect，用中文汇报 Context Pressure、漏斗（installed → enabled → injected → used）和可回收 token。
 之后凡是「上下文占用 / MCP 是否过多」的问题，优先使用 cap.inspect / cap inspect。
 ```
@@ -160,4 +160,4 @@ CAP Inject · 按任务装载
 - Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。高 Context Pressure 不会突然「触发幻觉」，但会造成注意力稀释、召回变差、选错工具和指令冲突（Lost in the Middle）。
 - V3 价值分析运行时已在 0.3.0（`src/profiler.js`）：`cost.value` 来自 Activity 信号，无信号时仍为 `null`；不假装测量当前会话注入。
 - V4 Dynamic Injection 运行时已在 Unreleased（`src/inject.js`）：`cap inject` 给出按任务的最小装载计划；不自动改 MCP 配置，也不把 `cap.inject` 加入默认三工具表面。
-- 本版优先验证开发者闭环，不包含 Desktop、企业权限、团队治理。npm 包名为 `@harveyallen/cap`。
+- 本版优先验证开发者闭环，不包含 Desktop、企业权限、团队治理。npm 包名为 `@harvey2008/cap`。
