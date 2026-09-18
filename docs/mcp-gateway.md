@@ -23,7 +23,7 @@ Models cannot reliably fill `cap.use` from Catalog `inputs: {field: "string"}` a
 | `input_schema` | JSON Schema object for that capability’s `cap.use` `input` |
 | `schema_source` | `"mcp"` if the schema came from downstream `tools/list` for the mapped `mcp_tool`; `"catalog"` otherwise |
 
-Live fetch: when a stdio launch is already bound or resolvable (Registry `mcp_bindings`, `--server` / local `mcpServers`, explicit launch, catalog `command`), CAP briefly spawns that server, calls `tools/list`, picks the mapped tool’s `inputSchema`, then exits. Same client as the gateway. If the child cannot be reached or the mapped tool is missing, results fall back to a Catalog-derived schema (`string` / `number` / `object` / `array` / `boolean` / `integer`, plus `path` → string path and `secret` → unlogged string). `path` is omitted from `required` because builtins default it to cwd.
+Live fetch: when a stdio launch is already bound or resolvable (Registry `mcp_bindings`, `--server` / local `mcpServers`, explicit launch, catalog `command`), CAP briefly spawns that server, calls `tools/list`, picks the mapped tool’s `inputSchema`, then exits. Same client as the gateway. If the child cannot be reached or the mapped tool is missing, results fall back to a Catalog-derived schema (`string` / `number` / `object` / `array` / `boolean` / `integer`, plus `path` → string path and `secret` → unlogged string). Field names `path` / `file` also get a filesystem-path description when the catalog type is only `string`. `path` is omitted from `required` because builtins default it to cwd.
 
 Builtins (git / ripgrep) always use `schema_source: "catalog"`. `cap inject` ranking sets `liveSchema: false` so the plan does not connect to third-party MCP.
 
