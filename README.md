@@ -33,7 +33,7 @@ $ cap search "分析 PostgreSQL 慢查询"
 - `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。
 - `cap inject`：按任务给出 V4 最小装载计划（load / defer），对照全量 catalog 与当前常驻占用。
 - `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
-- `cap use`：通过 Capability 抽象调用已登记的本地 Provider；初版内置 Git 状态与 ripgrep 搜索。
+- `cap use`：通过 Capability 抽象调用已登记的 Provider。内置 Git / ripgrep；MCP Provider 在有 stdio binding 时由 CAP 在幕后调用下游工具（Agent 仍只看到 `cap.search` / `cap.add` / `cap.use`）。详见 [docs/mcp-gateway.md](./docs/mcp-gateway.md)。
 - `cap optimize`：展示 Before / After；显式使用 `--apply --yes` 时迁移 JSON MCP 配置，并先生成时间戳备份。
 - `cap web`：轻量 Discover、My Capabilities、Context Health 仪表盘。
 - `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.add`、`cap.use`；可选暴露 `cap.inspect`、`cap.inject`。
@@ -115,6 +115,7 @@ CAP Core ── Search ── Catalog
 | [`AGENTS.md`](./AGENTS.md) | Agent 工作约定（命令、边界、目录图） |
 | [`llms.txt`](./llms.txt) | LLM / Agent 文档索引 |
 | [`docs/architecture.md`](./docs/architecture.md) | 模块边界与数据流 |
+| [`docs/mcp-gateway.md`](./docs/mcp-gateway.md) | `cap.use` 作为 MCP 网关的绑定模型（DingTalk 接入） |
 | [`docs/context-health.md`](./docs/context-health.md) | Context Pressure、漏斗与 Health 产品说明 |
 | [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills（CAP + full `mattpocock/skills` pack） |
 | [`.mcp.json`](./.mcp.json) | 项目级 CAP MCP（dogfood） |
@@ -144,8 +145,8 @@ Unreleased 运行时：`cap inject <任务>` 按任务给出最小装载计划�
 $ cap inject "分析 PostgreSQL 慢查询"
 CAP Inject · 按任务装载
 任务  分析 PostgreSQL 慢查询
-装载  1 / 6 个能力 · ~740 tok（全量 catalog ~3.4k）
-推迟  5 个 · 相对全量 catalog 少占 ~2.6k tok
+装载  1 / 7 个能力 · ~740 tok（全量 catalog ~3.8k）
+推迟  6 个 · 相对全量 catalog 少占 ~3.1k tok
 入口  cap.search / cap.add / cap.use 保持常驻
 ```
 
@@ -156,7 +157,7 @@ CAP Inject · 按任务装载
 ## V0.3 边界
 
 - 公共 Registry/GitHub 的在线抓取、语义向量检索与 OAuth 连接尚未实现；当前使用本地 curated Catalog 和可解释的混合关键词评分。
-- 非内置 Provider 可以添加，但 Use 会返回 `connection_required`，不会伪装成已执行。
+- 非内置 Provider 可以添加。MCP 在具备 `mcp_tool` 与 stdio 启动绑定（本地 `mcpServers` / `optimize` 迁入的 Registry 项 / 显式 `--server`）时，`cap.use` 会启动该 MCP 并调用映射工具；否则返回精确的 `connection_required`（或启动失败的 `failed`），不会伪装成已执行。DingTalk 等示例见 [docs/mcp-gateway.md](./docs/mcp-gateway.md)。
 - Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。高 Context Pressure 不会突然「触发幻觉」，但会造成注意力稀释、召回变差、选错工具和指令冲突（Lost in the Middle）。
 - V3 价值分析运行时已在 0.3.0（`src/profiler.js`）：`cost.value` 来自 Activity 信号，无信号时仍为 `null`；不假装测量当前会话注入。
 - V4 Dynamic Injection 运行时已在 Unreleased（`src/inject.js`）：`cap inject` 给出按任务的最小装载计划；不自动改 MCP 配置，也不把 `cap.inject` 加入默认三工具表面。

@@ -7,6 +7,7 @@
 - [README](README.md): human quick start and product overview
 - [AGENTS.md](AGENTS.md): instructions for coding agents
 - [Architecture](docs/architecture.md): module boundaries and data flow
+- [MCP gateway](docs/mcp-gateway.md): `cap.use` stdio binding model (Capability `mcp_tool` + local `mcpServers`)
 - [Context Health](docs/context-health.md): pressure, funnel, V3 Value Analysis runtime (value/cost), V4 Dynamic Injection plan, inspect/Health contract
 - [Catalog schema](data/catalog.schema.json): seed catalog contract
 - [Changelog](CHANGELOG.md)
@@ -14,6 +15,7 @@
 ## Entry points
 
 - CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `inject` / `add` / `use` / `optimize` / `web`)
+- MCP gateway: `src/mcp-bind.js` (launch resolve) + `src/mcp-client.js` (stdio JSON-RPC); `cap.use` calls one mapped tool. Agent surface stays `cap.search` / `cap.add` / `cap.use`.
 - Value Analysis: `src/profiler.js` (V3 value/cost from activity; internally the profiler module)
 - Dynamic Injection: `src/inject.js` (V4 task → load/defer plan; CLI `cap inject`; MCP `cap.inject` via `CAP_MCP_INJECT=1`)
 - MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect` / `cap.inject`)

@@ -67,6 +67,10 @@ test('schema rejects broken catalog fields', async () => {
   const emptyProviderRefs = structuredClone(catalog);
   emptyProviderRefs.capabilities[0].provider_refs = [];
   assert.throws(() => validateCatalog(emptyProviderRefs, schema), /fewer than minItems 1/);
+
+  const withMcpTool = structuredClone(catalog);
+  withMcpTool.capabilities[0].mcp_tool = 'status';
+  validateCatalog(withMcpTool, schema);
 });
 
 test('public API exports only the read/main path', () => {
@@ -161,7 +165,7 @@ test('project .mcp.json is CAP surface not a migrate target', async () => {
 });
 
 test('agent orientation docs exist', async () => {
-  for (const relative of ['AGENTS.md', 'CLAUDE.md', 'llms.txt', 'docs/architecture.md', 'docs/context-health.md', '.mcp.json', '.cursor/rules/cap.mdc']) {
+  for (const relative of ['AGENTS.md', 'CLAUDE.md', 'llms.txt', 'docs/architecture.md', 'docs/context-health.md', 'docs/mcp-gateway.md', '.mcp.json', '.cursor/rules/cap.mdc']) {
     await fs.access(path.join(root, relative));
   }
 });

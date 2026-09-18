@@ -53,7 +53,8 @@
             "type": "array",
             "minItems": 1,
             "items": { "type": "string", "minLength": 1 }
-          }
+          },
+          "mcp_tool": { "type": "string", "minLength": 1 }
         }
       }
     },
@@ -90,7 +91,13 @@
             "minItems": 1,
             "items": { "type": "string" }
           },
-          "executable": { "type": "string" }
+          "executable": { "type": "string" },
+          "mcp_server": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 },
+          "args": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
         }
       }
     }

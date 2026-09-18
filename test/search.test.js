@@ -8,6 +8,13 @@ import { addCapability, loadState } from '../src/registry.js';
 import { main } from '../src/cli.js';
 import { createWebServer } from '../src/web-server.js';
 
+test('intent-first search ranks DingTalk send first', async (t) => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'cap-search-dt-'));
+  t.after(() => fs.rm(home, {recursive: true, force: true}));
+  const results = await searchCapabilities('发送钉钉消息', {home});
+  assert.equal(results[0].capability_id, 'dingtalk.im.message.send');
+});
+
 test('intent-first search ranks PostgreSQL analysis first', async (t) => {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), 'cap-search-'));
   t.after(() => fs.rm(home, {recursive: true, force: true}));

@@ -85,7 +85,7 @@ test('unrelated task injects nothing extra', async (t) => {
   assert.equal(plan.load.length, 0);
   assert.equal(plan.defer.length, plan.comparison.catalogCount);
   assert.equal(plan.comparison.savedVsCatalog, plan.comparison.catalogTokens);
-  assert.equal(plan.comparison.catalogTokens, 3360);
+  assert.equal(plan.comparison.catalogTokens, 3840);
 });
 
 test('empty query is rejected', async () => {

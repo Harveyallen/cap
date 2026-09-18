@@ -13,7 +13,7 @@ CAP Core ── Search ── Catalog (data/catalog.json)
    │  └──── Registry / Activity (~/.cap/registry.json or $CAP_HOME)
    │
    ├────── Inspector ── Claude Code / Codex configs + Skills
-   └────── Use ─────── Managed providers (builtin CLI or connection_required)
+   └────── Use ─────── Managed providers (builtin CLI or stdio MCP gateway)
 ```
 
 ## Core objects
@@ -29,7 +29,9 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 |--------|------|----------|
 | `search.js` | Hybrid keyword/intent scoring | Persist state |
 | `registry.js` | Catalog load + registry R/W + add | Execute providers |
-| `use.js` | Execute managed builtins | Discover/search |
+| `use.js` | Execute managed builtins or gateway one MCP tool | Discover/search, dump downstream schemas |
+| `mcp-bind.js` | Resolve stdio launch from catalog / local mcpServers / Registry | Spawn or connect |
+| `mcp-client.js` | Line-delimited JSON-RPC stdio client (initialize + one `tools/call`) | Expand Agent tool surface |
 | `inspector.js` | Read local Agent configs/skills, estimate footprint, derive Context Health | Connect to MCP servers |
 | `profiler.js` | Score capability value / valuePerCost from Registry activity | Execute providers |
 | `inject.js` | Task → minimal load/defer injection plan (reuses search ranking) | Mutate Agent configs, connect to MCP, embeddings |
@@ -47,6 +49,7 @@ CAP Core ── Search ── Catalog (data/catalog.json)
 - Context footprint: character/4 estimate, not a vendor tokenizer.
 - Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Skill `contextTokens` are name+description only. `funnel.installed` is local scan names, not catalog size. `funnel.configured` aliases `injected` (config scan, not live session). `cap-mcp` is the CAP surface (`status: cap`), priced from known entry schemas, excluded from Move → CAP. `effectiveBudget <= 0` → pressure `unknown`. `cost.value` / `valuePerCost` are filled by V3 Value Analysis (`src/profiler.js`, 0.3.0 runtime) from Registry activity; remain `null` when there is no signal. 0.2.0 documented V3 only. Product rules: [context-health.md](./context-health.md).
 - Injection plan (V4, Unreleased): `planInjection(task)` returns `load` / `defer` / `keepResident` / `comparison`. Ranking reuses `searchCapabilities` with a relative score floor so weak substring hits are not loaded. `mutates: false` — plan only. `savedVsCatalog` uses seed `context_cost`. `savedVsResident` uses inspect estimates (after = CAP surface only; task caps go through `cap.use`). Default MCP surface stays 3 tools; `cap.inject` is opt-in (`CAP_MCP_INJECT=1`).
+- MCP gateway (Unreleased): Capability `mcp_tool` + Provider `mcp_server` (optional catalog `command`/`args`). `cap add` stores a stdio launch in Registry `mcp_bindings`; `cap.use` spawns that MCP and calls the mapped tool. Inspect still does not connect. Binding details: [mcp-gateway.md](./mcp-gateway.md).
 - Budget env: `CAP_NOMINAL_WINDOW`, `CAP_HARNESS_SOFT_LIMIT`, `CAP_RESERVE_TOKENS`, `CAP_EFFECTIVE_BUDGET`.
 
 ## Agent integration
