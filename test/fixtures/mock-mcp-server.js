@@ -2,6 +2,9 @@
 /** Local fake MCP for tests. Line-delimited JSON-RPC; no network, no credentials. */
 import readline from 'node:readline';
 
+// `node --test` globs test/**/*.js; do not hang the runner if this file is picked up.
+if (process.env.NODE_TEST_CONTEXT) process.exit(0);
+
 const toolName = process.env.CAP_MOCK_MCP_TOOL || 'send_message';
 
 async function handle(message) {

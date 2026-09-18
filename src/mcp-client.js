@@ -15,6 +15,7 @@ function parseLine(line) {
 
 function overlayEnv(extra) {
   const env = {...process.env};
+  delete env.NODE_TEST_CONTEXT;
   if (!extra || typeof extra !== 'object' || Array.isArray(extra)) return env;
   for (const [key, value] of Object.entries(extra)) {
     if (value == null) continue;
