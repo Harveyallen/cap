@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { validateCatalog } from './catalog-schema.js';
+import { describeBinding, resolveMcpBinding, storeBinding } from './mcp-bind.js';
 import { capHome, packageRoot } from './paths.js';
 
 export async function loadCatalog() {
@@ -18,7 +19,7 @@ export async function loadState(options = {}) {
     return JSON.parse(await fs.readFile(statePath, 'utf8'));
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    return {version: 1, managed_capabilities: [], managed_providers: [], external_providers: [], activity: []};
+    return {version: 1, managed_capabilities: [], managed_providers: [], external_providers: [], mcp_bindings: {}, activity: []};
   }
 }
 
@@ -42,8 +43,20 @@ export async function addCapability(capabilityId, providerId, options = {}) {
   const state = await loadState(options);
   if (!state.managed_capabilities.includes(capabilityId)) state.managed_capabilities.push(capabilityId);
   if (!state.managed_providers.includes(selected)) state.managed_providers.push(selected);
+  state.mcp_bindings ??= {};
+  let binding = null;
+  if (provider.type === 'MCP') {
+    const resolved = await resolveMcpBinding(provider, options, state);
+    if (resolved) {
+      state.mcp_bindings[selected] = storeBinding(resolved);
+      binding = describeBinding(state.mcp_bindings[selected]);
+    } else {
+      delete state.mcp_bindings[selected];
+      binding = describeBinding(null);
+    }
+  }
   state.activity.unshift({at: new Date().toISOString(), action: 'add', capability_id: capabilityId, provider_id: selected, success: true});
   state.activity = state.activity.slice(0, 100);
   const statePath = await saveState(state, options);
-  return {capability, provider: {...provider, status: 'CAP Managed'}, statePath};
+  return {capability, provider: {...provider, status: 'CAP Managed'}, statePath, binding};
 }

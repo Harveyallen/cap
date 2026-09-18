@@ -4,6 +4,13 @@
 
 - Published npm name is `@harvey2008/cap` (first registry publish of 0.3.0; publisher `npm whoami` is `harvey2008`, so `@harveyallen/cap` cannot be used). Install with `npx -y @harvey2008/cap setup`; `npx -y github:Harveyallen/cap setup` remains a fallback. Version stays `0.3.0`. `publishConfig.access` is `public`.
 
+### MCP gateway
+
+- **`cap.use` can call third-party MCP tools** over stdio JSON-RPC when a Capability has `mcp_tool` and a launch binding is resolved (local `mcpServers` / `mcp_servers`, Registry `external_providers` after `optimize --apply`, `--server`, explicit launch, or catalog `command`/`args`). Binding is stored in `~/.cap/registry.json` `mcp_bindings`. The Agent-facing MCP surface stays `cap.search` / `cap.add` / `cap.use` — downstream tools are not re-injected.
+- Missing launch or `mcp_tool` still returns `connection_required` with a `reason` (`missing_launch` / `missing_mcp_tool` / `unsupported_transport` / `unsupported_type`). Spawn/protocol errors return `failed`. No fake success.
+- Seed catalog: `mcp_server` on MCP providers; `mcp_tool` on GitHub / Postgres / DingTalk capabilities. DingTalk is a stub (`dingtalk.im.message.send` → tool `send_message`, server key `dingtalk`). Real DingTalk OAuth is out of scope. See [docs/mcp-gateway.md](./docs/mcp-gateway.md).
+- `cap add --server <mcp-name>` (MCP `cap.add` optional `server`) pins which local server to bind. Add/use results list `envKeys` only; env values stay in the 0600 registry file and are not logged.
+
 ### Context Health / Dynamic Injection
 
 - **V4 Dynamic Injection (runtime, plan-only):** `cap inject <task>` (`--json`) builds a minimal load/defer plan for that task instead of assuming the full catalog or Direct MCP surface is resident. Ranking reuses `searchCapabilities` with a relative score floor; CAP entry tools stay in `keepResident`. `savedVsCatalog` uses seed `context_cost`; `savedVsResident` uses inspect estimates with after = CAP surface only (`cap.use` does not add provider schemas to the resident window). Does not mutate Agent configs (`mutates: false`). MCP tool `cap.inject` is opt-in (`CAP_MCP_INJECT=1`), so the default 3-tool surface is unchanged.

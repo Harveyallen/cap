@@ -17,7 +17,9 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/cli.js` | Command routing |
 | `src/search.js` | Intent/keyword capability search |
 | `src/registry.js` | Catalog + `~/.cap/registry.json` state |
-| `src/use.js` | Execute managed providers (git / ripgrep builtins) |
+| `src/use.js` | Execute managed providers (git / ripgrep builtins, or stdio MCP gateway) |
+| `src/mcp-bind.js` | Resolve MCP stdio launch from catalog / local `mcpServers` / Registry |
+| `src/mcp-client.js` | Line-delimited JSON-RPC client used by `cap.use` (one tool call per use) |
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
 | `src/profiler.js` | V3 Value Analysis (internally: profiler module; activity → value / valuePerCost / underused) |
 | `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
@@ -98,17 +100,18 @@ When adding a Capability:
 1. Add the object to `data/catalog.json` `capabilities[]` with intents/keywords (zh + en when useful).
 2. Point `provider_refs` at existing or new providers.
 3. Update matching Provider `capabilities[]`.
-4. Validate shape against `data/catalog.schema.json`.
-5. Add a search and/or use test if behavior changes.
+4. For MCP: set Capability `mcp_tool` and Provider `mcp_server` (optional `command`/`args`). See `docs/mcp-gateway.md`.
+5. Validate shape against `data/catalog.schema.json`.
+6. Add a search and/or use test if behavior changes.
 
-Builtin executors live in `src/use.js` and only apply to providers with `executable`.
+Builtin executors live in `src/use.js` and only apply to providers with `executable`. MCP gateway execution also lives in `src/use.js` (stdio client in `src/mcp-client.js`). Spawn with `shell: false`. Do not mark MCP `use` as completed without a real tool result.
 
 ## Security
 
 - Registry files: directory `0700`, file `0600`.
 - `optimize --apply --yes` must backup JSON configs to `*.cap-backup` before clearing `mcpServers` / `mcp_servers`.
-- Spawn builtins with `shell: false`.
-- Do not log secrets from capability inputs.
+- Spawn builtins and downstream MCP with `shell: false`.
+- Do not log secrets from capability inputs or MCP `env`.
 
 ## PR expectations
 

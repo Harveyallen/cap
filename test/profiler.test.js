@@ -80,10 +80,22 @@ test('inspectLocal attaches profiler and fills cost.value after use', async (t) 
   };
 
   await addCapability('git.repository.status', undefined, {home});
-  await addCapability('github.pr.review', undefined, {home});
+  await addCapability('github.pr.review', undefined, {
+    home,
+    userHome: path.join(root, 'no-mcp'),
+    jsonConfigs: [],
+    skillRoots: [],
+    codexConfig: path.join(root, 'missing.toml')
+  });
   const used = await useCapability('git.repository.status', {path: process.cwd()}, {home});
   assert.equal(used.status, 'completed');
-  const blocked = await useCapability('github.pr.review', {}, {home});
+  const blocked = await useCapability('github.pr.review', {}, {
+    home,
+    userHome: path.join(root, 'no-mcp'),
+    jsonConfigs: [],
+    skillRoots: [],
+    codexConfig: path.join(root, 'missing.toml')
+  });
   assert.equal(blocked.status, 'connection_required');
 
   const state = await loadState({home});

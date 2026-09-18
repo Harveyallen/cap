@@ -37,7 +37,8 @@
       "context_cost": 860,
       "risk": "medium",
       "permissions": ["read repository", "read pull requests"],
-      "provider_refs": ["github.mcp"]
+      "provider_refs": ["github.mcp"],
+      "mcp_tool": "pull_request_read"
     },
     {
       "capability_id": "github.pr.security_review",
@@ -50,7 +51,8 @@
       "context_cost": 1120,
       "risk": "medium",
       "permissions": ["read repository", "read pull requests"],
-      "provider_refs": ["github.mcp", "codex.security"]
+      "provider_refs": ["github.mcp", "codex.security"],
+      "mcp_tool": "pull_request_read"
     },
     {
       "capability_id": "postgres.query.explain",
@@ -63,7 +65,8 @@
       "context_cost": 740,
       "risk": "high",
       "permissions": ["database connection", "execute read-only query"],
-      "provider_refs": ["postgres.mcp"]
+      "provider_refs": ["postgres.mcp"],
+      "mcp_tool": "query"
     },
     {
       "capability_id": "document.pdf.to_markdown",
@@ -77,14 +80,29 @@
       "risk": "low",
       "permissions": ["read selected file"],
       "provider_refs": ["pdf.skill"]
+    },
+    {
+      "capability_id": "dingtalk.im.message.send",
+      "name": "DingTalk Send Message",
+      "summary": "Send a DingTalk IM message through a locally configured DingTalk MCP server.",
+      "intents": ["send dingtalk message", "notify on dingtalk", "发送钉钉消息", "钉钉通知"],
+      "keywords": ["dingtalk", "ding ding", "im", "message", "notify", "钉钉", "消息", "通知"],
+      "inputs": {"id": "string", "msgKey": "string", "msgParam": "object"},
+      "outputs": {"result": "object"},
+      "context_cost": 480,
+      "risk": "medium",
+      "permissions": ["send dingtalk messages"],
+      "provider_refs": ["dingtalk.mcp"],
+      "mcp_tool": "send_message"
     }
   ],
   "providers": [
     {"provider_id": "builtin.git", "name": "Git CLI", "type": "CLI", "source": "local", "version": "system", "maintenance": "active", "trust": "local", "status": "Available", "capabilities": ["git.repository.status"], "executable": "git"},
     {"provider_id": "builtin.ripgrep", "name": "ripgrep", "type": "CLI", "source": "local", "version": "system", "maintenance": "active", "trust": "local", "status": "Available", "capabilities": ["local.files.search"], "executable": "rg"},
-    {"provider_id": "github.mcp", "name": "GitHub MCP", "type": "MCP", "source": "official registry", "version": "latest", "maintenance": "active", "trust": "official", "status": "Discovered", "capabilities": ["github.pr.review", "github.pr.security_review"]},
-    {"provider_id": "codex.security", "name": "Codex Security", "type": "MCP", "source": "OpenAI plugin", "version": "latest", "maintenance": "active", "trust": "official", "status": "Discovered", "capabilities": ["github.pr.security_review"]},
-    {"provider_id": "postgres.mcp", "name": "PostgreSQL MCP", "type": "MCP", "source": "public registry", "version": "latest", "maintenance": "community", "trust": "review required", "status": "Discovered", "capabilities": ["postgres.query.explain"]},
-    {"provider_id": "pdf.skill", "name": "PDF Skill", "type": "Skill", "source": "local or registry", "version": "latest", "maintenance": "active", "trust": "review required", "status": "Discovered", "capabilities": ["document.pdf.to_markdown"]}
+    {"provider_id": "github.mcp", "name": "GitHub MCP", "type": "MCP", "source": "official registry", "version": "latest", "maintenance": "active", "trust": "official", "status": "Discovered", "capabilities": ["github.pr.review", "github.pr.security_review"], "mcp_server": "github"},
+    {"provider_id": "codex.security", "name": "Codex Security", "type": "MCP", "source": "OpenAI plugin", "version": "latest", "maintenance": "active", "trust": "official", "status": "Discovered", "capabilities": ["github.pr.security_review"], "mcp_server": "security"},
+    {"provider_id": "postgres.mcp", "name": "PostgreSQL MCP", "type": "MCP", "source": "public registry", "version": "latest", "maintenance": "community", "trust": "review required", "status": "Discovered", "capabilities": ["postgres.query.explain"], "mcp_server": "postgres"},
+    {"provider_id": "pdf.skill", "name": "PDF Skill", "type": "Skill", "source": "local or registry", "version": "latest", "maintenance": "active", "trust": "review required", "status": "Discovered", "capabilities": ["document.pdf.to_markdown"]},
+    {"provider_id": "dingtalk.mcp", "name": "DingTalk MCP", "type": "MCP", "source": "local MCP config", "version": "latest", "maintenance": "community", "trust": "review required", "status": "Discovered", "capabilities": ["dingtalk.im.message.send"], "mcp_server": "dingtalk"}
   ]
 }

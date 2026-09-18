@@ -19,7 +19,7 @@ Usage:
   cap inspect [--json]
   cap search <task> [--json]
   cap inject <task> [--json]
-  cap add <capability-id> [--provider <provider-id>] [--json]
+  cap add <capability-id> [--provider <provider-id>] [--server <mcp-name>] [--json]
   cap use <capability-id> [--input <json>] [--json]
   cap optimize [--write-plan <file>] [--apply --yes] [--json]
   cap activity [--json]
@@ -287,8 +287,13 @@ export async function main(args, options = {}) {
   if (command === 'add') {
     const capabilityId = positional(rest)[0];
     if (!capabilityId) throw new Error('Capability id is required');
-    const result = await addCapability(capabilityId, flag(rest, '--provider'), options);
-    return print(json ? result : `Added ${result.capability.name} via ${result.provider.name}\nRegistry: ${result.statePath}`, json);
+    const result = await addCapability(capabilityId, flag(rest, '--provider'), {...options, server: flag(rest, '--server')});
+    const bind = result.binding?.bound
+      ? `MCP binding: ${result.binding.server} → ${result.binding.command} ${(result.binding.args ?? []).join(' ')}`.trim()
+      : result.binding && result.provider.type === 'MCP'
+        ? 'MCP binding: not resolved (cap.use will return connection_required until a matching mcpServers entry exists)'
+        : null;
+    return print(json ? result : [`Added ${result.capability.name} via ${result.provider.name}`, `Registry: ${result.statePath}`, bind].filter(Boolean).join('\n'), json);
   }
   if (command === 'use') {
     const capabilityId = positional(rest)[0];

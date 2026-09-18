@@ -2,7 +2,7 @@
 
 export const CAP_ENTRY_TOOLS = [
   {name: 'cap.search', description: 'Find capabilities for a task or intent.', inputSchema: {type: 'object', properties: {query: {type: 'string'}, limit: {type: 'integer', minimum: 1, maximum: 20}}, required: ['query']}},
-  {name: 'cap.add', description: 'Add or connect a capability behind CAP.', inputSchema: {type: 'object', properties: {capability_id: {type: 'string'}, provider_id: {type: 'string'}}, required: ['capability_id']}},
+  {name: 'cap.add', description: 'Add or connect a capability behind CAP. Optional server binds an MCP provider to a local mcpServers name without exposing that server to the LLM.', inputSchema: {type: 'object', properties: {capability_id: {type: 'string'}, provider_id: {type: 'string'}, server: {type: 'string'}}, required: ['capability_id']}},
   {name: 'cap.use', description: 'Execute a CAP-managed capability.', inputSchema: {type: 'object', properties: {capability_id: {type: 'string'}, input: {type: 'object'}}, required: ['capability_id']}},
   {name: 'cap.inject', description: 'Plan a minimal capability set to load for a task (V4 Dynamic Injection). Does not mutate Agent configs.', inputSchema: {type: 'object', properties: {query: {type: 'string'}, limit: {type: 'integer', minimum: 1, maximum: 10}}, required: ['query']}},
   {name: 'cap.inspect', description: 'Inspect local Agent capability health.', inputSchema: {type: 'object', properties: {}}}

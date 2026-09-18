@@ -126,10 +126,10 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
   "keepResident": {"kind": "cap-surface", "tools": ["cap.search", "cap.add", "cap.use"]},
   "comparison": {
     "loadCount": 1,
-    "catalogCount": 6,
+    "catalogCount": 7,
     "loadTokens": 740,
-    "catalogTokens": 3360,
-    "savedVsCatalog": 2620
+    "catalogTokens": 3840,
+    "savedVsCatalog": 3100
   }
 }
 ```

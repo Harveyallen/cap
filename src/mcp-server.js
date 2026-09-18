@@ -10,7 +10,7 @@ import { packageVersion } from './paths.js';
 
 async function callTool(name, args, options) {
   if (name === 'cap.search') return searchCapabilities(args.query, {...options, limit: args.limit});
-  if (name === 'cap.add') return addCapability(args.capability_id, args.provider_id, options);
+  if (name === 'cap.add') return addCapability(args.capability_id, args.provider_id, {...options, server: args.server});
   if (name === 'cap.use') return useCapability(args.capability_id, args.input, options);
   if (name === 'cap.inject') return planInjection(args.query, {...options, limit: args.limit});
   if (name === 'cap.inspect') return inspectLocal(options);
