@@ -25,10 +25,11 @@ $ cap search "分析 PostgreSQL 慢查询"
    Providers: PostgreSQL MCP (Discovered)
 ```
 
-## V0.2 已实现
+## V0.3 已实现
 
 - `cap setup`：备份并写入 Claude Code / Codex 的 CAP MCP 与 `cap-context-health` Skill，然后跑一次 `cap inspect`。
-- `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），用人话输出健康分数、常驻占用和清单。`cap-mcp` 不会被建议再迁走。详见 [docs/context-health.md](./docs/context-health.md)。
+- `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），用人话输出健康分数、常驻占用、清单和 V3 价值分析。`cap-mcp` 不会被建议再迁走。详见 [docs/context-health.md](./docs/context-health.md)。
+- V3 价值分析：从 Registry Activity 计算 Value/Cost，在 `cap inspect` / Web Health 展示性价比排行与建议减负（`src/profiler.js`）。
 - `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。
 - `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
 - `cap use`：通过 Capability 抽象调用已登记的本地 Provider；初版内置 Git 状态与 ripgrep 搜索。
@@ -74,7 +75,7 @@ cap optimize --write-plan .cap/optimization-plan.json
 cap optimize --apply --yes
 ```
 
-当前执行迁移仅支持 JSON 中的 `mcpServers` / `mcp_servers`。每个源配置会先复制为 `*.cap-backup`，Provider 配置再写入权限为 `0600` 的 CAP Registry。TOML 配置在 V0.2 中只检查、不自动修改。
+当前执行迁移仅支持 JSON 中的 `mcpServers` / `mcp_servers`。每个源配置会先复制为 `*.cap-backup`，Provider 配置再写入权限为 `0600` 的 CAP Registry。TOML 配置在 V0.3 中仍只检查、不自动修改。
 
 ## 扫描范围
 
@@ -131,12 +132,12 @@ node ./bin/cap.js web --port 4173
 
 ## V3 价值分析（Value Analysis）
 
-Unreleased 运行时（0.2.0 仅文档）：从 Registry Activity 统计每条 Capability 的使用，计算 Value/Cost，在 `cap inspect` / Web Health 展示性价比排行与建议减负。详见 [docs/context-health.md](./docs/context-health.md)。
+0.3.0 运行时（0.2.0 仅文档）：从 Registry Activity 统计每条 Capability 的使用，计算 Value/Cost，在 `cap inspect` / Web Health 展示性价比排行与建议减负。详见 [docs/context-health.md](./docs/context-health.md)。
 
-## V0.2 边界
+## V0.3 边界
 
 - 公共 Registry/GitHub 的在线抓取、语义向量检索与 OAuth 连接尚未实现；当前使用本地 curated Catalog 和可解释的混合关键词评分。
 - 非内置 Provider 可以添加，但 Use 会返回 `connection_required`，不会伪装成已执行。
 - Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。高 Context Pressure 不会突然「触发幻觉」，但会造成注意力稀释、召回变差、选错工具和指令冲突（Lost in the Middle）。
-- V3 价值分析运行时已在 Unreleased（`src/profiler.js`）：`cost.value` 来自 Activity 信号，无信号时仍为 `null`；不假装测量当前会话注入。
+- V3 价值分析运行时已在 0.3.0（`src/profiler.js`）：`cost.value` 来自 Activity 信号，无信号时仍为 `null`；不假装测量当前会话注入。
 - 本版优先验证开发者闭环，不包含 Desktop、企业权限、团队治理，也不发布 npm。

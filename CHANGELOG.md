@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-### Agent skills
+## 0.3.0
 
-- Added the full [`mattpocock/skills`](https://github.com/mattpocock/skills) pack (37 skills, including `setup-matt-pocock-skills`) under `.agents/skills/` via `npx skills@latest add mattpocock/skills -s '*' -a cursor -y --copy`. Per-repo `/setup-matt-pocock-skills` was **not** run in this change (issue-tracker choice needs a human). After merge, run `/setup-matt-pocock-skills` in Cursor/Agent against this repo and select **GitHub Issues**.
+Cuts **V3 Value Analysis** as a shipped runtime. npm registry publish remains deferred; install via `npx -y github:Harveyallen/cap setup` (or clone + `node ./bin/cap.js setup`). No git tags or GitHub Releases in this repo yet.
 
 ### Context Health / Value Analysis
 
@@ -14,6 +14,14 @@
 - Human `cap inspect` adds a **价值分析** section (性价比排行 / 建议减负); Web Health shows a **价值分析** panel.
 - User-facing copy uses **Value Analysis** / **价值分析**. Internal identifiers (`profiler.js`, `buildProfiler`, JSON `profiler`) stay as-is.
 - This is the runtime that follows the docs-only V3 note in **0.2.0** — 0.2.0 did not ship Value Analysis.
+
+### Agent skills
+
+- Added the full [`mattpocock/skills`](https://github.com/mattpocock/skills) pack (37 skills, including `setup-matt-pocock-skills`) under `.agents/skills/` via `npx skills@latest add mattpocock/skills -s '*' -a cursor -y --copy`. Per-repo `/setup-matt-pocock-skills` was **not** run in this change (issue-tracker choice needs a human). After merge, run `/setup-matt-pocock-skills` in Cursor/Agent against this repo and select **GitHub Issues**.
+
+### Version surface
+
+- CLI help/banner and MCP `initialize` `serverInfo.version` read `package.json` so they cannot drift (banner was still `CAP 0.1`; MCP was hardcoded `0.2.0`).
 
 ## 0.2.0
 
