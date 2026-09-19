@@ -180,6 +180,7 @@ test('agent orientation docs exist', async () => {
     'docs/compatibility.md',
     'docs/adr/0001-material-savings-threshold.md',
     'docs/adr/0002-observation-period-phase1.md',
+    'docs/adr/0003-observation-period-readiness.md',
     '.mcp.json',
     '.cursor/rules/cap.mdc'
   ]) {

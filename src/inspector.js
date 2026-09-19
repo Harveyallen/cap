@@ -246,7 +246,16 @@ export async function inspectLocal(options = {}) {
   const pressure = classifyPressure(contextTokens, budget.effectiveBudget);
   const funnel = buildFunnel({items, activity: state.activity});
   const catalog = await loadCatalog();
-  const profiler = buildProfiler({catalog, state, items});
+  const env = envMap(options);
+  const profiler = buildProfiler({
+    catalog,
+    state,
+    items,
+    duplicates: duplicateGroups.map((group) => ({name: group[0].name, sources: group.map((item) => item.source)})),
+    now: options.now,
+    periodDays: options.observationDays ?? env.CAP_OBSERVATION_DAYS,
+    evidenceSessionDays: options.observationEvidenceDays ?? env.CAP_OBSERVATION_EVIDENCE_DAYS
+  });
   return {
     generatedAt: new Date().toISOString(),
     summary: {
@@ -264,7 +273,8 @@ export async function inspectLocal(options = {}) {
       capEntryTools,
       estimatedReductionPercent: migrateableTools > capEntryTools ? Math.round((1 - capEntryTools / migrateableTools) * 100) : 0,
       profilerTracked: profiler.tracked,
-      profilerUsed: profiler.used
+      profilerUsed: profiler.used,
+      observationReady: profiler.observation.ready
     },
     budget,
     pressure,

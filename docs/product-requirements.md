@@ -304,9 +304,9 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | REC-01 | 1 | P0 | Initially recommend only high-context and duplicate capabilities. | Inspect recommendations start from cost/duplication. | — |
 | REC-01 | 1 | P0 | Initially recommend only high-context and duplicate capabilities. | Inspect recommendations start from cost/duplication. | — |
 | REC-02 | 1 | P0 | Record local CAP-mediated search, selection, invocation, outcome, and time in Registry Activity. | `cap search` / `cap.search` write a privacy-safe search event; add/use of a recent hit also writes `select`. Add/use still record invocation and outcome. | — |
-| REC-03 | 1 | P0 | Never label low-frequency until the Observation Period is satisfied. | Phase 1 **defers frequency labels until Phase 2** ([ADR 0002](./adr/0002-observation-period-phase1.md)). Search/select Activity is stored. Value Analysis still scores from `use` only and keeps `frequencyVerdicts: false`. `underused` is a value signal only; copy must not say remove. | — for Phase 1. |
-| REC-04 | 1 | P1 | Observation Period default is proposed at 14 days; validate before calling it final. | 14 days remains the Phase 2 default to validate. Not applied in Phase 1. | Phase 2 readiness chrome. |
-| REC-05 | 2 | — | Explain cost, duplication, usage, and recency signals separately. | Value Analysis ranks value-per-cost. | Formal signal breakdown. |
+| REC-03 | 1 | P0 | Never label low-frequency until the Observation Period is satisfied. | Ready only after **14 UTC days and 3 activity days** ([ADR 0003](./adr/0003-observation-period-readiness.md)). Until then `frequencyVerdicts` is `false`. `underused` is a value signal only; copy must not say remove. | — |
+| REC-04 | 2 | P1 | Observation Period default is 14 days; validate before calling it final. | **Kept at 14 UTC days** plus a 3-activity-day evidence floor. 7 days is too short for weekly tools; 30 days delays advice without extra quality. | — |
+| REC-05 | 2 | P1 | Explain cost, duplication, usage, and recency signals separately. | After readiness, `profiler.advice[]` lists those four signals and `prefer_on_demand`. Never unused→remove. | — |
 | REC-06 | 2 | — | Let users pin a Provider resident or exclude it from recommendations. | Not a first-class pin UX. | Pin = Direct Exposure. |
 | REC-07 | 1 | P0 | Never recommend the CAP surface itself for removal. | `cap-mcp` is excluded from Move → CAP. | — |
 | REC-08 | 1 | P0 | Beside every optimize call to action, say what is backed up (timestamped `.cap-backup`), how to recover from that file, and that one-click Restore is not claimed. | README + [restore-from-backup.md](./restore-from-backup.md) + onboarding template. | — |
@@ -366,7 +366,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 
 | ID | Phase | Pri | Target | Now | Gap |
 |---|:---:|:---:|---|---|---|
-| TEL-LCL | 1 | P0 | Local Registry Activity is sufficient for Value Analysis and underused advice. | Activity records search/select/add/use. Value Analysis still scores from `use` only and keeps `frequencyVerdicts: false`. | — |
+| TEL-LCL | 1 | P0 | Local Registry Activity is sufficient for Value Analysis and underused advice. | Activity records search/select/add/use. Value Analysis still scores from `use` only. `frequencyVerdicts` follows Observation Period readiness ([ADR 0003](./adr/0003-observation-period-readiness.md)). | — |
 | TEL-01 | 3 | — | Record anonymous install, active-use, search, exposure, acquisition, invocation result, and estimated savings events. | No product-wide anonymous contract. | Not a Phase 1 gate. |
 | TEL-02 | 3 | — | Provide an immediate user-visible opt-out. | N/A until remote TEL exists. | Phase 3. |
 | TEL-03 | 3 | — | Never transmit source code, raw task, config, inventory, paths, credentials, or raw errors. | Nothing is transmitted today. | Keep as a hard rule when TEL ships. |
@@ -380,7 +380,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 
 **Now:** Web Health / inspect JSON cover health, inventory, duplicates, Value Analysis, and recommendations.
 
-**Gap:** observation-readiness chrome, Restore Point browser, sanitized remote activity, and privacy/telemetry controls are later. The page must stay keyboard accessible and must not rely on color alone.
+**Gap:** Restore Point browser, sanitized remote activity, and privacy/telemetry controls are later. Observation readiness and frequency/value advice are on Inspect/Web after the 14-day / 3-activity-day gate. The page must stay keyboard accessible and must not rely on color alone.
 
 ## 10. State model
 
@@ -502,7 +502,7 @@ Do not market remote discovery, anonymous telemetry, or full Restore as generall
 |---|:---:|---|---|---|
 | Agent onboarding | 1 | Directive-scoped install + first health report | README Agent Installation Directive; `cap setup --agent auto`; `cap inspect`; [agent-onboarding.md](./agent-onboarding.md) | Not auto Restore. |
 | Inventory and health | 1 | Local inventory and Context Health | Inspect: budget, pressure, funnel, costs, reclaimable estimate, Value Analysis; [compatibility.md](./compatibility.md) | Richer visual filters; OS/Agent version floors |
-| Recommendations | 1 | High-cost and duplicate only | Inspect recommendations; profiler underused is a value signal, not a frequency verdict ([ADR 0002](./adr/0002-observation-period-phase1.md)). Search/select Activity is stored (REC-02); Value Analysis still scores from `use` and keeps `frequencyVerdicts: false`. | Phase 2 Observation Period readiness |
+| Recommendations | 2 | High-cost / duplicate always; frequency/value advice after readiness | Inspect recommendations stay cost/duplication. After 14 UTC days + 3 activity days, `profiler.advice` explains cost, duplication, usage, and recency separately ([ADR 0003](./adr/0003-observation-period-readiness.md)). Until ready, `frequencyVerdicts: false` and `underused` is a value signal only. | Pin/exclude UX (#36) |
 | Optimize | 1 | JSON MCP consolidation after `--apply --yes` | Preview + guarded JSON apply; Skill index; TOML inspect-only | Other adapters (Phase 2+) |
 | Restore | 1 | Timestamped `.cap-backup` + documented recovery | Backups are written; [restore-from-backup.md](./restore-from-backup.md); copy refuses one-click Restore | Full Restore UI/CLI across adapters is later, not Phase 1 P0 |
 | Transparent use | 1 | search / add / use + Skills overlay + implicit add-on-use | Delivered | — |
@@ -521,7 +521,7 @@ Settled by this Grill and removed from this list: Installation Directive as scop
 Closed in this Phase 1 docs pass (removed from the open list):
 
 - Material-savings threshold = **10% of effective budget** ([ADR 0001](./adr/0001-material-savings-threshold.md), #27 / ONB-12).
-- Observation Period / frequency labels: **defer until Phase 2**; Phase 1 must not emit low-frequency → remove ([ADR 0002](./adr/0002-observation-period-phase1.md), #31 / REC-03). 14 days remains the Phase 2 default to validate (REC-04), not a Phase 1 gate.
+- Observation Period readiness: **14 UTC calendar days and 3 distinct activity days** ([ADR 0003](./adr/0003-observation-period-readiness.md), #35 / REC-03/04/05). Until ready, no low-frequency → remove. After ready, advice is `prefer_on_demand` with separated signals.
 
 Still open:
 

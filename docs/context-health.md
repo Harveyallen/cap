@@ -91,13 +91,13 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 0.2.0 只把 V3 写在文档里；**0.3.0 交付运行时**（内部模块 `src/profiler.js`），挂在 `cap inspect` / `--json` / Web Health 的 `profiler` 上（JSON 字段名保持兼容）。
 
 1. **Usage from Activity**  
-   从 Registry Activity 按 `capability_id` 聚合 `use`（成功次数、失败 / `connection_required`、最近尝试、UTC 日会话）。`search` / `select` 会写入 Registry，但不计入 value、`useAttempts` 或低频标签。`profiler.frequencyVerdicts` 保持 `false`，直到 Observation Period 就绪。`funnel.used` 仍是成功 use 的去重能力数；`funnel.useAttempts` 是全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`。
+   从 Registry Activity 按 `capability_id` 聚合 `use`（成功次数、失败 / `connection_required`、最近尝试、UTC 日会话）。`search` / `select` 会写入 Registry，但不计入 value 或 `useAttempts`。`profiler.frequencyVerdicts` 仅在 Observation Period 就绪后为 `true`（14 个 UTC 日 + 3 个活动日；[ADR 0003](./adr/0003-observation-period-readiness.md)）。`funnel.used` 仍是成功 use 的去重能力数；`funnel.useAttempts` 是全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`。
 
 2. **Value / Cost**  
    有信号时填写 `cost.value`（0–100，由成功 use + 会话日解释）与 `cost.valuePerCost`（`value / catalog context_cost`）；无信号时仍为 `null`。不要把这当成当前会话的实测注入量。
 
 3. **性价比排行 + 价值信号**  
-   `profiler.ranked` 按 value-per-cost 排序（人体：性价比排行）；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力（人体：价值信号）。**Phase 1 不会把它们标成低频，也不会据此建议移除 / 卸载**（[ADR 0002](./adr/0002-observation-period-phase1.md)）。CAP surface（`cap-mcp`）不是候选。
+   `profiler.ranked` 按 value-per-cost 排序（人体：性价比排行）；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力（人体：价值信号）。就绪前不标低频、不建议移除。就绪后 `profiler.advice` 分列成本 / 重复 / 用量 / 近况，动作是 `prefer_on_demand`，**不是移除 / 卸载**（[ADR 0003](./adr/0003-observation-period-readiness.md)）。CAP surface（`cap-mcp`）不是候选。
 
 输入仍是本地 Activity + inspect 估算，不连接第三方 MCP。
 
@@ -171,8 +171,10 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
     "searchEvents": 0,
     "selectEvents": 0,
     "frequencyVerdicts": false,
+    "observation": {"ready": false, "periodDays": 14, "evidenceSessionDaysRequired": 3},
     "ranked": [],
-    "underused": []
+    "underused": [],
+    "advice": []
   }
 }
 ```

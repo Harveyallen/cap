@@ -122,6 +122,7 @@ test('web API add replaces acquire', async (t) => {
   assert.doesNotMatch(html, /本地发现/);
   assert.doesNotMatch(html, /会暴露/);
   assert.match(html, /频率结论未就绪/);
+  assert.match(html, /频率 \/ 价值建议（信号分列，不是移除）/);
   const inspect = await fetch(`http://127.0.0.1:${port}/api/inspect`);
   const report = await inspect.json();
   assert.equal(typeof report.pressure.band, 'string');

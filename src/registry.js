@@ -80,8 +80,16 @@ export function sanitizeSearchQuery(query) {
 
 export function pushActivity(state, row) {
   state.activity ??= [];
-  state.activity.unshift({at: new Date().toISOString(), ...row});
+  const event = {at: new Date().toISOString(), ...row};
+  state.activity.unshift(event);
   state.activity = state.activity.slice(0, ACTIVITY_LIMIT);
+  if (!state.observation_started_at) {
+    let oldest = event.at;
+    for (const item of state.activity) {
+      if (item?.at && Date.parse(item.at) < Date.parse(oldest)) oldest = item.at;
+    }
+    state.observation_started_at = oldest;
+  }
   return state;
 }
 

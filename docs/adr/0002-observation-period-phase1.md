@@ -1,6 +1,6 @@
 # ADR 0002: Observation Period and frequency labels in Phase 1
 
-Status: Accepted  
+Status: Superseded by [ADR 0003](./0003-observation-period-readiness.md) for the Phase 2 readiness rule  
 Date: 2026-09-19  
 PRD: REC-03, REC-04  
 Issue: #31
@@ -23,4 +23,4 @@ REC-03 forbids labeling a Provider **low-frequency** until an Observation Period
 
 - PRD §17 observation duration is closed for Phase 1 (“defer labels”) and pointed at Phase 2 for the 14-day number.
 - Inspect/Web/Agent copy must not say 低频, rarely used, or 建议移除 on first report.
-- Phase 2 may introduce readiness chrome and frequency-based optimize recommendations; that work is out of scope here.
+- Phase 2 readiness (14 UTC days + 3 activity days) and frequency/value advice live in [ADR 0003](./0003-observation-period-readiness.md).
