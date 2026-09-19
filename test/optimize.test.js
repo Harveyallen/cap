@@ -4,7 +4,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { inspectLocal } from '../src/inspector.js';
-import { applyOptimization, buildOptimizationPlan } from '../src/optimize.js';
+import { applyOptimization, buildOptimizationPlan, validateOptimizationOutcome } from '../src/optimize.js';
+import { pinProvider } from '../src/pin.js';
 import { main } from '../src/cli.js';
 
 async function fixture() {
@@ -174,4 +175,112 @@ test('CLI optimize requires --apply and --yes together', async (t) => {
   await fs.writeFile(ctx.codexConfig, CODEX_TOML);
   await assert.rejects(() => main(['optimize', '--apply'], ctx.options), /both --apply and --yes/);
   assert.match(await fs.readFile(ctx.codexConfig, 'utf8'), /\[mcp_servers\.github\]/);
+});
+
+test('optimize apply re-inspects and reports actual vs projected estimated savings', async (t) => {
+  const ctx = await fixture();
+  t.after(() => fs.rm(ctx.root, {recursive: true, force: true}));
+  await fs.writeFile(ctx.codexConfig, CODEX_TOML);
+  const before = await inspectLocal({...ctx.options, jsonConfigs: [], env: {}});
+  const result = await applyOptimization({...ctx.options, jsonConfigs: []});
+  const after = await inspectLocal({...ctx.options, jsonConfigs: [], env: {}});
+  const validation = result.validation;
+  assert.equal(validation.ok, true);
+  assert.equal(validation.estimated, true);
+  assert.match(validation.note, /estimat/i);
+  assert.match(validation.note, /characters\/4|tokenizer/i);
+  assert.equal(validation.projected.before.contextTokens, before.summary.contextTokens);
+  assert.equal(validation.projected.before.directTools, before.summary.directTools);
+  assert.equal(validation.actual.after.contextTokens, after.summary.contextTokens);
+  assert.equal(validation.actual.after.directTools, after.summary.directTools);
+  assert.equal(validation.actual.tokensSaved, before.summary.contextTokens - after.summary.contextTokens);
+  assert.equal(validation.projected.tokensSaved, before.summary.contextTokens - result.plan.after.contextTokens);
+  assert.equal(validation.actual.capSurface, true);
+  assert.ok(after.summary.contextTokens < before.summary.contextTokens);
+  assert.match(result.message, /estimat/i);
+});
+
+test('post-optimize validation fails when config is invalid or CAP surface is gone', () => {
+  const source = '/tmp/.claude.json';
+  const plan = {
+    before: {directTools: 5, contextTokens: 1000},
+    after: {directTools: 3, contextTokens: 180},
+    reductionPercent: 40,
+    retained: [{name: 'cap', source}]
+  };
+  const changed = [{source, adapter: 'json-mcp', providers: ['github']}];
+  const state = {
+    external_providers: [{name: 'github', originalSource: source, type: 'MCP', config: {command: 'github-mcp'}}]
+  };
+  const invalid = validateOptimizationOutcome({
+    plan,
+    changed,
+    inspection: {
+      summary: {directTools: 3, contextTokens: 180, capSurface: true, reclaimableTokens: 0, pinned: 0, excluded: 0},
+      items: [{kind: 'warning', source, message: 'Unexpected token'}]
+    },
+    state
+  });
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.estimated, true);
+  assert.equal(invalid.failures[0].code, 'config_invalid');
+  assert.match(invalid.failures[0].message, /Unexpected token/);
+
+  const broken = validateOptimizationOutcome({
+    plan,
+    changed,
+    inspection: {
+      summary: {directTools: 0, contextTokens: 0, capSurface: false, reclaimableTokens: 0, pinned: 0, excluded: 0},
+      items: []
+    },
+    state
+  });
+  assert.equal(broken.ok, false);
+  assert.ok(broken.failures.some((item) => item.code === 'cap_surface_broken'));
+  assert.match(broken.failures.find((item) => item.code === 'cap_surface_broken').message, /cap-mcp|CAP surface/i);
+});
+
+test('CLI optimize apply prints estimated savings and fails closed on validation errors', async (t) => {
+  const ctx = await fixture();
+  t.after(() => fs.rm(ctx.root, {recursive: true, force: true}));
+  await fs.writeFile(ctx.codexConfig, CODEX_TOML);
+  const logs = [];
+  const original = console.log;
+  console.log = (value) => logs.push(value);
+  t.after(() => { console.log = original; });
+  await main(['optimize', '--apply', '--yes', '--json'], {...ctx.options, jsonConfigs: []});
+  const payload = JSON.parse(logs[0]);
+  assert.equal(payload.validation.ok, true);
+  assert.equal(payload.validation.estimated, true);
+  assert.ok(payload.validation.actual.tokensSaved > 0);
+
+  logs.length = 0;
+  await assert.rejects(
+    () => main(['optimize', '--apply', '--yes'], {
+      ...ctx.options,
+      jsonConfigs: [],
+      afterInspect: async () => ({
+        summary: {directTools: 0, contextTokens: 0, capSurface: false, reclaimableTokens: 0, pinned: 0, excluded: 0},
+        items: []
+      })
+    }),
+    /validation failed|CAP surface|cap-mcp/i
+  );
+});
+
+test('optimize apply validation keeps pin/exclude remaining Direct Exposure as success', async (t) => {
+  const ctx = await fixture();
+  t.after(() => fs.rm(ctx.root, {recursive: true, force: true}));
+  await fs.writeFile(ctx.claudeJson, JSON.stringify({mcpServers: {
+    github: {command: 'github-mcp', tools: [{name: 'get_pr'}, {name: 'comment_pr'}]},
+    cap: {command: 'node', args: ['/tmp/bin/cap-mcp.js']}
+  }}, null, 2));
+  await pinProvider('github', ctx.options);
+  const result = await applyOptimization(ctx.options);
+  assert.equal(result.validation.ok, true);
+  assert.equal(result.changed.length, 0);
+  const config = JSON.parse(await fs.readFile(ctx.claudeJson, 'utf8'));
+  assert.ok(config.mcpServers.github);
+  assert.ok(config.mcpServers.cap);
+  assert.equal(result.validation.actual.pinned, 1);
 });

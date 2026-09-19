@@ -15,6 +15,11 @@
 - **Frequency/value advice after readiness.** `profiler.advice` explains cost, duplication, usage, and recency separately. Combined action is `prefer_on_demand` — never unused→remove. Value scores still come from `use` only. Registry persists `observation_started_at` so the 100-row Activity cap cannot drift the start.
 - Human `cap inspect` and Web Health show observation progress; frequency labels appear only when ready.
 
+### Optimize (OPT-07)
+
+- **`cap optimize --apply --yes` re-inspects after a confirmed apply** and reports **actual vs projected** footprint savings. JSON `validation` is always `estimated: true` (characters/4, not a live tokenizer). Human output labels the same figures as estimates.
+- **Apply fails closed** when a mutated file is unreadable after write (`config_invalid`) or a previously retained `cap-mcp` entry is gone (`cap_surface_broken`). Migrated MCP with no Registry launch is `invocation_regression`. Remaining Direct Exposure from pin/exclude is expected and not a failure. This is not auto Restore; recover from `.cap-backup`.
+
 ### Optimize (OPT-06)
 
 - **`cap optimize --apply --yes` now migrates dotted-table Codex TOML** (`[mcp_servers.name]` and that server’s `[mcp_servers.name.env]`) with the same dual confirm, timestamped `.cap-backup`, and post-write validation as JSON MCP. Non-MCP tables (model, projects, …) and `cap-mcp` stay. Nested `.env` is not treated as its own server.

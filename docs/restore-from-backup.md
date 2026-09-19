@@ -45,6 +45,8 @@ cap optimize --apply --yes --json
 
 Look at `changed[].source`, `changed[].backup`, and `changed[].adapter` (`json-mcp` or `codex-toml`). Preview-only `cap optimize` does not write a backup. `refused[]` lists sources that were left unchanged.
 
+Apply also re-inspects and returns `validation` (projected vs actual **estimated** savings). `validation.ok: false` is a failure (`config_invalid`, `cap_surface_broken`, or `invocation_regression`), not automatic Restore. If validation fails, copy the matching `.cap-backup` back as below, then `cap inspect`.
+
 ## Recover the file
 
 There is **no** conflict detector. If you edited the live file after optimize, copying the backup back overwrites those later edits.

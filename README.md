@@ -167,7 +167,7 @@ cap inject "分析 PostgreSQL 慢查询" --json
 - `cap inspect` 只读取本地配置，不连接或执行扫描到的第三方 MCP。
 - `cap search` 只读取本地 Skill 的名称和描述，不默认加载正文。
 - `cap inject` 只生成 load / defer 计划，不修改 Agent 配置。
-- `cap optimize` 默认只预览；只有 `cap optimize --apply --yes` 才修改支持的 JSON MCP 与 Codex 点分表 TOML，并持久化 Skill 索引。
+- `cap optimize` 默认只预览；只有 `cap optimize --apply --yes` 才修改支持的 JSON MCP 与 Codex 点分表 TOML，并持久化 Skill 索引。应用成功后会再跑一次 inspect，对比 **projected vs actual** 估算节省；配置损坏或 CAP 入口丢失时失败（不是一键 Restore）。
 - `cap pin` 把 Provider 写成 Direct Exposure；`cap unpin` 再收回到 CAP-managed。`cap exclude` 只从建议里拿掉，不卸载。默认 MCP 入口仍是 search / add / use。
 - 修改配置前会创建带时间戳的 `*.cap-backup`；从备份恢复见 [runbook](./docs/restore-from-backup.md)。这不是一键 Restore。Registry 文件权限为 `0600`。
 - 不支持的格式（JSON `mcp.servers`、Codex inline-table / `[mcp_servers]` / `[mcp.servers.*]`）会被拒绝并给出手工指引，不会静默改写。详见 [兼容性矩阵](./docs/compatibility.md)。

@@ -7,7 +7,7 @@
 - [README](README.md): human quick start and product overview
 - [CONTEXT.md](CONTEXT.md): domain glossary (Acquisition, Direct Exposure, CAP-managed, ManagedBinding, Invoked, Pin, Exclude, Local Inventory, Activity, Observation Period)
 - [Product requirements](docs/product-requirements.md): Phase 1 P0 / launch gates with Target / Now / Gap
-- [Agent onboarding copy](docs/agent-onboarding.md): first-report URL, partial scan, 10% savings, scoped Restore, USE-09, inspect label map
+- [Agent onboarding copy](docs/agent-onboarding.md): first-report URL, partial scan, 10% savings, scoped Restore, USE-09, inspect label map, post-optimize validation
 - [Restore from `.cap-backup`](docs/restore-from-backup.md): JSON MCP and Codex dotted-table TOML optimize recovery (not one-click Restore)
 - [OS/Agent compatibility](docs/compatibility.md): inspect paths and optimize-apply formats with tested / expected / unknown
 - [ADRs](docs/adr/): material-savings 10%; Observation Period readiness (14 UTC days + 3 activity days)
@@ -22,6 +22,7 @@
 ## Entry points
 
 - CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `inject` / `add` / `use` / `pin` / `unpin` / `exclude` / `include` / `optimize` / `activity` / `web`)
+- Optimize apply: `src/optimize.js` re-inspects after `--apply --yes` and returns `validation` (projected vs actual estimates; fail closed on invalid config / broken CAP surface)
 - Pin / exclude: `src/pin.js` (Direct Exposure pin; recommendation exclusion). Default MCP tools stay search/add/use.
 - MCP gateway: `src/mcp-bind.js` (launch resolve) + `src/mcp-client.js` (stdio JSON-RPC); `cap.use` calls one mapped tool and implicitly `add`s if the capability is not yet managed. Search/add attach on-demand `input_schema` (`src/input-schema.js`: live `tools/list` when bound, else catalog). Agent `tools/list` stays `cap.search` / `cap.add` / `cap.use`.
 - Value Analysis: `src/profiler.js` (V3 value/cost from `use` activity only; Observation Period readiness + frequency/value advice; search/select do not create value scores)

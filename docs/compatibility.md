@@ -31,8 +31,8 @@ Optimize `--apply` mutates **JSON MCP** (`mcpServers` / `mcp_servers`) and **dot
 
 | Adapter | Mutate | Backup | Notes |
 |---|---|---|---|
-| JSON `mcpServers` / `mcp_servers` | yes | `<source>.<stamp>.cap-backup` | Existing path. Keeps `cap-mcp`. Validates after write. |
-| Codex `[mcp_servers.name]` (+ `[mcp_servers.name.env]`) | yes | same sibling pattern | OPT-06 slice. Non-MCP tables (model, projects, …) are kept. Nested `.env` is removed with the parent server. |
+| JSON `mcpServers` / `mcp_servers` | yes | `<source>.<stamp>.cap-backup` | Existing path. Keeps `cap-mcp`. Validates after write, then re-inspects (OPT-07). |
+| Codex `[mcp_servers.name]` (+ `[mcp_servers.name.env]`) | yes | same sibling pattern | OPT-06 slice. Non-MCP tables (model, projects, …) are kept. Nested `.env` is removed with the parent server. Same post-apply re-inspect. |
 | JSON `mcp.servers` | no | — | Inspected; apply refuses with guidance. |
 | Codex `mcp_servers = { … }` inline table | no | — | Refused. |
 | Codex `[mcp_servers]` table form | no | — | Refused. |

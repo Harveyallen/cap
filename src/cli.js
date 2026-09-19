@@ -74,6 +74,17 @@ export function compactTokens(value) {
   return `~${n}`;
 }
 
+function validationLine(validation) {
+  if (!validation) return '';
+  const actual = compactTokens(validation.actual.tokensSaved);
+  const projected = compactTokens(validation.projected.tokensSaved);
+  const base = `Validation: actual estimated savings ${actual} tok vs projected ${projected} tok (estimates, characters/4).`;
+  if (!validation.ok) {
+    return `\n${base}\nValidation failed: ${validation.failures.map((item) => item.message).join('; ')}`;
+  }
+  return `\n${base}`;
+}
+
 function stamp(iso) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
@@ -383,7 +394,12 @@ export async function main(args, options = {}) {
     const refusedLine = (result.refused ?? plan.refused)?.length
       ? `\nRefused: ${(result.refused ?? plan.refused).map((item) => `${item.source} (${item.reason})`).join('; ')}`
       : '';
-    return print(json ? result : `Before: ${plan.before.directTools} direct tools\nAfter: ${plan.after.directTools} CAP entry tools\nEstimated reduction: ${plan.reductionPercent}%${skillLine}${output ? `\nPlan: ${output}` : ''}${result.message ? `\n${result.message}` : preview}${refusedLine}${rollback}`, json);
+    const applied = Boolean(result.validation);
+    print(json ? result : `Before: ${plan.before.directTools} direct tools\nAfter: ${plan.after.directTools} CAP entry tools\nEstimated reduction: ${plan.reductionPercent}%${skillLine}${output ? `\nPlan: ${output}` : ''}${result.message ? `\n${result.message}` : preview}${refusedLine}${applied ? validationLine(result.validation) : ''}${rollback}`, json);
+    if (result.validation && !result.validation.ok) {
+      throw new Error(`Optimize validation failed: ${result.validation.failures.map((item) => item.message).join('; ')}`);
+    }
+    return;
   }
   if (command === 'activity') {
     const state = await loadState(options);
