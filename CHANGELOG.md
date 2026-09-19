@@ -6,7 +6,7 @@
 
 - **`npx ... setup` now installs persistent `cap` and `cap-mcp` launchers.** Setup prefers a writable directory already present in `PATH`; when it must fall back to `~/.local/bin`, the CLI prints the exact `export PATH=...` command required by the current shell. Generated launchers are marked and updated safely; unrelated existing commands are never overwritten.
 - **npx-based MCP setup no longer stores an ephemeral npm cache path.** The generated Agent configuration launches the pinned package through `npx`, so clearing the `_npx` cache does not leave Claude Code or Codex pointing at a missing `cap-mcp.js` file.
-- **README is reorganized around first-run success.** Installation and `cap inspect` come first, the `search → add → use` path uses an executable builtin example, catalog misses are explained explicitly, and implementation/history details move behind focused docs links.
+- **README now starts from the user's pain and stays Agent-first.** It explains capability-installation FOMO, resident context pressure, and intent-first Provider discovery, then gives copy-paste prompts for Agent-led setup/inspect and a complete architecture-diagram discovery → comparison → selection → use journey. Catalog misses are explicit, and implementation/history details move behind focused docs links.
 
 ### Local skills
 

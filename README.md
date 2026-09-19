@@ -1,45 +1,87 @@
 # CAP
 
-让 Agent 只看到少量稳定入口，其他能力按任务查找、添加和调用；同时看清本地 MCP 与 Skills 占用了多少上下文。
-
 > Install more. Expose less.
 
-MCP 和工具越装越多，常驻 Tool Schema 占用的上下文也越多。CAP 把底层 CLI、MCP、Skill 和 API 统一成 **Capability**，让 Agent 默认只面对 `cap.search`、`cap.add` 和 `cap.use`，而不是所有 Provider 的完整工具列表。
+## 你可能已经遇到这些问题
+
+你在社交媒体、GitHub 或技术社区看到一个新的 MCP 或 Skill：它看起来很有用，于是安装下来试一试。过几天又看到几个，也都想装。单个能力的成本似乎不高，但数量越来越多之后，它们的名称、描述和 Tool Schema 会持续挤占大模型上下文——即使当前任务根本用不到它们。
+
+结果是：**安装的能力越多，Agent 留给真实任务的有效上下文越少；相似能力越多，Agent 选错工具和忽略重要信息的概率也越高。**
+
+另一个问题是发现能力。用户通常知道自己想完成什么，却不知道应该搜索哪个 Skill、MCP Server 或插件。比如你只会说：
+
+> 我想画一张生产系统架构图。
+
+理想情况下，Agent 应该直接找到与“架构图”相关的 Capability，列出可用的 Skill 或 MCP，并说明每个候选的能力覆盖、维护状态、权限、风险和上下文成本。你选择一个 Provider 后，就能立即把它加入 CAP 并在当前任务中使用，而不需要先研究一堆工具名称和安装文档。
+
+## CAP 怎么解决
+
+CAP 把 CLI、MCP、Skill 和 API 统一成 **Capability**，围绕用户意图完成四件事：
+
+1. **Inspect**：看清本机已经安装了什么，以及它们占用了多少上下文。
+2. **Search**：用模糊的自然语言描述目标，搜索相关 Capability，而不是工具名称。
+3. **Compare**：比较候选 Provider 的覆盖范围、状态、权限、风险和 Context 成本。
+4. **Add and Use**：选择 Provider，加入 CAP，然后通过统一入口调用。
+
+```text
+“我想画生产架构图”
+          │
+          ▼
+   搜索相关 Capability
+          │
+          ▼
+ Skill / MCP 候选与优缺点
+          │
+          ▼
+      选择 → 添加 → 使用
+```
+
+与此同时，Agent 默认只需要面对 `cap.search`、`cap.add` 和 `cap.use`，而不是所有 Provider 的完整工具列表。
+
+当前版本会搜索内置种子 Catalog 和本机发现的 `SKILL.md`。在线公共 Catalog 仍在规划中，因此不是任意意图都一定有结果。
 
 ## 三分钟开始
 
-需要 Node.js 20 或更高版本。
+CAP 的主要使用场景是在 Agent 里，而不是让用户记住一组 CLI 命令。打开支持本地终端的 Codex、Claude Code 或 Cursor，把下面这段话直接粘贴进去：
 
-```bash
-npx -y @harvey2008/cap setup
+```text
+请在这台电脑上安装并检查 CAP：
+
+1. 确认 Node.js 版本不低于 20。
+2. 运行 npx -y @harvey2008/cap setup。
+3. 如果 setup 输出了更新 PATH 的命令，请执行它。
+4. 运行 cap inspect --json。
+5. 用中文告诉我：当前发现了多少 MCP、Skills 和暴露工具；它们估算占用多少上下文；Context Health 如何；哪些能力重复或值得迁入 CAP。
+
+只做安装和只读检查。不要执行 cap optimize --apply --yes，也不要连接或运行扫描到的第三方 MCP。
 ```
 
-`setup` 会安装 `cap` / `cap-mcp` 命令，备份并配置检测到的 Claude Code 或 Codex MCP，安装 Context Health Skill，索引本地 `SKILL.md`，然后执行一次本机检查。
+Agent 会代你安装 `cap` / `cap-mcp`，备份并配置检测到的 MCP，索引本地 `SKILL.md`，然后把检查结果翻译成人能读懂的报告。你不需要自己分析 JSON，也不需要知道配置文件在哪里。
 
-如果输出提示当前终端需要更新 PATH，请复制执行它给出的 `export PATH=...` 命令。随后运行：
+首次接入 MCP 后，Agent 可能会提示重启或新开一个会话。安装阶段仍可通过终端执行 `cap inspect`；重启后，Agent 才能直接调用 `cap.search`、`cap.add`、`cap.use` 和已启用的诊断入口。
 
-```bash
-cap inspect
-```
-
-看到 MCP、Skills、暴露工具、Context Health 和建议清单，就表示安装成功。每台机器的配置不同，数量和 token 估算也会不同。
+当 Agent 能汇报 MCP、Skills、暴露工具、Context Health 和建议清单时，就表示安装成功。每台机器的配置不同，数量和 token 估算也会不同。
 
 ## 第一个完整流程
 
-这个例子使用内置 Git Provider，不需要安装第三方 MCP：
+安装完成并按提示重启 Agent 后，你仍然只需要描述目标。比如直接说：
 
-```bash
-# 1. 按任务搜索，而不是按插件名搜索
-cap search "查看 Git 仓库状态"
+```text
+我想画一张生产系统架构图。
 
-# 2. 将能力加入 CAP Registry
-cap add git.repository.status
+请先通过 CAP 搜索本机和 Catalog 中相关的 Skill 或 MCP。列出最相关的候选，并比较：
+- 适合做什么、不适合做什么
+- 来源与维护状态
+- 需要的权限和风险
+- 估算的上下文成本
+- 当前是否已经可用，还是需要安装、连接或授权
 
-# 3. 通过统一入口调用能力
-cap use git.repository.status --input '{"path":"."}'
+先让我选择，不要自动执行需要脚本、新权限或外部账号的 Provider。等我选择后，再通过 CAP 添加并使用这个能力。
 ```
 
-对于 MCP Provider，`cap add` 会尝试绑定本地已有的 `mcpServers` 配置。没有可用连接时，CAP 返回 `connection_required` 和下一步建议，不会假装任务已经执行。
+Agent 会把这段模糊意图交给 `cap.search`，只返回少量相关候选。你选择后，Agent 再调用 `cap.add` 和 `cap.use`。如果命中的是本地 Skill，CAP 可以按需读取它的正文；如果命中的是 MCP，CAP 会尝试绑定已有的 `mcpServers` 配置。
+
+如果没有匹配能力、缺少连接或需要额外授权，Agent 应明确说明原因和下一步，而不是假装已经完成架构图。
 
 ## 搜索不到不是安装失败
 
@@ -137,6 +179,7 @@ node ./bin/cap.js search "查看 Git 仓库状态"
 
 ## 深入阅读
 
+- [产品需求文档](./docs/product-requirements.md)
 - [架构与模块边界](./docs/architecture.md)
 - [本地 Agent Skills 的发现与按需读取](./docs/local-skills.md)
 - [Context Health、Value Analysis 与 Dynamic Injection](./docs/context-health.md)
