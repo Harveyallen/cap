@@ -72,7 +72,7 @@ CAP 的主要使用场景是在 Agent 里，而不是让用户记住一组 CLI �
 
 Agent 会代你安装 `cap` / `cap-mcp`，备份并配置检测到的 MCP，索引本地 `SKILL.md`，然后把检查结果翻译成人能读懂的报告。你不需要自己分析 JSON，也不需要知道配置文件在哪里。
 
-如果 MCP / Skills 已经严重挤占上下文，Agent 应直接给出行动建议，例如“建议使用 CAP 收拢这些能力，预计可回收 18,000 tokens”。它会同时说明优化会修改什么、备份在哪里，以及反悔后如何复原。首次体检只推荐和预览，不会直接应用优化；你确认方案后才会执行。当前版本会为受支持的 JSON 配置创建时间戳 `.cap-backup`，完整的一键恢复流程仍是产品需求中的 P0 能力，在实现前不能宣称已经支持自动恢复。
+如果 MCP / Skills 已经严重挤占上下文，Agent 应直接给出行动建议，例如“建议使用 CAP 收拢这些能力，预计可回收 18,000 tokens”。它会同时说明优化会修改什么、备份在哪里，以及如何从备份复原。首次体检只推荐和预览，不会直接应用优化；你确认方案后才会执行。当前版本会为受支持的 JSON 配置创建时间戳 `.cap-backup`；现阶段的可复原范围就是这份备份和文档中的恢复步骤，不是跨 Agent 的一键 Restore。在实现完整一键恢复之前，不能宣称已经支持自动恢复。
 
 首次接入 MCP 后，Agent 可能会提示重启或新开一个会话。安装阶段仍可通过终端执行 `cap inspect`；重启后，Agent 才能直接调用 `cap.search`、`cap.add`、`cap.use` 和已启用的诊断入口。
 
@@ -195,6 +195,7 @@ node ./bin/cap.js search "查看 Git 仓库状态"
 ## 深入阅读
 
 - [产品需求文档](./docs/product-requirements.md)
+- [领域词汇](./CONTEXT.md)
 - [架构与模块边界](./docs/architecture.md)
 - [本地 Agent Skills 的发现与按需读取](./docs/local-skills.md)
 - [Context Health、Value Analysis 与 Dynamic Injection](./docs/context-health.md)
