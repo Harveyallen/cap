@@ -198,7 +198,7 @@ cap pin github
 cap unpin github
 cap exclude postgres
 cap include postgres
-cap optimize          # 预览；写入仍需 --apply --yes
+cap optimize          # 预览；写入仍需 --apply --yes（应用后会再 inspect，对比 projected vs actual 估算）
 ```
 
 Pin / exclude 是 Phase 2 REC-06。`cap pin` 把 Provider 固定为 Direct Exposure（JSON MCP 会写回或保留在 Agent 配置里）。`cap unpin` 把它收回为非驻留 CAP-managed。`cap exclude` 只从建议里拿掉，不卸载。默认 MCP `tools/list` 仍是 search / add / use，没有 `cap.pin`。

@@ -26,7 +26,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/profiler.js` | V3 Value Analysis (internally: profiler module; `use` activity → value / valuePerCost / underused; Observation Period readiness + frequency/value advice) |
 | `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
 | `src/setup.js` | `cap setup`: install persistent CLI launchers, write CAP MCP + Context Health Skill, then inspect |
-| `src/optimize.js` | Preview / apply MCP consolidation (JSON + dotted-table Codex TOML; keeps `cap-mcp`) and index local skills |
+| `src/optimize.js` | Preview / apply MCP consolidation (JSON + dotted-table Codex TOML; keeps `cap-mcp`), index local skills, and post-apply savings / regression validation |
 | `src/codex-toml.js` | Codex `config.toml` MCP parse / format safety / table removal (setup, inspect, bind, optimize) |
 | `src/pin.js` | Pin / unpin Direct Exposure; exclude / include optimize recommendations |
 | `src/mcp-server.js` | MCP JSON-RPC tools |

@@ -52,6 +52,19 @@ Fill from inspect JSON. Do **not** say 一键恢复, one-click Restore, or “sa
 后悔时按 docs/restore-from-backup.md 把备份复制回去，再 cap inspect 核对。这不是一键 Restore。
 ```
 
+## After optimize apply (OPT-07)
+
+After a confirmed `cap optimize --apply --yes`, CAP re-inspects. Read `validation` from `--json` (or the human Validation line).
+
+| Field | Agent does |
+|---|---|
+| `validation.estimated: true` | Say **estimated**. Never claim a live-session tokenizer count. |
+| `validation.projected` vs `validation.actual` | Report both token savings. Actual remaining Direct Exposure from pin/exclude is expected, not a miss. |
+| `validation.ok: true` | Apply succeeded. Restart the Agent to reload config. |
+| `validation.ok: false` | Treat as failure. `config_invalid` = mutated file unreadable; `cap_surface_broken` = retained `cap-mcp` gone; `invocation_regression` = migrated MCP has no Registry launch for `cap.use`. Point at `.cap-backup` copy-back in [restore-from-backup.md](./restore-from-backup.md). Do not claim one-click Restore. |
+
+Do not connect to third-party MCP to “verify” savings. The validation loop is inspect estimates plus CAP-surface / launch checks.
+
 ## Unique hit vs choice (USE-09)
 
 `cap.use` on an unmanaged catalog or local-skill hit **registers a ManagedBinding** (same ledger as `cap.add`). That is **Acquisition + CAP-managed**, not Direct Exposure. It does not add the Provider’s tools to the Agent tool list.

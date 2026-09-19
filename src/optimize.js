@@ -15,6 +15,7 @@ import { loadCatalog, loadState, registerLocalSkills, saveState } from './regist
 import { discoverLocalSkills, overlayLocalSkills } from './skills.js';
 
 const ROLLBACK = 'Each changed JSON or Codex TOML file is copied to <source>.<ISO-stamp>.cap-backup before modification. Recover by copying that backup over the live file (docs/restore-from-backup.md). This is not one-click Restore.';
+const ESTIMATE_NOTE = 'All footprint figures are estimates (characters/4), not a live-session tokenizer.';
 
 export const OPTIMIZE_ADAPTERS = {
   apply: [
@@ -227,14 +228,105 @@ export async function buildOptimizationPlan(options = {}) {
   };
 }
 
-function applyMessage({changed, refused, skillMsg}) {
+function percentSaved(before, after) {
+  const start = Number(before) || 0;
+  const end = Number(after) || 0;
+  if (start <= 0) return 0;
+  return Math.round((1 - end / start) * 100);
+}
+
+function launchable(config = {}) {
+  return Boolean(config.command || config.url);
+}
+
+export function validateOptimizationOutcome({plan, changed = [], inspection, state = {}}) {
+  const projectedBefore = plan?.before ?? {directTools: 0, contextTokens: 0};
+  const projectedAfter = plan?.after ?? {directTools: 0, contextTokens: 0};
+  const summary = inspection?.summary ?? {};
+  const actualAfter = {
+    directTools: summary.directTools ?? 0,
+    contextTokens: summary.contextTokens ?? 0
+  };
+  const projectedSaved = (projectedBefore.contextTokens ?? 0) - (projectedAfter.contextTokens ?? 0);
+  const actualSaved = (projectedBefore.contextTokens ?? 0) - (actualAfter.contextTokens ?? 0);
+  const failures = [];
+  const changedSources = new Set(changed.map((item) => item.source));
+  for (const item of inspection?.items ?? []) {
+    if (item.kind === 'warning' && changedSources.has(item.source)) {
+      failures.push({
+        code: 'config_invalid',
+        source: item.source,
+        message: `Config invalid after apply: ${item.source} (${item.message}). Recover from .cap-backup (docs/restore-from-backup.md).`
+      });
+    }
+  }
+  if ((plan?.retained ?? []).length && !summary.capSurface) {
+    failures.push({
+      code: 'cap_surface_broken',
+      message: 'CAP surface (cap-mcp) is missing after apply. Recover from .cap-backup (docs/restore-from-backup.md).'
+    });
+  }
+  const providers = state.external_providers ?? [];
+  for (const change of changed) {
+    for (const name of change.providers ?? []) {
+      const record = providers.find((item) => item.name === name && item.originalSource === change.source)
+        ?? providers.find((item) => item.name === name);
+      if (!record || !launchable(record.config)) {
+        failures.push({
+          code: 'invocation_regression',
+          provider: name,
+          source: change.source,
+          message: `Migrated provider ${name} has no Registry launch for cap.use after apply.`
+        });
+      }
+    }
+  }
+  return {
+    ok: failures.length === 0,
+    estimated: true,
+    note: ESTIMATE_NOTE,
+    projected: {
+      before: projectedBefore,
+      after: projectedAfter,
+      reductionPercent: plan?.reductionPercent ?? percentSaved(projectedBefore.contextTokens, projectedAfter.contextTokens),
+      tokensSaved: projectedSaved
+    },
+    actual: {
+      before: projectedBefore,
+      after: actualAfter,
+      reductionPercent: percentSaved(projectedBefore.contextTokens, actualAfter.contextTokens),
+      tokensSaved: actualSaved,
+      capSurface: Boolean(summary.capSurface),
+      reclaimableTokens: summary.reclaimableTokens ?? 0,
+      pinned: summary.pinned ?? 0,
+      excluded: summary.excluded ?? 0
+    },
+    delta: {
+      tokensSaved: actualSaved - projectedSaved,
+      reductionPercent: percentSaved(projectedBefore.contextTokens, actualAfter.contextTokens)
+        - (plan?.reductionPercent ?? percentSaved(projectedBefore.contextTokens, projectedAfter.contextTokens))
+    },
+    failures
+  };
+}
+
+function validationNote(validation) {
+  if (!validation) return '';
+  if (!validation.ok) {
+    return ` Validation failed: ${validation.failures.map((item) => item.message).join('; ')}`;
+  }
+  return ` Actual estimated savings ${validation.actual.tokensSaved} tok vs projected ${validation.projected.tokensSaved} tok (estimates).`;
+}
+
+function applyMessage({changed, refused, skillMsg, validation}) {
+  const extra = `${skillMsg}${validationNote(validation)}`;
   if (changed.length) {
     const refuseNote = refused.length ? ` ${refused.length} unsupported source(s) were left unchanged.` : '';
-    return `Migration applied. Restart the Agent to reload its configuration.${refuseNote}${skillMsg}`;
+    return `Migration applied. Restart the Agent to reload its configuration.${refuseNote}${extra}`;
   }
-  if (refused.length) return `No supported config was mutated. Unsupported formats were refused.${skillMsg}`;
-  if (skillMsg) return skillMsg.trim();
-  return 'No supported JSON or Codex TOML MCP configuration was found.';
+  if (refused.length) return `No supported config was mutated. Unsupported formats were refused.${extra}`;
+  if (skillMsg) return `${skillMsg.trim()}${validationNote(validation)}`;
+  return `No supported JSON or Codex TOML MCP configuration was found.${validationNote(validation)}`;
 }
 
 export async function applyOptimization(options = {}) {
@@ -268,12 +360,16 @@ export async function applyOptimization(options = {}) {
   }
   state.external_providers = [...new Map(state.external_providers.map((item) => [`${item.originalSource}:${item.name}`, item])).values()];
   await saveState(state, options);
+  const inspect = options.afterInspect ?? inspectLocal;
+  const inspection = await inspect(options);
+  const validation = validateOptimizationOutcome({plan, changed, inspection, state});
   return {
     plan,
     changed,
     refused,
     skills,
-    message: applyMessage({changed, refused, skillMsg})
+    validation,
+    message: applyMessage({changed, refused, skillMsg, validation})
   };
 }
 
