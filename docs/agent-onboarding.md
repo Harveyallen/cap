@@ -36,7 +36,7 @@ Recommend a **preview** (`cap optimize`, never `--apply --yes` under onboarding 
 1. Context Pressure band is `high`, `critical`, or `emergency`, or
 2. `summary.reclaimableTokens` is at least **10% of `budget.effectiveBudget`** (material-savings threshold; closed in [ADR 0001](./adr/0001-material-savings-threshold.md)).
 
-Do not recommend from unused / Value Analysis “underused” as if that were low-frequency. See [ADR 0002](./adr/0002-observation-period-phase1.md).
+Until Observation Period readiness (14 UTC days and 3 activity days; [ADR 0003](./adr/0003-observation-period-readiness.md)), do not treat unused / Value Analysis `underused` as low-frequency. After readiness, frequency/value advice still must not say remove.
 
 ## Optimize recommendation template (ONB-13 / RST-09)
 

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Observation Period
+
+- **Phase 2 readiness is 14 UTC days and 3 distinct activity days** ([ADR 0003](./docs/adr/0003-observation-period-readiness.md), REC-03/04/05). 14 days is kept (7 is too short for weekly tools; 30 delays advice). Until both gates pass, Inspect/Web keep `frequencyVerdicts: false` and show `underused` as a value signal only.
+- **Frequency/value advice after readiness.** `profiler.advice` explains cost, duplication, usage, and recency separately. Combined action is `prefer_on_demand` — never unused→remove. Value scores still come from `use` only. Registry persists `observation_started_at` so the 100-row Activity cap cannot drift the start.
+- Human `cap inspect` and Web Health show observation progress; frequency labels appear only when ready.
+
 ### Registry Activity
 
 - **`cap search` / MCP `cap.search` write a local search event.** Registry Activity now records the privacy-safe query (Capability Intent), hit count, hit ids, top id, timestamp, and `selected_id` when the result set has exactly one capability. Subsequent `add` / `use` of a recent hit also writes a `select` event. Add/use invocation and outcome records are unchanged.

@@ -23,7 +23,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/input-schema.js` | On-demand JSON Schema for `cap.use` input (live MCP `tools/list` or catalog) |
 | `src/skills.js` | Discover local `SKILL.md` files and map them to catalog overlay entries |
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
-| `src/profiler.js` | V3 Value Analysis (internally: profiler module; `use` activity → value / valuePerCost / underused; no day-one frequency verdicts) |
+| `src/profiler.js` | V3 Value Analysis (internally: profiler module; `use` activity → value / valuePerCost / underused; Observation Period readiness + frequency/value advice) |
 | `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
 | `src/setup.js` | `cap setup`: install persistent CLI launchers, write CAP MCP + Context Health Skill, then inspect |
 | `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) and index local skills |

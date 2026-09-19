@@ -174,8 +174,14 @@ export function inspectText(report, options = {}) {
   if (profiler && profiler.tracked > 0) {
     lines.push(rule, '价值分析');
     lines.push(`  Registry 跟踪 ${profiler.tracked} 个能力 · 用过 ${profiler.used} 个 · 未使用 ${profiler.unusedManaged} 个 · ${profiler.useAttempts} 次 use`);
-    if (profiler.frequencyVerdicts === false) {
+    const observation = profiler.observation ?? {};
+    if (profiler.frequencyVerdicts) {
+      lines.push(`  频率结论：已就绪（${observation.elapsedDays} / ${observation.periodDays} 天 · ${observation.evidenceSessionDays} 个活动日）`);
+    } else {
       lines.push('  频率结论：未就绪（搜索/选择已记录，Observation Period 未完成）');
+      if (observation.startedAt) {
+        lines.push(`  观察进度：已过 ${observation.elapsedDays} / ${observation.periodDays} 天 · 活动日 ${observation.evidenceSessionDays} / ${observation.evidenceSessionDaysRequired}`);
+      }
     }
     if (profiler.ranked.length) {
       lines.push('  性价比排行（value / context_cost）：');
@@ -183,7 +189,19 @@ export function inspectText(report, options = {}) {
         lines.push(`  ${index + 1}. ${item.capability_id}  value ${item.value} · vpc ${item.valuePerCost} · ${item.successes} uses / ${item.sessions} sessions · ~${item.contextCost} tok`);
       });
     }
-    if (profiler.underused.length) {
+    if (profiler.frequencyVerdicts && profiler.advice?.length) {
+      lines.push('  频率 / 价值建议（信号分列，不是移除建议）：');
+      profiler.advice.slice(0, 5).forEach((item) => {
+        const {cost, duplication, usage, recency} = item.signals;
+        const frequency = item.frequency === 'low' ? '低频' : '已观察';
+        const recencyText = recency.neverUsed ? '从未成功 use' : `${recency.daysSinceLastUse} 天前`;
+        lines.push(`  ● ${item.capability_id}  ${frequency} · 建议勿常驻注入`);
+        lines.push(`      成本 ~${cost.contextCost} tok（估算）`);
+        lines.push(`      重复 ${duplication.duplicate ? duplication.name : '无'}`);
+        lines.push(`      用量 ${usage.successes} 成功 / ${usage.attempts} 尝试 / ${usage.sessions} 会话`);
+        lines.push(`      近况 ${recencyText}`);
+      });
+    } else if (profiler.underused.length) {
       lines.push('  价值信号（Observation Period 未完成，不是移除建议）：');
       profiler.underused.slice(0, 5).forEach((item) => {
         const signal = item.successes ? `value ${item.value} · vpc ${item.valuePerCost}` : '未使用';

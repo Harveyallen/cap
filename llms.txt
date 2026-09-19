@@ -10,7 +10,7 @@
 - [Agent onboarding copy](docs/agent-onboarding.md): first-report URL, partial scan, 10% savings, scoped Restore, USE-09, inspect label map
 - [Restore from `.cap-backup`](docs/restore-from-backup.md): JSON MCP optimize recovery (not one-click Restore)
 - [OS/Agent compatibility](docs/compatibility.md): inspect paths with tested / expected / unknown
-- [ADRs](docs/adr/): material-savings 10%; defer frequency labels until Phase 2
+- [ADRs](docs/adr/): material-savings 10%; Observation Period readiness (14 UTC days + 3 activity days)
 - [AGENTS.md](AGENTS.md): instructions for coding agents
 - [Architecture](docs/architecture.md): module boundaries and data flow
 - [Local skills](docs/local-skills.md): discover SKILL.md, overlay catalog, search/add/use without dumping bodies
@@ -23,7 +23,7 @@
 
 - CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `inject` / `add` / `use` / `optimize` / `activity` / `web`)
 - MCP gateway: `src/mcp-bind.js` (launch resolve) + `src/mcp-client.js` (stdio JSON-RPC); `cap.use` calls one mapped tool and implicitly `add`s if the capability is not yet managed. Search/add attach on-demand `input_schema` (`src/input-schema.js`: live `tools/list` when bound, else catalog). Agent `tools/list` stays `cap.search` / `cap.add` / `cap.use`.
-- Value Analysis: `src/profiler.js` (V3 value/cost from `use` activity only; search/select are recorded but do not create frequency verdicts)
+- Value Analysis: `src/profiler.js` (V3 value/cost from `use` activity only; Observation Period readiness + frequency/value advice; search/select do not create value scores)
 - Dynamic Injection: `src/inject.js` (V4 task → load/defer plan; CLI `cap inject`; MCP `cap.inject` via `CAP_MCP_INJECT=1`)
 - MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect` / `cap.inject`)
 - Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`

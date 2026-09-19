@@ -83,7 +83,7 @@ MCP and Skill Providers discovered from supported Agent configuration files on t
 _Avoid_: Catalog, CAP-managed, Direct Exposure
 
 **Observation Period**:
-The interval in which CAP records invocation activity before classifying a Provider as low-frequency. Phase 1 defers that classification until Phase 2; unused Value Analysis signals are not a low-frequency verdict.
+The interval in which CAP records invocation activity before classifying a Provider as low-frequency. Ready after 14 UTC days and 3 distinct activity days ([ADR 0003](docs/adr/0003-observation-period-readiness.md)). Until then, unused Value Analysis signals are not a frequency verdict and must not say remove.
 _Avoid_: Trial period, telemetry window
 
 **Capability Unlock**:
