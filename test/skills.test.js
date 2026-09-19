@@ -153,6 +153,9 @@ test('use works from search overlay without a prior add', async (t) => {
   const used = await useCapability('skill.system-blueprint', {}, ctx.options);
   assert.equal(used.status, 'completed');
   assert.equal(used.skill.path, ctx.skillFile);
+  const state = await loadState(ctx.options);
+  assert.ok(state.managed_capabilities.includes('skill.system-blueprint'));
+  assert.ok(state.activity.some((row) => row.action === 'add' && row.capability_id === 'skill.system-blueprint'));
 });
 
 test('optimize preview and apply index local skills', async (t) => {

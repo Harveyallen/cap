@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Agent path
+
+- **`cap.use` implicitly adds.** Calling `use` on a catalog or local-skill capability that is not yet in the Registry registers it first (same ledger as `cap.add`: Installed→Enabled for inspect / inject / stats), then executes. Already-managed capabilities skip the add. Explicit `cap.add` stays available for intentional enablement. Search hits that are not installed include `use_registers: true`. Default Agent tools stay search / add / use.
+
 ## 0.4.1
 
 ### Setup / CLI installation

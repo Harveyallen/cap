@@ -1,10 +1,11 @@
-/** Execute CAP-managed providers: local builtins (git / ripgrep) or stdio MCP gateway. */
+/** Execute CAP-managed providers: local builtins (git / ripgrep) or stdio MCP gateway.
+ *  First use of an unmanaged catalog/local-skill capability registers it (same ledger as cap.add). */
 import {spawn} from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {callMcpTool} from './mcp-client.js';
 import {describeBinding, listMcpLaunchCandidates, missingLaunchHint, missingLaunchMessage, resolveMcpBinding, storeBinding} from './mcp-bind.js';
-import {loadEffectiveCatalog, loadState, saveState} from './registry.js';
+import {addCapability, loadEffectiveCatalog, loadState, saveState} from './registry.js';
 import {parseSkillMarkdown} from './skills.js';
 
 function run(executable, args, options = {}) {
@@ -207,12 +208,13 @@ async function useMcp(capability, provider, input, state, options) {
 }
 
 export async function useCapability(capabilityId, input = {}, options = {}) {
-  const [catalog, state] = await Promise.all([loadEffectiveCatalog(options), loadState(options)]);
+  const [catalog, loaded] = await Promise.all([loadEffectiveCatalog(options), loadState(options)]);
   const capability = catalog.capabilities.find((item) => item.capability_id === capabilityId);
   if (!capability) throw new Error(`Unknown capability: ${capabilityId}`);
-  const isLocalSkill = capability.origin === 'local-skill';
-  if (!state.managed_capabilities.includes(capabilityId) && !isLocalSkill) {
-    throw new Error(`${capabilityId} is not CAP Managed. Run cap add ${capabilityId} first.`);
+  let state = loaded;
+  if (!state.managed_capabilities.includes(capabilityId)) {
+    await addCapability(capabilityId, options.provider_id ?? options.provider, options);
+    state = await loadState(options);
   }
   const providerId = capability.provider_refs.find((id) => state.managed_providers.includes(id))
     ?? capability.provider_refs[0];

@@ -53,17 +53,21 @@ export async function searchCapabilities(query, options = {}) {
   const providers = new Map(catalog.providers.map((item) => [item.provider_id, item]));
   const registered = new Set((state.local_skills ?? []).map((item) => item.capability_id));
   const ranked = catalog.capabilities
-    .map((capability) => ({
-      ...capability,
-      score: scoreCapability(query, capability),
-      installed: state.managed_capabilities.includes(capability.capability_id),
-      registered: registered.has(capability.capability_id) || capability.origin === 'local-skill',
-      providers: capability.provider_refs.map((id) => {
-        const provider = providers.get(id);
-        if (!provider) return {provider_id: id, name: id, status: 'Unknown'};
-        return {...provider, status: state.managed_providers.includes(id) ? 'CAP Managed' : provider.status};
-      })
-    }))
+    .map((capability) => {
+      const installed = state.managed_capabilities.includes(capability.capability_id);
+      return {
+        ...capability,
+        score: scoreCapability(query, capability),
+        installed,
+        ...(installed ? {} : {use_registers: true}),
+        registered: registered.has(capability.capability_id) || capability.origin === 'local-skill',
+        providers: capability.provider_refs.map((id) => {
+          const provider = providers.get(id);
+          if (!provider) return {provider_id: id, name: id, status: 'Unknown'};
+          return {...provider, status: state.managed_providers.includes(id) ? 'CAP Managed' : provider.status};
+        })
+      };
+    })
     .filter((item) => item.score >= 4)
     .sort((a, b) => b.score - a.score || a.context_cost - b.context_cost)
     .slice(0, options.limit ?? 5);

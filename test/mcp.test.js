@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { handleMcpMessage } from '../src/mcp-server.js';
+import { loadState } from '../src/registry.js';
 
 test('MCP exposes a small stable tool surface', async (t) => {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), 'cap-mcp-'));
@@ -26,6 +27,23 @@ test('MCP inspect is opt-in', async (t) => {
   t.after(() => fs.rm(home, {recursive: true, force: true}));
   const response = await handleMcpMessage({jsonrpc: '2.0', id: 3, method: 'tools/list'}, {home, exposeInspect: true});
   assert.equal(response.result.tools.at(-1).name, 'cap.inspect');
+});
+
+test('MCP use without prior add registers then executes', async (t) => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'cap-mcp-use-implicit-'));
+  t.after(() => fs.rm(home, {recursive: true, force: true}));
+  const response = await handleMcpMessage({
+    jsonrpc: '2.0',
+    id: 7,
+    method: 'tools/call',
+    params: {name: 'cap.use', arguments: {capability_id: 'git.repository.status', input: {path: process.cwd()}}}
+  }, {home});
+  assert.equal(response.result.structuredContent.status, 'completed');
+  const listed = await handleMcpMessage({jsonrpc: '2.0', id: 8, method: 'tools/list'}, {home, env: {}});
+  const useTool = listed.result.tools.find((tool) => tool.name === 'cap.use');
+  assert.match(useTool.description, /registers it/);
+  const state = await loadState({home});
+  assert.ok(state.managed_capabilities.includes('git.repository.status'));
 });
 
 test('MCP add registers a managed capability', async (t) => {

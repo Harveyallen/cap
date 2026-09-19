@@ -17,7 +17,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/cli.js` | Command routing |
 | `src/search.js` | Intent/keyword capability search (seed catalog + local skills) |
 | `src/registry.js` | Catalog + `~/.cap/registry.json` state + local skill index |
-| `src/use.js` | Execute managed providers (git / ripgrep builtins, stdio MCP gateway, or local skill path) |
+| `src/use.js` | Execute managed providers (git / ripgrep builtins, stdio MCP gateway, or local skill path); first use implicitly `add`s if unmanaged |
 | `src/mcp-bind.js` | Resolve MCP stdio launch from catalog / local `mcpServers` / Registry |
 | `src/mcp-client.js` | Line-delimited JSON-RPC client (`tools/call` for `cap.use`, `tools/list` for on-demand input schema) |
 | `src/input-schema.js` | On-demand JSON Schema for `cap.use` input (live MCP `tools/list` or catalog) |
