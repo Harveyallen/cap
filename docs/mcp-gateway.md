@@ -35,7 +35,7 @@ This does **not** expand `tools/list`. DingTalk’s 15 tools stay behind `cap.us
 2. `--server` / MCP `cap.add` argument `server` matching a local `mcpServers` name.
 3. Catalog `mcp_server`, then `provider_id` / first id segment / provider name (e.g. `github.mcp` → `github`).
 4. Registry `external_providers` left by `cap optimize --apply --yes`.
-5. Live JSON configs (same roots as inspect: `~/.claude.json`, `~/.claude/settings.json`, `~/.cursor/mcp.json`, project `.cursor/mcp.json`, project `.mcp.json`) and a best-effort Codex TOML `command`/`args`.
+5. Live JSON configs (same roots as inspect: `~/.claude.json`, `~/.claude/settings.json`, `~/.cursor/mcp.json`, project `.cursor/mcp.json`, project `.mcp.json`) and Codex dotted-table TOML `command` / `args` / `env` (`[mcp_servers.name]` + `[mcp_servers.name.env]`).
 6. Catalog `command` + `args` when the seed itself knows a stdio launcher.
 
 `cap-mcp` is never used as a downstream provider. HTTP/`url`-only servers return `connection_required` with `reason: unsupported_transport` (stdio only in v1). Env values from MCP configs are copied into the 0600 registry file so the child can start; add/use **results** expose `envKeys` only — values are not logged.

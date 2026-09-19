@@ -362,7 +362,11 @@ export async function main(args, options = {}) {
     const skillCount = plan.skills?.discovered ?? result.skills?.registered?.length ?? 0;
     const skillLine = skillCount ? `\nLocal skills: ${skillCount} indexed for cap search / add / use` : '';
     const rollback = plan.rollback ? `\n${plan.rollback}` : '';
-    return print(json ? result : `Before: ${plan.before.directTools} direct tools\nAfter: ${plan.after.directTools} CAP entry tools\nEstimated reduction: ${plan.reductionPercent}%${skillLine}${output ? `\nPlan: ${output}` : ''}${result.message ? `\n${result.message}` : '\nPreview only. Use --apply --yes to migrate supported JSON configs and index local skills.'}${rollback}`, json);
+    const preview = '\nPreview only. Use --apply --yes to migrate supported JSON MCP and Codex TOML configs and index local skills.';
+    const refusedLine = (result.refused ?? plan.refused)?.length
+      ? `\nRefused: ${(result.refused ?? plan.refused).map((item) => `${item.source} (${item.reason})`).join('; ')}`
+      : '';
+    return print(json ? result : `Before: ${plan.before.directTools} direct tools\nAfter: ${plan.after.directTools} CAP entry tools\nEstimated reduction: ${plan.reductionPercent}%${skillLine}${output ? `\nPlan: ${output}` : ''}${result.message ? `\n${result.message}` : preview}${refusedLine}${rollback}`, json);
   }
   if (command === 'activity') {
     const state = await loadState(options);

@@ -163,9 +163,9 @@ cap inject "分析 PostgreSQL 慢查询" --json
 - `cap inspect` 只读取本地配置，不连接或执行扫描到的第三方 MCP。
 - `cap search` 只读取本地 Skill 的名称和描述，不默认加载正文。
 - `cap inject` 只生成 load / defer 计划，不修改 Agent 配置。
-- `cap optimize` 默认只预览；只有 `cap optimize --apply --yes` 才修改支持的 JSON MCP 配置并持久化 Skill 索引。
-- 修改配置前会创建带时间戳的 `*.cap-backup`；从备份恢复见 [runbook](./docs/restore-from-backup.md)。Registry 文件权限为 `0600`。
-- Codex TOML 当前只检查，不由 optimize 自动修改。
+- `cap optimize` 默认只预览；只有 `cap optimize --apply --yes` 才修改支持的 JSON MCP 与 Codex 点分表 TOML，并持久化 Skill 索引。
+- 修改配置前会创建带时间戳的 `*.cap-backup`；从备份恢复见 [runbook](./docs/restore-from-backup.md)。这不是一键 Restore。Registry 文件权限为 `0600`。
+- 不支持的格式（JSON `mcp.servers`、Codex inline-table / `[mcp_servers]` / `[mcp.servers.*]`）会被拒绝并给出手工指引，不会静默改写。详见 [兼容性矩阵](./docs/compatibility.md)。
 - Context footprint 是字符和 Schema 的稳定估算，不是模型 tokenizer 的精确计数。
 
 扫描范围以 [OS/Agent 兼容性矩阵](./docs/compatibility.md) 为准：Claude Code、Cursor、Codex 以及共享目录中的用户级/项目级 MCP 与 Skills（含 Cursor 插件缓存中的 Skills）。矩阵标为 unknown 的路径不要当成已支持。

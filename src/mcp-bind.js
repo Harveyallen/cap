@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {listCodexMcpServers} from './codex-toml.js';
 import {isCapMcpConfig} from './mcp-tools.js';
 
 function normalizeName(value) {
@@ -113,14 +114,6 @@ function serverEntries(value) {
   return servers && typeof servers === 'object' ? Object.entries(servers) : [];
 }
 
-function parseTomlLaunch(block) {
-  const command = block.match(/^\s*command\s*=\s*"((?:\\.|[^"\\])*)"/m)?.[1];
-  if (!command) return null;
-  const argsBlock = block.match(/^\s*args\s*=\s*\[([\s\S]*?)\]/m)?.[1] ?? '';
-  const args = [...argsBlock.matchAll(/"((?:\\.|[^"\\])*)"/g)].map((match) => match[1]);
-  return launchFromConfig({command, args});
-}
-
 async function scanJsonConfigs(files) {
   const found = [];
   for (const [file, agent] of files) {
@@ -144,16 +137,11 @@ async function scanCodexToml(file) {
     if (error.code === 'ENOENT') return [];
     throw error;
   }
-  const headers = [...text.matchAll(/^\[mcp_servers\.(["']?)([^\]"']+)\1\]\s*$/gm)];
-  return headers.flatMap((match, index) => {
-    const name = match[2];
-    if (name.includes('.')) return [];
-    const end = headers[index + 1]?.index ?? text.length;
-    const block = text.slice(match.index, end);
-    if (isCapMcpConfig({}, block)) return [];
-    const launch = parseTomlLaunch(block);
-    if (!launch) return [];
-    return [{name, agent: 'Codex', source: file, ...launch}];
+  return listCodexMcpServers(text).flatMap((server) => {
+    if (isCapMcpConfig(server.config, server.block)) return [];
+    const launch = launchFromConfig(server.config);
+    if (!launch?.command) return [];
+    return [{name: server.name, agent: 'Codex', source: file, ...launch}];
   });
 }
 

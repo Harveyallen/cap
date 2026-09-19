@@ -188,8 +188,8 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | | |
 |---|---|
 | **Target** | Identify high-context and duplicate Providers. Preview. Require explicit confirmation. Apply JSON MCP consolidation only. Write a timestamped `.cap-backup`. Document how to recover from that file. |
-| **Now** | `cap optimize` previews; `cap optimize --apply --yes` mutates supported JSON MCP configs, keeps `cap-mcp`, indexes local Skills, and writes `*.cap-backup`. Codex TOML is inspect-only. |
-| **Gap** | Other adapters and a dedicated one-click Restore command/UI. Those are not Phase 1 P0. |
+| **Now** | `cap optimize` previews; `cap optimize --apply --yes` mutates supported JSON MCP and dotted-table Codex TOML, keeps `cap-mcp`, indexes local Skills, writes `*.cap-backup`, and validates after write. Unsafe TOML / JSON `mcp.servers` are refused. |
+| **Gap** | Remaining layouts, per-item selectivity, and a dedicated one-click Restore command/UI. Those are not Phase 1 P0. |
 
 1. CAP identifies high-context and duplicate Providers.
 2. It previews current and proposed footprint, savings, affected files, risks, and retained entries.
@@ -318,10 +318,10 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | OPT-01 | 1 | P0 | Produce a dry-run plan with affected files, before/after estimate, savings, retained entries, and reload needs. | `cap optimize` preview. | — |
 | OPT-02 | 1 | P0 | Require explicit confirmation immediately before applying. | `--apply --yes`. | — |
 | OPT-03 | 1 | P0 | Preserve Provider executables and Skill bodies; consolidation is not uninstall. | JSON MCP entries move behind CAP; Skills are indexed, not rewritten. | — |
-| OPT-04 | 1 | P0 | Apply supported JSON MCP changes and validate afterward. | Guarded JSON apply. | Not all adapters. |
-| OPT-05 | 1 | P0 | Refuse ambiguous/unsupported mutations and provide manual guidance. | TOML and unsafe paths are refused. | — |
-| OPT-06 | 2 | — | Support selective migration and every shipped Agent/OS adapter. | JSON MCP only. | TOML and remaining adapters. |
-| RST-01 | 1 | P0 | Write a timestamped `.cap-backup` before every supported JSON optimize mutation. | `*.cap-backup` is created. | — |
+| OPT-04 | 1 | P0 | Apply supported JSON MCP changes and validate afterward. | Guarded JSON apply + validate-after. Codex dotted-table apply is Phase 2 (OPT-06). | Remaining adapters. |
+| OPT-05 | 1 | P0 | Refuse ambiguous/unsupported mutations and provide manual guidance. | Unsafe TOML and JSON `mcp.servers` are refused with guidance. | — |
+| OPT-06 | 2 | — | Support selective migration and every shipped Agent/OS adapter. | JSON MCP + Codex `[mcp_servers.name]` apply (backup, confirm, validate). | JSON `mcp.servers`; Codex inline-table / `[mcp_servers]` / `[mcp.servers.*]`; per-item pick UX (REC-06). |
+| RST-01 | 1 | P0 | Write a timestamped `.cap-backup` before every supported JSON optimize mutation. | `*.cap-backup` is created for JSON and Codex dotted-table apply. | — |
 | RST-02 | 1 | P0 | Keep enough backup identity to recover the file (path and timestamp). | Timestamped sibling backup files. | Richer plan-ID metadata is later. |
 | RST-03 | later | — | Preview and confirm restoration through a Restore command. | Not shipped. | Full Restore UI/CLI. |
 | RST-04 | later | — | Restore exact original configuration when no later edit conflicts. | Manual copy from `.cap-backup`. | Automated exact restore. |
@@ -503,7 +503,7 @@ Do not market remote discovery, anonymous telemetry, or full Restore as generall
 | Agent onboarding | 1 | Directive-scoped install + first health report | README Agent Installation Directive; `cap setup --agent auto`; `cap inspect`; [agent-onboarding.md](./agent-onboarding.md) | Not auto Restore. |
 | Inventory and health | 1 | Local inventory and Context Health | Inspect: budget, pressure, funnel, costs, reclaimable estimate, Value Analysis; [compatibility.md](./compatibility.md) | Richer visual filters; OS/Agent version floors |
 | Recommendations | 2 | High-cost / duplicate always; frequency/value advice after readiness | Inspect recommendations stay cost/duplication. After 14 UTC days + 3 activity days, `profiler.advice` explains cost, duplication, usage, and recency separately ([ADR 0003](./adr/0003-observation-period-readiness.md)). Until ready, `frequencyVerdicts: false` and `underused` is a value signal only. | Pin/exclude UX (#36) |
-| Optimize | 1 | JSON MCP consolidation after `--apply --yes` | Preview + guarded JSON apply; Skill index; TOML inspect-only | Other adapters (Phase 2+) |
+| Optimize | 1–2 | JSON + shipped adapters after `--apply --yes` | Preview + guarded JSON and Codex dotted-table apply; Skill index; remaining layouts refused | Per-item selectivity; other layouts; Restore UI |
 | Restore | 1 | Timestamped `.cap-backup` + documented recovery | Backups are written; [restore-from-backup.md](./restore-from-backup.md); copy refuses one-click Restore | Full Restore UI/CLI across adapters is later, not Phase 1 P0 |
 | Transparent use | 1 | search / add / use + Skills overlay + implicit add-on-use | Delivered | — |
 | Compare | 1 | Existing metadata fields | Catalog and search metadata | No separate pros/cons engine (settled) |
