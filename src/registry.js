@@ -7,6 +7,9 @@ import { describeBinding, listMcpLaunchCandidates, missingLaunchHint, resolveMcp
 import { capHome, packageRoot } from './paths.js';
 import { discoverLocalSkills, overlayLocalSkills } from './skills.js';
 
+const ACTIVITY_LIMIT = 100;
+const QUERY_LIMIT = 200;
+
 export async function loadCatalog() {
   const root = packageRoot();
   const catalog = JSON.parse(await fs.readFile(path.join(root, 'data', 'catalog.json'), 'utf8'));
@@ -61,6 +64,57 @@ export async function saveState(state, options = {}) {
   return target;
 }
 
+/** Privacy-safe Capability Intent for local Activity. Never store secrets, paths, or raw config. */
+export function sanitizeSearchQuery(query) {
+  let text = String(query ?? '').replace(/\s+/g, ' ').trim();
+  text = text.replace(/\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/g, '[email]');
+  text = text.replace(/\b(?:https?|wss|ftp):\/\/[^\s]+/gi, '[url]');
+  text = text.replace(/(?:[A-Za-z]:\\|\/)[^\s]+/g, '[path]');
+  text = text.replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[token]');
+  text = text.replace(/\b(?:sk|pk|ghp|github_pat|xox[baprs])-[A-Za-z0-9_-]{8,}\b/g, '[secret]');
+  text = text.replace(/\b[A-Fa-f0-9]{32,}\b/g, '[secret]');
+  text = text.replace(/\b(?:password|token|secret|api[_-]?key|authorization|bearer)\s*[:=]\s*\S+/gi, '[redacted]');
+  if (text.length > QUERY_LIMIT) text = text.slice(0, QUERY_LIMIT);
+  return text;
+}
+
+export function pushActivity(state, row) {
+  state.activity ??= [];
+  state.activity.unshift({at: new Date().toISOString(), ...row});
+  state.activity = state.activity.slice(0, ACTIVITY_LIMIT);
+  return state;
+}
+
+/** Record select when add/use chooses a hit from the most recent search. */
+export function maybeRecordSelect(state, capabilityId) {
+  if (!capabilityId) return false;
+  const search = (state.activity ?? []).find((row) => row.action === 'search');
+  if (!search || !(search.hits ?? []).includes(capabilityId)) return false;
+  const dup = (state.activity ?? []).some((row) => (
+    row.action === 'select' && row.capability_id === capabilityId && row.query === search.query
+  ));
+  if (dup) return false;
+  pushActivity(state, {action: 'select', capability_id: capabilityId, query: search.query, success: true});
+  return true;
+}
+
+export async function recordSearchActivity(query, hits, options = {}) {
+  const ids = hits.map((item) => item.capability_id).filter(Boolean);
+  const selectedId = ids.length === 1 ? ids[0] : undefined;
+  const state = await loadState(options);
+  pushActivity(state, {
+    action: 'search',
+    query: sanitizeSearchQuery(query),
+    hit_count: ids.length,
+    hits: ids,
+    top_id: ids[0] ?? null,
+    ...(selectedId ? {selected_id: selectedId, capability_id: selectedId} : {}),
+    success: true
+  });
+  await saveState(state, options);
+  return state;
+}
+
 export async function addCapability(capabilityId, providerId, options = {}) {
   const catalog = await loadEffectiveCatalog(options);
   const capability = catalog.capabilities.find((item) => item.capability_id === capabilityId);
@@ -89,8 +143,8 @@ export async function addCapability(capabilityId, providerId, options = {}) {
       launch = undefined;
     }
   }
-  state.activity.unshift({at: new Date().toISOString(), action: 'add', capability_id: capabilityId, provider_id: selected, success: true});
-  state.activity = state.activity.slice(0, 100);
+  maybeRecordSelect(state, capabilityId);
+  pushActivity(state, {action: 'add', capability_id: capabilityId, provider_id: selected, success: true});
   const statePath = await saveState(state, options);
   const schema = await resolveInputSchema(capability, {...options, provider, state, launch});
   return {

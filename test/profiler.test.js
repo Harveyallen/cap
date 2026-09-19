@@ -27,7 +27,9 @@ test('buildProfiler ranks used capabilities and marks underused', async () => {
       {at: '2026-09-12T10:00:00.000Z', action: 'use', capability_id: 'git.repository.status', provider_id: 'builtin.git', success: true},
       {at: '2026-09-12T11:00:00.000Z', action: 'use', capability_id: 'git.repository.status', provider_id: 'builtin.git', success: true},
       {at: '2026-09-11T09:00:00.000Z', action: 'use', capability_id: 'git.repository.status', provider_id: 'builtin.git', success: true},
-      {at: '2026-09-12T12:00:00.000Z', action: 'add', capability_id: 'github.pr.review', provider_id: 'github.mcp', success: true}
+      {at: '2026-09-12T12:00:00.000Z', action: 'add', capability_id: 'github.pr.review', provider_id: 'github.mcp', success: true},
+      {at: '2026-09-12T09:00:00.000Z', action: 'search', query: 'review github pr', hit_count: 1, hits: ['github.pr.review'], selected_id: 'github.pr.review', success: true},
+      {at: '2026-09-12T09:00:01.000Z', action: 'select', capability_id: 'github.pr.review', query: 'review github pr', success: true}
     ]
   };
   const profiler = buildProfiler({catalog, state, items: []});
@@ -36,6 +38,9 @@ test('buildProfiler ranks used capabilities and marks underused', async () => {
   assert.equal(profiler.used, 1);
   assert.equal(profiler.unusedManaged, 1);
   assert.equal(profiler.useAttempts, 3);
+  assert.equal(profiler.searchEvents, 1);
+  assert.equal(profiler.selectEvents, 1);
+  assert.equal(profiler.frequencyVerdicts, false);
   const git = profiler.capabilities.find((item) => item.capability_id === 'git.repository.status');
   assert.equal(git.successes, 3);
   assert.equal(git.sessions, 2);
@@ -119,6 +124,8 @@ test('inspectLocal attaches profiler and fills cost.value after use', async (t) 
   assert.match(text, /git\.repository\.status/);
   assert.match(text, /性价比排行/);
   assert.match(text, /建议减负/);
+  assert.match(text, /频率结论：未就绪/);
+  assert.equal(report.profiler.frequencyVerdicts, false);
 });
 
 test('profiler leaves cost.value null without activity', async (t) => {

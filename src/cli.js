@@ -46,6 +46,15 @@ function print(value, json) {
   else console.log(value);
 }
 
+function activityLine(item) {
+  const outcome = item.success === false ? 'failed' : 'ok';
+  if (item.action === 'search') {
+    const pick = item.selected_id ?? item.top_id ?? '-';
+    return `${item.at}  search  q=${item.query ?? ''}  hits=${item.hit_count ?? 0}  ${pick}  ${outcome}`;
+  }
+  return `${item.at}  ${item.action}  ${item.capability_id ?? '-'}  ${outcome}`;
+}
+
 function colorEnabled() {
   return Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 }
@@ -165,6 +174,9 @@ export function inspectText(report, options = {}) {
   if (profiler && profiler.tracked > 0) {
     lines.push(rule, '价值分析');
     lines.push(`  Registry 跟踪 ${profiler.tracked} 个能力 · 用过 ${profiler.used} 个 · 未使用 ${profiler.unusedManaged} 个 · ${profiler.useAttempts} 次 use`);
+    if (profiler.frequencyVerdicts === false) {
+      lines.push('  频率结论：未就绪（搜索/选择已记录，不据不完整数据标低频）');
+    }
     if (profiler.ranked.length) {
       lines.push('  性价比排行（value / context_cost）：');
       profiler.ranked.slice(0, 5).forEach((item, index) => {
@@ -335,7 +347,7 @@ export async function main(args, options = {}) {
   }
   if (command === 'activity') {
     const state = await loadState(options);
-    return print(json ? state.activity : (state.activity.map((item) => `${item.at}  ${item.action}  ${item.capability_id}  ${item.success ? 'ok' : 'failed'}`).join('\n') || 'No activity yet.'), json);
+    return print(json ? state.activity : (state.activity.map(activityLine).join('\n') || 'No activity yet.'), json);
   }
   if (command === 'web') {
     const {url} = await startWebServer({...options, port: flag(rest, '--port')});

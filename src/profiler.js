@@ -60,6 +60,8 @@ export function buildProfiler({catalog, state, items = []}) {
   const activity = state.activity ?? [];
   const managed = new Set(state.managed_capabilities ?? []);
   const useRows = activity.filter((row) => row.action === 'use');
+  const searchRows = activity.filter((row) => row.action === 'search');
+  const selectRows = activity.filter((row) => row.action === 'select');
   const byId = new Map();
 
   for (const id of managed) byId.set(id, emptyEntry(id, catalog, true));
@@ -137,9 +139,12 @@ export function buildProfiler({catalog, state, items = []}) {
     used: capabilities.filter((item) => item.successes > 0).length,
     unusedManaged: capabilities.filter((item) => item.managed && item.successes === 0).length,
     useAttempts: useRows.length,
+    searchEvents: searchRows.length,
+    selectEvents: selectRows.length,
+    frequencyVerdicts: false,
     capabilities,
     ranked: ranked.slice(0, 10),
     underused: underused.slice(0, 10),
-    notes: 'Value Analysis is derived from Registry activity (successful uses + distinct UTC days as sessions). valuePerCost = value / catalog context_cost. Not a live-session measurement.'
+    notes: 'Value Analysis is derived from Registry activity (successful uses + distinct UTC days as sessions). Search and select events are stored for later observation; they do not create value scores or low-frequency labels. Frequency verdicts stay off until an Observation Period is satisfied. valuePerCost = value / catalog context_cost. Not a live-session measurement.'
   };
 }

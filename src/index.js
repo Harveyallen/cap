@@ -1,6 +1,7 @@
 /**
  * Public programmatic API for CAP.
- * Read / main-path only. Import optimize, servers, and registry writes from their modules.
+ * Read / main-path only (`searchCapabilities` may append a local search Activity event).
+ * Import optimize, servers, and other registry writes from their modules.
  */
 export { searchCapabilities } from './search.js';
 export { addCapability } from './registry.js';

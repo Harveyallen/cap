@@ -302,7 +302,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | ID | Phase | Pri | Target | Now | Gap |
 |---|:---:|:---:|---|---|---|
 | REC-01 | 1 | P0 | Initially recommend only high-context and duplicate capabilities. | Inspect recommendations start from cost/duplication. | — |
-| REC-02 | 1 | P0 | Record local CAP-mediated search, selection, invocation, outcome, and time in Registry Activity. | Registry Activity records add/use. | Search-selection events if missing. |
+| REC-02 | 1 | P0 | Record local CAP-mediated search, selection, invocation, outcome, and time in Registry Activity. | `cap search` / `cap.search` write a privacy-safe search event; add/use of a recent hit also writes `select`. Add/use still record invocation and outcome. | — |
 | REC-03 | 1 | P0 | Never label low-frequency until the Observation Period is satisfied. | Value Analysis leaves unused signals as underused without a day-one frequency verdict. | Formal readiness policy (open). |
 | REC-04 | 1 | P1 | Observation Period default is proposed at 14 days; validate before calling it final. | Not finalized. | Open decision. |
 | REC-05 | 2 | — | Explain cost, duplication, usage, and recency signals separately. | Value Analysis ranks value-per-cost. | Formal signal breakdown. |
@@ -365,7 +365,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 
 | ID | Phase | Pri | Target | Now | Gap |
 |---|:---:|:---:|---|---|---|
-| TEL-LCL | 1 | P0 | Local Registry Activity is sufficient for Value Analysis and underused advice. | Activity records add/use outcomes. | — |
+| TEL-LCL | 1 | P0 | Local Registry Activity is sufficient for Value Analysis and underused advice. | Activity records search/select/add/use. Value Analysis still scores from `use` only and keeps `frequencyVerdicts: false`. | — |
 | TEL-01 | 3 | — | Record anonymous install, active-use, search, exposure, acquisition, invocation result, and estimated savings events. | No product-wide anonymous contract. | Not a Phase 1 gate. |
 | TEL-02 | 3 | — | Provide an immediate user-visible opt-out. | N/A until remote TEL exists. | Phase 3. |
 | TEL-03 | 3 | — | Never transmit source code, raw task, config, inventory, paths, credentials, or raw errors. | Nothing is transmitted today. | Keep as a hard rule when TEL ships. |
@@ -510,7 +510,7 @@ Do not market remote discovery, anonymous telemetry, or full Restore as generall
 | Dynamic Injection | 1 | Plan-only | `cap inject` (`mutates: false`) | Auto mutate/evict later |
 | Remote catalog | 3 | Public Unlock | Bundled seed only | Service, admin workflow, signing, cache, revocation |
 | Remote acquisition | 3 | Download, integrity, permission gates | Local bindings; honest `connection_required` | Remote install path |
-| Activity | 1 | Local Registry Activity | Add/use outcomes on disk | — |
+| Activity | 1 | Local Registry Activity | Search/select/add/use on disk (privacy-safe query; no remote telemetry). `cap inject` ranking does not write search events. | — |
 | Anonymous telemetry | 3 | Opt-out product telemetry | Not shipped | Not a Phase 1 gate |
 
 ## 17. Open decisions

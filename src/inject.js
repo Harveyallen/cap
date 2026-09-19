@@ -44,7 +44,7 @@ export async function planInjection(query, options = {}) {
   const limit = options.limit ?? DEFAULT_LIMIT;
   const task = query.trim();
   const [matches, catalog, inspection] = await Promise.all([
-    searchCapabilities(task, {...options, limit: Math.max(limit, 5), liveSchema: false}),
+    searchCapabilities(task, {...options, limit: Math.max(limit, 5), liveSchema: false, record: false}),
     loadEffectiveCatalog(options),
     inspectLocal(options)
   ]);

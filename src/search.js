@@ -1,6 +1,6 @@
 /** Intent/keyword capability ranking over the seed catalog plus local skills. */
 import { attachInputSchemas } from './input-schema.js';
-import { loadEffectiveCatalog, loadState } from './registry.js';
+import { loadEffectiveCatalog, loadState, recordSearchActivity } from './registry.js';
 
 function terms(value) {
   return value.toLocaleLowerCase().match(/[\p{L}\p{N}_.+-]+/gu) ?? [];
@@ -71,5 +71,6 @@ export async function searchCapabilities(query, options = {}) {
     .filter((item) => item.score >= 4)
     .sort((a, b) => b.score - a.score || a.context_cost - b.context_cost)
     .slice(0, options.limit ?? 5);
+  if (options.record !== false) await recordSearchActivity(query, ranked, options);
   return attachInputSchemas(ranked, {catalog, state, options});
 }
