@@ -38,7 +38,7 @@ CAP Core ── Search ── Catalog (data/catalog.json + local SKILL.md overla
 | `profiler.js` | Score capability value / valuePerCost from Registry activity | Execute providers |
 | `inject.js` | Task → minimal load/defer injection plan (reuses search ranking) | Mutate Agent configs, connect to MCP, embeddings |
 | `mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection | Talk to the network |
-| `setup.js` | Write CAP MCP + Context Health Skill into Claude / Codex | Wipe existing servers or mutate unsafe TOML |
+| `setup.js` | Install persistent CLI launchers; write CAP MCP + Context Health Skill into Claude / Codex | Overwrite unrelated commands, wipe existing servers, or mutate unsafe TOML |
 | `optimize.js` | Plan + guarded JSON MCP migration (keeps `cap-mcp`) + skill index | Mutate TOML |
 | `mcp-server.js` | JSON-RPC stdio tool surface | Re-inject downstream tools into `tools/list` |
 | `web-server.js` | Discover UI + thin JSON APIs | Own business logic |
@@ -56,4 +56,4 @@ CAP Core ── Search ── Catalog (data/catalog.json + local SKILL.md overla
 
 ## Agent integration
 
-`cap setup` writes user-level Claude Code / Codex MCP so Agents see `cap.search` / `cap.add` / `cap.use` (and `cap.inspect` when `CAP_MCP_INSPECT=1`, `cap.inject` when `CAP_MCP_INJECT=1`). Setup and `optimize --apply` also index local `SKILL.md` files into Registry `local_skills`; search overlays them live. Project `.mcp.json` is local dogfood, not a migrate/wipe target. Coding agents should load `AGENTS.md` and skills under `.agents/skills/` (CAP plus the full `mattpocock/skills` pack). Per-repo `/setup-matt-pocock-skills` is a human step after install; it is not applied by `cap setup`. The Matt pack is repo dogfood for developing CAP, not an end-user V4 prune target.
+`cap setup` installs marked `cap` / `cap-mcp` launchers in a writable bin directory already on `PATH` when possible, then writes user-level Claude Code / Codex MCP so Agents see `cap.search` / `cap.add` / `cap.use` (and `cap.inspect` when `CAP_MCP_INSPECT=1`, `cap.inject` when `CAP_MCP_INJECT=1`). If no writable PATH directory exists, launchers go to `~/.local/bin` and setup returns the required PATH command. npx installs use pinned npx launchers instead of cache paths; unrelated existing executables are not overwritten. Setup and `optimize --apply` also index local `SKILL.md` files into Registry `local_skills`; search overlays them live. Project `.mcp.json` is local dogfood, not a migrate/wipe target. Coding agents should load `AGENTS.md` and skills under `.agents/skills/` (CAP plus the full `mattpocock/skills` pack). Per-repo `/setup-matt-pocock-skills` is a human step after install; it is not applied by `cap setup`. The Matt pack is repo dogfood for developing CAP, not an end-user V4 prune target.

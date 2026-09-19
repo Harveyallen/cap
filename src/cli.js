@@ -207,6 +207,16 @@ export function setupText(result, options = {}) {
     paint(1, 'CAP Setup'),
     `Agent  ${result.agent} → ${result.targets.join(', ')}`
   ];
+  if (result.cli?.installed) {
+    lines.push(`命令  ${result.cli.paths.map(rel).join(' · ')}`);
+    if (result.cli.pathCommand) {
+      lines.push('当前终端还需要执行：');
+      lines.push(`  ${result.cli.pathCommand}`);
+    } else {
+      lines.push('可用  cap inspect · cap search <任务>');
+    }
+  }
+  for (const file of result.cli?.conflicts ?? []) lines.push(`跳过  ${rel(file)}  已存在且不是 CAP launcher`);
   for (const item of result.writes) {
     const backup = item.backup ? `  备份 ${rel(item.backup)}` : '';
     lines.push(`写入  ${rel(item.path)}${backup}`);

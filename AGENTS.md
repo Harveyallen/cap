@@ -25,7 +25,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
 | `src/profiler.js` | V3 Value Analysis (internally: profiler module; activity → value / valuePerCost / underused) |
 | `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
-| `src/setup.js` | `cap setup`: write CAP MCP + Context Health Skill, then inspect |
+| `src/setup.js` | `cap setup`: install persistent CLI launchers, write CAP MCP + Context Health Skill, then inspect |
 | `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) and index local skills |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
 | `src/mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection |

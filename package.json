@@ -1,6 +1,6 @@
 {
   "name": "@harvey2008/cap",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Intent-first capability discovery and consolidation for AI agents",
   "type": "module",
   "bin": {

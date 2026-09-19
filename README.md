@@ -1,180 +1,156 @@
 # CAP
 
-CAP 是面向 AI Agent 的 **Capability & Context Control Plane**。用户按任务搜索 Capability，Provider 被收拢到 CAP Registry；同时计量这些能力占用的上下文。目标不是「安装了多少 Skill」，而是 **Context Health、已消耗 token、以及可回收 token**。
+让 Agent 只看到少量稳定入口，其他能力按任务查找、添加和调用；同时看清本地 MCP 与 Skills 占用了多少上下文。
 
-> 用最小能力集，换最大有效上下文。
->
 > Install more. Expose less.
 
-## 首屏 Demo
+MCP 和工具越装越多，常驻 Tool Schema 占用的上下文也越多。CAP 把底层 CLI、MCP、Skill 和 API 统一成 **Capability**，让 Agent 默认只面对 `cap.search`、`cap.add` 和 `cap.use`，而不是所有 Provider 的完整工具列表。
 
-```console
-$ cap inspect
-CAP Inspect · 2026-09-12 11:32
-Claude Code / Codex
-14 MCP · 8 Skills · 286 tools · ~37.8k tokens
-████████████████████░░  →  3 CAP entry tools (−99%)
-Pressure  High  22% · health 78 · effective ~168k / nominal ~200k
-Funnel    24 local installed → 22 enabled → 16 injected → used unknown
-⚠ 2 warnings · 3 duplicates · ✓ 1 managed
+## 三分钟开始
 
-$ cap search "分析 PostgreSQL 慢查询"
-1. PostgreSQL Performance Analysis  [Available]
-   postgres.query.explain
-   Explain a slow PostgreSQL query and recommend evidence-based optimizations.
-   Providers: PostgreSQL MCP (Discovered)
-```
-
-## V0.4 已实现
-
-- `cap setup`：备份并写入 Claude Code / Codex 的 CAP MCP 与 `cap-context-health` Skill，然后跑一次 `cap inspect`。
-- `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），用人话输出健康分数、常驻占用、清单和 V3 价值分析。`cap-mcp` 不会被建议再迁走。详见 [docs/context-health.md](./docs/context-health.md)。
-- V3 价值分析：从 Registry Activity 计算 Value/Cost，在 `cap inspect` / Web Health 展示性价比排行与建议减负（`src/profiler.js`）。
-- `cap search`：使用任务/意图搜索 Capability（种子 Catalog **加上**本地 `SKILL.md`），并比较 Provider、权限、风险和 Context 成本。JSON 结果带 `input_schema`（`cap.use` 入参的 JSON Schema）和 `schema_source`（`mcp` 或 `catalog`）。本地 Skill 只返回摘要和路径。
-- `cap inject`：按任务给出 V4 最小装载计划（load / defer），对照全量 catalog 与当前常驻占用。
-- `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
-- `cap use`：通过 Capability 抽象调用已登记的 Provider。内置 Git / ripgrep；MCP Provider 在有 stdio binding 时由 CAP 在幕后调用下游工具（Agent 仍只看到 `cap.search` / `cap.add` / `cap.use`）。详见 [docs/mcp-gateway.md](./docs/mcp-gateway.md)。
-- `cap optimize`：展示 Before / After；显式使用 `--apply --yes` 时迁移 JSON MCP 配置（先备份），并索引本地 Skills。
-- `cap web`：轻量 Discover、My Capabilities、Context Health 仪表盘。
-- `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.add`、`cap.use`；可选暴露 `cap.inspect`、`cap.inject`。
-- Activity：记录 Add/Use 结果，为后续 CapabilityBench 积累基础数据。
-
-## 安装
-
-优先从 npm 安装本版（包名 `@harvey2008/cap`，**0.4.0**）：
-
-```bash
-npx -y @harvey2008/cap@0.4.0 setup
-```
-
-当前 latest 与本版对齐后也可：
+需要 Node.js 20 或更高版本。
 
 ```bash
 npx -y @harvey2008/cap setup
 ```
 
-也可以从 GitHub 安装（仓库 `Harveyallen/cap` 若为私有需有访问权限），或克隆后本地执行 `node ./bin/cap.js setup`：
+`setup` 会安装 `cap` / `cap-mcp` 命令，备份并配置检测到的 Claude Code 或 Codex MCP，安装 Context Health Skill，索引本地 `SKILL.md`，然后执行一次本机检查。
+
+如果输出提示当前终端需要更新 PATH，请复制执行它给出的 `export PATH=...` 命令。随后运行：
 
 ```bash
-npx -y github:Harveyallen/cap setup
+cap inspect
 ```
 
-Agent 可粘贴：
+看到 MCP、Skills、暴露工具、Context Health 和建议清单，就表示安装成功。每台机器的配置不同，数量和 token 估算也会不同。
+
+## 第一个完整流程
+
+这个例子使用内置 Git Provider，不需要安装第三方 MCP：
+
+```bash
+# 1. 按任务搜索，而不是按插件名搜索
+cap search "查看 Git 仓库状态"
+
+# 2. 将能力加入 CAP Registry
+cap add git.repository.status
+
+# 3. 通过统一入口调用能力
+cap use git.repository.status --input '{"path":"."}'
+```
+
+对于 MCP Provider，`cap add` 会尝试绑定本地已有的 `mcpServers` 配置。没有可用连接时，CAP 返回 `connection_required` 和下一步建议，不会假装任务已经执行。
+
+## 搜索不到不是安装失败
+
+CAP 会搜索内置种子 Catalog，并叠加本机发现的 `SKILL.md`。它目前不是完整的在线 MCP Marketplace。例如：
+
+```bash
+cap search "生产架构图"
+```
+
+如果本机没有相应 Skill，可能返回 `No matching capability found.`。这表示命令运行正常，只是当前种子目录和本地 Skills 都没有匹配能力。
+
+可以用以下任务验证内置搜索：
+
+```bash
+cap search "查看 Git 仓库状态"
+cap search "在项目中搜索代码"
+cap search "分析 PostgreSQL 慢查询"
+cap search "发送钉钉消息"
+cap search "把 PDF 转成 Markdown"
+```
+
+搜索命中不等于 Provider 已连接。结果中的 `Available`、`CAP Managed`、权限和连接状态会说明下一步。本地 Skill 默认只返回名称、摘要和路径，正文仅在明确请求时加载。
+
+## 工作方式
 
 ```text
-请安装 CAP（npx -y @harvey2008/cap@0.4.0 setup。也可 npx -y @harvey2008/cap setup 装当前 latest，或 npx -y github:Harveyallen/cap setup，或克隆后 node ./bin/cap.js setup）。
-然后运行 cap inspect，用中文汇报 Context Pressure、漏斗（installed → enabled → injected → used）和可回收 token。
-之后凡是「上下文占用 / MCP 是否过多」的问题，优先使用 cap.inspect / cap inspect。
-```
-
-用法示例：帮我看看当前上下文占用情况
-
-`setup` 会备份并写入 Claude Code / Codex 的 MCP（`cap.search` / `cap.add` / `cap.use`；`cap.inspect` 需进程环境 `CAP_MCP_INSPECT=1`）、安装 `cap-context-health` Skill，并跑一次 inspect。`--agent auto|claude|codex`（默认 auto）。Codex TOML 无法安全改写时会打印手动片段，但仍会装 Skill 并 inspect。
-
-## 安全迁移
-
-默认只预览，不修改 Agent 配置：
-
-```bash
-cap optimize
-cap optimize --write-plan .cap/optimization-plan.json
-```
-
-只有同时提供两个确认参数才会执行：
-
-```bash
-cap optimize --apply --yes
-```
-
-当前执行迁移仅支持 JSON 中的 `mcpServers` / `mcp_servers`。每个源配置会先复制为 `*.cap-backup`，Provider 配置再写入权限为 `0600` 的 CAP Registry。TOML 配置在 V0.4 中仍只检查、不自动修改。
-
-## 扫描范围
-
-- Claude Code：`~/.claude.json`、`~/.claude/settings.json`、项目 `.mcp.json`、`~/.claude/skills`、`~/.claude/plugins`、项目 `.claude/skills`
-- Cursor：`~/.cursor/mcp.json`、项目 `.cursor/mcp.json`（与 inspect / bind 同一份根；`optimize --apply` 只改扫描到的 JSON MCP）、`~/.cursor/skills`、`~/.cursor/skills-cursor`、`~/.cursor/plugins`（含 `plugins/cache/…/skills`）、项目 `.cursor/skills`
-- Codex：`~/.codex/config.toml`、`~/.codex/skills`、项目 `.codex/skills`
-- 共享 Skills：`~/.agents/skills`、项目 `.agents/skills`
-
-无法从静态配置读取 Tool Schema 时，`Direct Tools` 显示的是保守的最小估算。CAP 不会连接或执行扫描到的 MCP Server。
-
-## 本地 Skills
-
-`cap search` / `cap inject` 会把上述目录里的 `SKILL.md` 叠到种子 Catalog 上（`loadCatalog()` 仍是种子文件）。`cap setup` 与 `cap optimize --apply --yes` 把发现结果写入 Registry `local_skills`。Agent 表面仍是 `cap.search` / `cap.add` / `cap.use`：只暴露名称、摘要和路径；正文按需 `cap use … --input '{"include_body":true}'`。详见 [docs/local-skills.md](./docs/local-skills.md)。
-
-## 架构
-
-```text
-CLI / Web / MCP
-       │
-       ▼
-CAP Core ── Search ── Catalog
-   │  │
-   │  └──── Registry / Activity
+用户任务
    │
-   ├────── Inspector ── Claude / Codex config
-   └────── Use ─────── Managed providers (builtin CLI or stdio MCP gateway)
+   ▼
+cap.search ── 找到 Capability 与候选 Provider
+   │
+   ▼
+cap.add ───── 登记能力并绑定本地 Provider
+   │
+   ▼
+cap.use ───── 通过统一输入调用 CLI、MCP 或本地 Skill
 ```
 
-核心对象是 Capability，而不是 MCP Server。一个 Capability 可以由多个 MCP、Skill、API 或 CLI Provider 实现。
+Capability 描述“能完成什么”，Provider 描述“由谁实现”。同一个 Capability 可以有多个 Provider。CAP 不会把下游 Provider 的完整 Tool Schema 或 Skill 正文重新暴露给 Agent，只会按需返回当前能力的输入和内容。
 
-## AI 友好仓库
+## 常用命令
 
-本仓库按 coding agent 可导航方式组织：
+| 命令 | 用途 | 是否修改状态 |
+|---|---|---|
+| `cap setup` | 安装命令、接入 Agent 并索引本地 Skills | 是，写入前备份 |
+| `cap inspect` | 检查 MCP、Skills 和上下文占用 | 否，只读扫描 |
+| `cap search <任务>` | 搜索种子 Capability 与本地 Skills | 否 |
+| `cap inject <任务>` | 生成最小能力装载计划 | 否，只生成计划 |
+| `cap add <id>` | 将能力与 Provider 加入 CAP | 是，更新 Registry |
+| `cap use <id>` | 调用 CLI、MCP 或按需读取本地 Skill | 会执行对应 Provider |
+| `cap optimize` | 预览 MCP 收拢与 Skill 索引计划 | 否，默认仅预览 |
+| `cap web` | 启动本地搜索与健康页面 | 否 |
 
-| 文件 | 用途 |
-|------|------|
-| [`AGENTS.md`](./AGENTS.md) | Agent 工作约定（命令、边界、目录图） |
-| [`llms.txt`](./llms.txt) | LLM / Agent 文档索引 |
-| [`docs/architecture.md`](./docs/architecture.md) | 模块边界与数据流 |
-| [`docs/local-skills.md`](./docs/local-skills.md) | 本地 `SKILL.md` 扫描与 catalog overlay |
-| [`docs/mcp-gateway.md`](./docs/mcp-gateway.md) | `cap.use` 作为 MCP 网关的绑定模型（DingTalk 接入） |
-| [`docs/context-health.md`](./docs/context-health.md) | Context Pressure、漏斗与 Health 产品说明 |
-| [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills（CAP + full `mattpocock/skills` pack） |
-| [`.mcp.json`](./.mcp.json) | 项目级 CAP MCP（dogfood） |
-| [`src/index.js`](./src/index.js) | 稳定程序化 API：`searchCapabilities` / `addCapability` / `useCapability` / `inspectLocal` / `loadCatalog` / `loadState` |
-| [`data/catalog.schema.json`](./data/catalog.schema.json) | Catalog 结构约束 |
+机器读取时添加 `--json`：
 
-Claude Code / Cursor / Copilot 等也会读取 `CLAUDE.md`、`.cursor/rules/`、`.github/copilot-instructions.md`，内容以 `AGENTS.md` 为准。
+```bash
+cap inspect --json
+cap search "分析 PostgreSQL 慢查询" --json
+cap inject "分析 PostgreSQL 慢查询" --json
+```
+
+## 安全边界
+
+- `cap inspect` 只读取本地配置，不连接或执行扫描到的第三方 MCP。
+- `cap search` 只读取本地 Skill 的名称和描述，不默认加载正文。
+- `cap inject` 只生成 load / defer 计划，不修改 Agent 配置。
+- `cap optimize` 默认只预览；只有 `cap optimize --apply --yes` 才修改支持的 JSON MCP 配置并持久化 Skill 索引。
+- 修改配置前会创建带时间戳的 `*.cap-backup`；Registry 文件权限为 `0600`。
+- Codex TOML 当前只检查，不由 optimize 自动修改。
+- Context footprint 是字符和 Schema 的稳定估算，不是模型 tokenizer 的精确计数。
+
+扫描范围包括 Claude Code、Cursor、Codex 和共享目录中的用户级/项目级 MCP 配置与 Skills，也包括 Cursor 插件缓存中的 Skills。
+
+## 当前边界
+
+- 公共 Registry 在线同步、语义向量检索和通用 OAuth 尚未实现。
+- 内置 Git 与 ripgrep 能力可直接调用；MCP 能力需要本地 stdio 启动配置或 Registry 绑定。
+- 本地 Skill 可以直接搜索和按需读取，但 CAP 不会自行执行 Skill 中描述的工作流。
+- 产品当前面向开发者，不包含 Desktop、企业权限和团队治理。
+
+## 从源码运行
+
+```bash
+git clone https://github.com/Harveyallen/cap.git
+cd cap
+node ./bin/cap.js setup
+```
+
+不执行 setup 也可以直接调用：
+
+```bash
+node ./bin/cap.js inspect
+node ./bin/cap.js search "查看 Git 仓库状态"
+```
+
+## 深入阅读
+
+- [架构与模块边界](./docs/architecture.md)
+- [本地 Agent Skills 的发现与按需读取](./docs/local-skills.md)
+- [Context Health、Value Analysis 与 Dynamic Injection](./docs/context-health.md)
+- [MCP Gateway 与按需 input schema](./docs/mcp-gateway.md)
+- [Agent 工作约定](./AGENTS.md)
+- [LLM 文档索引](./llms.txt)
 
 ## 开发
+
+项目使用 Node.js ESM，运行时零 npm 依赖，测试基于 `node:test`。
 
 ```bash
 npm test
 npm run check
-node ./bin/cap.js setup --agent auto
-node ./bin/cap.js inspect
-node ./bin/cap.js inject "分析 PostgreSQL 慢查询" --json
-node ./bin/cap.js web --port 4173
 ```
 
-种子 Catalog 位于 `data/catalog.json`，结构见 `data/catalog.schema.json`。添加记录时保持 `capability_id` 稳定，并在 `provider_refs` 与 Provider 的 `capabilities` 中双向声明。Agent 侧可直接按 `.agents/skills/add-capability/SKILL.md` 执行。
-
-## MCP 网关（0.4.0）
-
-`cap.use` 可在幕后启动第三方 stdio MCP 并调用映射工具（GitHub / Postgres / DingTalk 种子能力）。Agent 表面仍是 `cap.search` / `cap.add` / `cap.use`。search/add 按需附带该能力的 `input_schema`（`schema_source` 为 `mcp` 或 `catalog`），不把下游工具灌进 `tools/list`。详见 [docs/mcp-gateway.md](./docs/mcp-gateway.md)。
-
-## V4 Dynamic Injection
-
-0.4.0 运行时：`cap inject <任务>` 按任务给出最小装载计划（load / defer / CAP 入口常驻），对照全量 catalog（以及当前 inspect 常驻占用）。只出计划，不改 Agent 配置。MCP 工具 `cap.inject` 需 `CAP_MCP_INJECT=1`。默认 Agent 表面仍是 `cap.search` / `cap.add` / `cap.use`。详见 [docs/context-health.md](./docs/context-health.md)。
-
-```console
-$ cap inject "分析 PostgreSQL 慢查询"
-CAP Inject · 按任务装载
-任务  分析 PostgreSQL 慢查询
-装载  1 / 7 个能力 · ~740 tok（全量 catalog ~3.8k）
-推迟  6 个 · 相对全量 catalog 少占 ~3.1k tok
-入口  cap.search / cap.add / cap.use 保持常驻
-```
-
-## V3 价值分析（Value Analysis）
-
-0.3.0 运行时（0.2.0 仅文档）：从 Registry Activity 统计每条 Capability 的使用，计算 Value/Cost，在 `cap inspect` / Web Health 展示性价比排行与建议减负。详见 [docs/context-health.md](./docs/context-health.md)。
-
-## V0.4 边界
-
-- 公共 Registry/GitHub 的在线抓取、语义向量检索与 OAuth 连接尚未实现；当前使用本地 curated Catalog 和可解释的混合关键词评分。
-- 非内置 Provider 可以添加。MCP 在具备 `mcp_tool` 与 stdio 启动绑定（本地 `mcpServers` / `optimize` 迁入的 Registry 项 / 显式 `--server`）时，`cap.use` 会启动该 MCP 并调用映射工具；否则返回精确的 `connection_required`（或启动失败的 `failed`），不会伪装成已执行。DingTalk 等示例见 [docs/mcp-gateway.md](./docs/mcp-gateway.md)。
-- Context footprint 是可解释的字符/Schema 估算，不等同于某个特定模型 tokenizer 的精确值。高 Context Pressure 不会突然「触发幻觉」，但会造成注意力稀释、召回变差、选错工具和指令冲突（Lost in the Middle）。
-- V3 价值分析运行时已在 0.3.0（`src/profiler.js`）：`cost.value` 来自 Activity 信号，无信号时仍为 `null`；不假装测量当前会话注入。
-- V4 Dynamic Injection 运行时已在 0.4.0（`src/inject.js`）：`cap inject` 给出按任务的最小装载计划；不自动改 MCP 配置，也不把 `cap.inject` 加入默认三工具表面。
-- 本版优先验证开发者闭环，不包含 Desktop、企业权限、团队治理。npm 包名为 `@harvey2008/cap`（本版 `@harvey2008/cap@0.4.0`）。
+种子目录位于 `data/catalog.json`。添加 Capability 时保持 `capability_id` 稳定，并维护 Capability `provider_refs` 与 Provider `capabilities` 的双向引用。完整约束见 [AGENTS.md](./AGENTS.md)。
