@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { classifyPressure, estimateTokens, inspectLocal, resolveBudget } from '../src/inspector.js';
+import { classifyPressure, estimateTokens, filterInventory, inspectLocal, parseInspectFilters, resolveBudget, skillOverlapScore } from '../src/inspector.js';
 import { exposedCapTools, isCapMcpConfig } from '../src/mcp-tools.js';
 import { applyOptimization } from '../src/optimize.js';
 import { compactTokens, inspectText, main } from '../src/cli.js';
@@ -284,4 +284,76 @@ test('optimize keeps the CAP mcp entry and migrates the rest', async (t) => {
   const config = JSON.parse(await fs.readFile(mcpPath, 'utf8'));
   assert.deepEqual(Object.keys(config.mcpServers), ['cap']);
   assert.deepEqual(result.changed[0].providers, ['github']);
+});
+
+test('inspect flags path/name duplicates and probable skill overlap (INV-06)', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const skills = path.join(options.userHome, '.claude', 'skills');
+  await fs.mkdir(path.join(skills, 'pr-review'), {recursive: true});
+  await fs.mkdir(path.join(skills, 'github-review'), {recursive: true});
+  await fs.mkdir(path.join(skills, 'postgres-explain'), {recursive: true});
+  await fs.writeFile(path.join(skills, 'pr-review', 'SKILL.md'), '---\nname: pr-review\ndescription: Review GitHub pull requests for bugs and style\n---\n');
+  await fs.writeFile(path.join(skills, 'github-review', 'SKILL.md'), '---\nname: github-pr-review\ndescription: Review GitHub pull requests and comment on diffs\n---\n');
+  await fs.writeFile(path.join(skills, 'postgres-explain', 'SKILL.md'), '---\nname: postgres-explain\ndescription: Explain slow PostgreSQL queries with EXPLAIN ANALYZE\n---\n');
+  const result = await inspectLocal({...options, env: {}});
+  assert.ok(result.overlaps.length >= 1);
+  const overlap = result.overlaps.find((group) => group.names.includes('pr-review') && group.names.includes('github-pr-review'));
+  assert.ok(overlap);
+  assert.ok(['token-jaccard', 'name-containment'].includes(overlap.method));
+  assert.ok(overlap.score >= 0.5);
+  assert.match(overlap.note, /False positives/);
+  assert.equal(result.overlaps.some((group) => group.names.includes('postgres-explain') && group.names.includes('pr-review')), false);
+  const reviewer = result.items.find((item) => item.name === 'pr-review');
+  assert.ok(reviewer.reasons.includes('overlap'));
+  assert.equal(reviewer.scope, 'user');
+  assert.equal(skillOverlapScore({name: 'reviewer', description: 'Review code'}, {name: 'reviewer', description: 'Review code'}), null);
+});
+
+test('inspect filters inventory by agent scope type status cost and reason (INV-10)', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  await fs.mkdir(path.join(options.projectRoot, '.claude', 'skills', 'project-note'), {recursive: true});
+  await fs.writeFile(path.join(options.projectRoot, '.claude', 'skills', 'project-note', 'SKILL.md'), '---\nname: project-note\ndescription: Project notes\n---\n');
+  const full = await inspectLocal({
+    ...options,
+    skillRoots: [
+      [path.join(options.userHome, '.claude', 'skills'), 'Claude Code'],
+      [path.join(options.projectRoot, '.claude', 'skills'), 'Claude Code']
+    ],
+    env: {}
+  });
+  assert.equal(full.items.find((item) => item.name === 'project-note').scope, 'project');
+  assert.equal(full.items.find((item) => item.name === 'reviewer').scope, 'user');
+  const skills = await inspectLocal({...options, env: {}, filters: {type: 'skill'}});
+  assert.ok(skills.filtered.every((item) => item.kind === 'skill'));
+  assert.ok(skills.items.some((item) => item.kind === 'mcp'));
+  assert.equal(skills.summary.mcpServers, full.summary.mcpServers);
+  const byStatus = filterInventory(full.items, {status: 'direct'});
+  assert.ok(byStatus.length);
+  assert.ok(byStatus.every((item) => item.status === 'direct'));
+  const costly = filterInventory(full.items, {costMin: 10_000});
+  assert.ok(costly.every((item) => item.contextTokens >= 10_000));
+  const migrate = filterInventory(full.items, {reason: 'migrate'});
+  assert.ok(migrate.every((item) => item.reasons.includes('migrate')));
+  const sourceHit = filterInventory(full.items, {source: 'skills'});
+  assert.ok(sourceHit.every((item) => /skills/i.test(item.source)));
+  assert.deepEqual(parseInspectFilters({scope: 'plugin', type: 'mcp'}).scope, 'plugin');
+  const text = inspectText(skills, options);
+  assert.match(text, /筛选/);
+  assert.match(text, /type=skill/);
+});
+
+test('inspect groups extra cap-mcp names as duplicate CAP surfaces', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  await fs.writeFile(path.join(options.userHome, '.claude.json'), JSON.stringify({mcpServers: {
+    cap: {command: 'node', args: ['./bin/cap-mcp.js']},
+    'cap-old': {command: 'npx', args: ['-y', '-p', '@harvey2008/cap', 'cap-mcp']}
+  }}));
+  const result = await inspectLocal({...options, skillRoots: [], env: {}});
+  assert.equal(result.summary.capSurfaces, 2);
+  assert.ok(result.duplicates.some((group) => group.reason === 'cap-surface'));
+  const cap = result.items.find((item) => item.name === 'cap');
+  assert.ok(cap.reasons.includes('cap-duplicate'));
 });

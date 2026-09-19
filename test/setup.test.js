@@ -205,3 +205,71 @@ test('optimize keeps cap-mcp and does not wipe project-style CAP entries', async
   assert.equal(await fs.readFile(path.join(ctx.projectRoot, '.mcp.json'), 'utf8').then((text) => JSON.parse(text).mcpServers.cap.command), 'node');
   assert.match(renderCodexSnippet(launch), /cap-mcp\.js/);
 });
+
+test('setup reuses a compatible install and does not add a second CAP surface (ONB-09)', async (t) => {
+  const ctx = await fixture();
+  t.after(() => fs.rm(ctx.root, {recursive: true, force: true}));
+  await fs.writeFile(ctx.claudeJson, `${JSON.stringify({mcpServers: {
+    'cap-local': {command: 'node', args: [path.join(repoRoot, 'bin', 'cap-mcp.js')], env: {CAP_MCP_INSPECT: '1'}},
+    'cap-dup': {command: 'node', args: [path.join(repoRoot, 'bin', 'cap-mcp.js')]}
+  }}, null, 2)}\n`);
+  const result = await setupCap({...ctx.options, agent: 'claude'});
+  const config = JSON.parse(await fs.readFile(ctx.claudeJson, 'utf8'));
+  const capNames = Object.entries(config.mcpServers).filter(([, value]) => isCapMcpConfig(value)).map(([name]) => name);
+  assert.equal(capNames.length, 1);
+  assert.equal(capNames[0], 'cap-local');
+  assert.equal(config.mcpServers.cap, undefined);
+  assert.ok(result.install.reused);
+  assert.ok(result.install.deduped.includes('cap-dup'));
+  const again = await setupCap({...ctx.options, agent: 'claude'});
+  const after = JSON.parse(await fs.readFile(ctx.claudeJson, 'utf8'));
+  assert.deepEqual(Object.keys(after.mcpServers).filter((name) => isCapMcpConfig(after.mcpServers[name])), ['cap-local']);
+  assert.equal(again.skipped.some((item) => item.reason === 'already-installed'), true);
+  const {setupText} = await import('../src/cli.js');
+  assert.match(setupText(again, ctx.options), /复用/);
+});
+
+test('setup upgrades marked CLI launchers in place instead of installing a second copy', async (t) => {
+  const ctx = await fixture();
+  t.after(() => fs.rm(ctx.root, {recursive: true, force: true}));
+  const first = path.join(ctx.root, 'bin-a');
+  const second = path.join(ctx.root, 'bin-b');
+  await fs.mkdir(first, {recursive: true});
+  await fs.mkdir(second, {recursive: true});
+  const env = {PATH: `${first}${path.delimiter}${second}`};
+  await setupCap({...ctx.options, agent: 'claude', installCli: true, binDir: first, env});
+  const result = await setupCap({...ctx.options, agent: 'claude', installCli: true, binDir: second, env});
+  assert.equal(result.cli.reused, true);
+  await fs.access(path.join(first, 'cap'));
+  await assert.rejects(() => fs.access(path.join(second, 'cap')));
+});
+
+test('setup keeps a single Claude CAP surface when settings.json already has cap-mcp', async (t) => {
+  const ctx = await fixture();
+  t.after(() => fs.rm(ctx.root, {recursive: true, force: true}));
+  const settings = path.join(ctx.userHome, '.claude', 'settings.json');
+  await fs.mkdir(path.dirname(settings), {recursive: true});
+  await fs.writeFile(settings, `${JSON.stringify({mcpServers: {
+    cap: {command: 'node', args: [path.join(repoRoot, 'bin', 'cap-mcp.js')], env: {CAP_MCP_INSPECT: '1'}}
+  }}, null, 2)}\n`);
+  await fs.writeFile(path.join(ctx.userHome, '.claude.json'), `${JSON.stringify({mcpServers: {github: {command: 'github-mcp'}}}, null, 2)}\n`);
+  const result = await setupCap({
+    userHome: ctx.userHome,
+    projectRoot: ctx.projectRoot,
+    home: ctx.home,
+    claudeSkillRoot: ctx.claudeSkills,
+    jsonConfigs: [[path.join(ctx.userHome, '.claude.json'), 'Claude Code'], [settings, 'Claude Code']],
+    skillRoots: [[ctx.claudeSkills, 'Claude Code']],
+    env: {},
+    installCli: false,
+    agent: 'claude'
+  });
+  const preferred = JSON.parse(await fs.readFile(path.join(ctx.userHome, '.claude.json'), 'utf8'));
+  const other = JSON.parse(await fs.readFile(settings, 'utf8'));
+  const caps = [
+    ...Object.values(preferred.mcpServers ?? {}).filter((value) => isCapMcpConfig(value)),
+    ...Object.values(other.mcpServers ?? {}).filter((value) => isCapMcpConfig(value))
+  ];
+  assert.equal(caps.length, 1);
+  assert.ok(result.install.reused);
+});

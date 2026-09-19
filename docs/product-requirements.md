@@ -275,7 +275,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | ONB-06 | 1 | P0 | Return the first health summary in the originating conversation. A local detailed-report URL is optional when the visual page is available. | Inspect JSON can be summarized in-conversation. README + inspect next-step may point at `cap web` → `http://127.0.0.1:4173` without requiring the server. | — |
 | ONB-07 | 1 | P0 | If installation succeeds but one scan source fails, return a partial report with a scoped warning. | Inspect continues across sources and surfaces warnings. Agent wording is in [agent-onboarding.md](./agent-onboarding.md). | — |
 | ONB-08 | 1 | P0 | If the Agent cannot execute locally, provide one official copyable command and continue after install is detected. | README documents the official command. | — |
-| ONB-09 | 1 | P1 | Detect an existing compatible CAP install and upgrade/reuse it. | Setup updates marked launchers. | Dedup of duplicate surfaces. |
+| ONB-09 | 1 | P1 | Detect an existing compatible CAP install and upgrade/reuse it. | Setup reuses any `cap-mcp` entry, upgrades its launch, and removes extra CAP surfaces in the same Agent JSON/TOML (and a second Claude user file). Marked CLI launchers on PATH are updated in place. | — |
 | ONB-10 | 1 | P1 | Track time from explicit install request to first rendered health report. | Not shipped. | Local timing only if useful; not remote TEL. |
 | ONB-11 | 1 | P0 | When Context Pressure is `high`, `critical`, or `emergency`, explicitly recommend previewing CAP optimization. | README directive requires this. Inspect exposes pressure. | — |
 | ONB-12 | 1 | P0 | Also recommend optimization when reclaimable context crosses a material-savings threshold. | Threshold is **10% of effective budget** ([ADR 0001](./adr/0001-material-savings-threshold.md)). Inspect exposes `reclaimableTokens` and `effectiveBudget`. | — |
@@ -291,11 +291,11 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | INV-03 | 1 | P0 | Never connect to or execute third-party MCPs during inspection. | Inspect is read-only. | — |
 | INV-04 | 1 | P0 | Estimate MCP schema/description cost and resident Skill identity cost separately. | Cost segments exist; Skill identity is name+description. | — |
 | INV-05 | 1 | P0 | Mark values as estimated and publish the method. | Estimates are labeled; method is documented. | — |
-| INV-06 | 1 | P0 | Identify duplicate definitions and probable overlapping Skills. | Duplicate paths/names are flagged. | Semantic overlap method is open. |
+| INV-06 | 1 | P0 | Identify duplicate definitions and probable overlapping Skills. | Path/name duplicates plus a bounded Skill overlap heuristic (token Jaccard / name containment on name+description). | — |
 | INV-07 | 1 | P0 | Distinguish installed, configured, Direct Exposure, CAP-managed, and Invoked. | Funnel and item `status` exist. Label map: [agent-onboarding.md](./agent-onboarding.md) and [context-health.md](./context-health.md). | — |
 | INV-08 | 1 | P0 | Show effective budget, footprint, pressure, score, warnings, recoverable tokens, and projected after-state. | Inspect / Health report includes these. | — |
 | INV-09 | 1 | P0 | Use one report model for CLI, Agent response, and local visual UI. | Shared inspect JSON; CLI/Web render it. | Agent prose is derived, not a second model. |
-| INV-10 | 1 | P1 | Filter details by Agent, scope, source, type, status, cost, and reason. | Basic listing. | Richer filters. |
+| INV-10 | 1 | P1 | Filter details by Agent, scope, source, type, status, cost, and reason. | CLI / Web Health / `GET /api/inspect` filter those dimensions. Summary and pressure stay unfiltered. | — |
 
 ### Observation and recommendations
 
@@ -502,7 +502,7 @@ Do not market remote discovery, anonymous telemetry, or full Restore as generall
 | Area | Phase | Target | Now | Gap |
 |---|:---:|---|---|---|
 | Agent onboarding | 1 | Directive-scoped install + first health report | README Agent Installation Directive; `cap setup --agent auto`; `cap inspect`; [agent-onboarding.md](./agent-onboarding.md) | Not auto Restore. |
-| Inventory and health | 1 | Local inventory and Context Health | Inspect: budget, pressure, funnel, costs, reclaimable estimate, Value Analysis; [compatibility.md](./compatibility.md) | Richer visual filters; OS/Agent version floors |
+| Inventory and health | 1 | Local inventory and Context Health | Inspect: budget, pressure, funnel, costs, reclaimable estimate, Value Analysis, inventory filters, Skill overlap; [compatibility.md](./compatibility.md) | OS/Agent version floors |
 | Recommendations | 2 | High-cost / duplicate always; frequency/value advice after readiness | Inspect recommendations stay cost/duplication. After 14 UTC days + 3 activity days, `profiler.advice` explains cost, duplication, usage, and recency separately ([ADR 0003](./adr/0003-observation-period-readiness.md)). Until ready, `frequencyVerdicts: false` and `underused` is a value signal only. | Pin/exclude UX (#36) |
 | Optimize | 1–2 | JSON + shipped adapters after `--apply --yes`; post-apply savings validation | Preview + guarded JSON and Codex dotted-table apply; Skill index; remaining layouts refused; post-apply re-inspect reports projected vs actual estimates and fails closed on invalid config / broken CAP surface | Other layouts; Restore UI |
 | Restore | 1 | Timestamped `.cap-backup` + documented recovery | Backups are written; [restore-from-backup.md](./restore-from-backup.md); copy refuses one-click Restore | Full Restore UI/CLI across adapters is later, not Phase 1 P0 |
@@ -528,12 +528,17 @@ Still open:
 
 - Ranking weights (and, in Phase 3, popularity anti-manipulation).
 - “High context” thresholds by effective budget (pressure bands are shipped; this is any extra high-cost cutoff beyond ONB-11/12).
-- Semantic duplicate method and acceptable false positives.
 - Semantic retrieval approach and quality targets for vague multilingual intents (Phase 3; not a launch gate).
 - Minimum supported OS and Agent **versions** (path matrix is published; version floors are not).
 - Administrator review checklist, staffing, and publication SLA (Phase 3).
 - Artifact hosting, licensing, and telemetry retention (Phase 3).
 - Agent protocol for signaling full task completion.
+
+Closed in this Phase 2 carryover pass (#39):
+
+- **Skill overlap method (INV-06):** bounded token Jaccard (≥ 0.5 and ≥ 2 content tokens of length ≥ 4, stopwords dropped) plus 5+ character name containment, on Skill **name + description only** (not bodies, not embeddings). Acceptable false positives: skills that share jargon (`review`, `github`, `审查`) but serve different owners. False negatives: paraphrases with no shared tokens. Path/name copies stay `duplicates`. Not Phase 3 vector catalog.
+- **ONB-09 duplicate CAP surfaces:** reuse/upgrade the existing `cap-mcp` keeper; remove extras in the same Agent config (and extra Claude user-level files). Project `.mcp.json` is reported by inspect, not auto-stripped by setup.
+- **INV-10 filters:** Agent, scope (`user` / `project` / `shared` / `plugin`), source substring, type, status, resident cost min/max, reason (`duplicate` / `overlap` / `migrate` / `pinned` / `excluded` / `cap-surface`).
 
 ## 18. Launch gates
 

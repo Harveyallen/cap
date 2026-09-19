@@ -123,11 +123,17 @@ test('web API add replaces acquire', async (t) => {
   assert.doesNotMatch(html, /会暴露/);
   assert.match(html, /频率结论未就绪/);
   assert.match(html, /频率 \/ 价值建议（信号分列，不是移除）/);
+  assert.match(html, /id="inv-filters"/);
+  assert.match(html, /Skill 重叠/);
   const inspect = await fetch(`http://127.0.0.1:${port}/api/inspect`);
   const report = await inspect.json();
   assert.equal(typeof report.pressure.band, 'string');
   assert.equal(typeof report.funnel.installed, 'number');
   assert.ok(report.budget.effectiveBudget > 0);
+  const filtered = await (await fetch(`http://127.0.0.1:${port}/api/inspect?type=skill`)).json();
+  assert.equal(filtered.filters.type, 'skill');
+  assert.ok(Array.isArray(filtered.filtered));
+  assert.ok((filtered.filtered ?? []).every((item) => item.kind === 'skill'));
 });
 
 test('sanitizeSearchQuery keeps intent and strips secrets paths and tokens', () => {

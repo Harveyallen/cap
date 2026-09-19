@@ -8,6 +8,19 @@
 - **`cap add` during a trial promotes it** to a persistent ManagedBinding. Cleanup then keeps the binding and still retains the outcome. Ordinary `cap.use` without try stays a persistent implicit add.
 - Remote public-catalog download/try is refused until Phase 3 ACQ-*. Local SKILL.md files are never deleted. Web: `POST /api/try` and `/api/cleanup`. Default MCP tools stay `cap.search` / `cap.add` / `cap.use`. See [docs/try-mode.md](./docs/try-mode.md).
 
+### Setup (ONB-09)
+
+- **`cap setup` reuses a compatible CAP install instead of adding another surface.** Any existing `cap-mcp` entry (canonical `cap` or another name) is upgraded in place. Extra `cap-mcp` servers in the same Claude JSON or Codex TOML are removed after a `.cap-backup`. A second Claude user file (`.claude.json` vs `settings.json`) that also has `cap-mcp` is stripped so that Agent sees one CAP surface. Project `.mcp.json` is still not a setup mutate target.
+- **Marked CLI launchers already on `PATH` are updated, not duplicated** into a second bin directory.
+- JSON `install.reused` / `install.deduped` / `install.upgraded` records the outcome. Human setup prints 复用 / 去重 / 升级.
+
+### Inventory (INV-10 / INV-06)
+
+- **Inspect filters** (`cap inspect` and `GET /api/inspect`, Web Health 清单): `--agent`, `--scope user|project|shared|plugin`, `--type mcp|skill`, `--status`, `--source` (path substring), `--cost-min` / `--cost-max` (resident `contextTokens`), `--reason duplicate|overlap|migrate|pinned|excluded|cap-surface`. Tiles / pressure stay the full report; only the inventory listing is filtered (`filtered` in JSON).
+- **Probable Skill overlap** beyond path/name dupes: Jaccard ≥ 0.5 on name+description content tokens (length ≥ 4, stopwords dropped) with ≥ 2 shared tokens, or 5+ character name containment. `overlaps[]` plus item `reasons` include `overlap`. False positives: shared jargon (review, github, 审查) across different owners. Paraphrases with no shared tokens are missed (not Phase 3 embeddings). Same-name copies stay in `duplicates`.
+- Multiple `cap-mcp` entries for the same Agent are a `duplicates` group with `reason: cap-surface`.
+
+
 ### Pin / exclude (REC-06)
 
 - **`cap pin` / `cap unpin` are first-class Direct Exposure controls.** Pin keeps or writes a JSON MCP Provider into Agent config so inspect/Health show `status: direct` with `pinned: true`. Unpin migrates that JSON entry into Registry `external_providers` and restores non-resident CAP-managed behavior. Implicit `add` / `use` still do not pin.
