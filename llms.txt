@@ -5,6 +5,8 @@
 ## Docs
 
 - [README](README.md): human quick start and product overview
+- [CONTEXT.md](CONTEXT.md): domain glossary (Acquisition, Direct Exposure, CAP-managed, ManagedBinding, Invoked)
+- [Product requirements](docs/product-requirements.md): Phase 1 P0 / launch gates with Target / Now / Gap
 - [AGENTS.md](AGENTS.md): instructions for coding agents
 - [Architecture](docs/architecture.md): module boundaries and data flow
 - [Local skills](docs/local-skills.md): discover SKILL.md, overlay catalog, search/add/use without dumping bodies

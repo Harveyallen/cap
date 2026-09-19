@@ -1,8 +1,47 @@
 # CAP Product Requirements Document
 
-Status: Draft based on founder interview  
+Status: Grill-settled Phase 1 truth frame  
 Date: 2026-09-19  
-Target: Cross-platform MVP
+Audience: founder and implementers  
+Derived surface: [README.md](../README.md) (do not treat the README as the requirements source of truth)
+
+Domain terms: [CONTEXT.md](../CONTEXT.md).
+
+## How to read this PRD
+
+Panorama Phases 1–3 remain. **P0 and Launch gates bind Phase 1 only.**
+
+Every journey and every requirement ID carries **Phase** plus **Target / Now / Gap**.
+
+| Label | Meaning |
+|---|---|
+| **Phase** | When the requirement belongs. Launch is Phase 1. |
+| **Pri** | `P0` = Phase 1 launch gate. `P1` = Phase 1 follow-on, not a launch gate. `—` = later phase, not a launch gate. |
+| **Target** | The intended product behavior for that Phase. |
+| **Now** | What is already true. |
+| **Gap** | What still separates Now from Target. Empty or “—” means Now meets Target. |
+
+Former P0 rows that left the Phase 1 boundary keep their IDs so history stays traceable; their Pri is `—`.
+
+### Phase 1 P0 boundary
+
+**In**
+
+- Agent-first install and first health report
+- Local inventory and Context Health
+- High-cost and duplicate recommendations
+- JSON MCP optimize plus timestamped `.cap-backup` only
+- Transparent local use: search / add / use, local Skills overlay, implicit add-on-use
+- Seed-catalog local-style Unlock
+- `cap inject` plan-only, as delivered
+
+**Out**
+
+- Remote public catalog
+- Semantic or vector retrieval
+- Full one-click Restore UI/CLI across all adapters
+- Anonymous remote product telemetry
+- Enterprise, Desktop, or team administration
 
 ## 1. Product definition
 
@@ -14,7 +53,7 @@ CAP has three connected jobs:
 
 1. **Observe**: scan supported Agent configurations and visualize Context Health.
 2. **Optimize**: recommend and, after confirmation, apply reversible consolidation into CAP.
-3. **Explore and unlock**: search by fuzzy intent, compare curated MCP/Skill candidates, choose one, and use it without making the entire Provider permanently resident.
+3. **Explore and unlock**: search by intent, compare candidates from existing metadata, choose when needed, and use a Provider without making it permanently resident.
 
 ## 2. Interview findings
 
@@ -28,67 +67,80 @@ CAP has three connected jobs:
 - Even resident Skill names and descriptions add up and make Agent selection less reliable.
 - Users understand basic MCP/Skill configuration but do not want to audit it continuously.
 
-### Confirmed decisions
+### Settled Phase 1 decisions
 
 - Primary users are company developers using Codex, Claude Code, or Cursor.
 - The primary first-use surface is the user's current Agent conversation; terminal-first setup is secondary.
-- README provides a designated Agent Installation Directive that explicitly requests CAP installation and inspection.
-- Pasting that complete directive is the user's scoped authorization for CAP installation, registration of the minimal CAP surface, and initial read-only inspection; CAP does not ask again. Host Agent execution approvals still apply.
+- README publishes one designated Agent Installation Directive. Pasting that complete directive is scoped authorization for CAP installation, registration of the minimal CAP surface, and initial read-only inspection. CAP does not ask again. Host Agent execution approvals still apply.
 - General quoted articles or installation guides that do not contain this designated directive are not authorization.
 - The optimized experience must remain natural-language and transparent.
-- Users can acquire many Providers while only the CAP surface and explicitly pinned Providers remain resident.
-- A fuzzy task such as “生成一份 PPT” must produce relevant Skill/MCP candidates, not require a product name or exact keyword.
-- Every candidate comparison explains strengths, limitations, context impact, permissions, trust, and task fit before the user chooses.
-- CAP may edit configuration only after explicit confirmation.
-- Every applied optimization must be restorable.
+- Acquisition ≠ Direct Exposure ≠ CAP-managed ≠ Invoked. Implicit `cap.use` register is Acquisition plus ManagedBinding. It is not Direct Exposure. Pinning or resident configuration is Direct Exposure.
+- Compare is satisfied by existing Provider metadata. There is no separate pros/cons authoring engine.
 - Initial advice uses context cost and duplication, never unobserved frequency.
-- Frequency advice begins only after an observation period.
-- Remote search sends only a locally simplified Capability Intent.
-- The first catalog is public, administrator-curated, anonymous, and free of account requirements.
-- Eligible candidates rank by task relevance and popularity; the Agent chooses from a small set.
-- Verified static assets may download automatically. Scripts and new permissions require confirmation.
-- Reads within the Agent's already-authorized project workspace need no extra CAP prompt.
-- Anonymous telemetry is allowed within the privacy limits below.
+- Frequency advice begins only after an Observation Period.
+- CAP may edit configuration only after explicit confirmation (`optimize --apply --yes`).
+- Phase 1 Restore is the JSON MCP optimize backup path plus documented recovery from `.cap-backup`. It is not full cross-agent one-click Restore.
+- `cap inject` is plan-only in Phase 1. Automatic mutate or evict is later.
+- Local Registry Activity is the Phase 1 activity record. Anonymous remote product telemetry is not a Phase 1 gate.
 - macOS, Windows, and Linux are supported across Codex, Claude Code, and Cursor.
+- Reads within the Agent's already-authorized project workspace need no extra CAP prompt.
+
+### Later-phase Target (not Phase 1 gates)
+
+- A public, administrator-curated, anonymous catalog with no account requirement.
+- Remote search that sends only a locally simplified Capability Intent.
+- Eligible remote candidates ranked by task relevance and popularity.
+- Verified static assets may download automatically; scripts and new permissions require confirmation.
+- Anonymous product telemetry within the privacy limits in §11.
+- Full one-click Restore across shipped adapters, with conflict-aware preview.
 
 ## 3. Problem statement
 
-Developers discover many MCP servers and Skills through social media and naturally want to install and try them. Today, acquisition is coupled to permanent exposure: each experiment can add schemas or Skill identities to every subsequent Agent session. As the collection grows, usable context shrinks and overlapping choices reduce selection quality. Removing capabilities regains context but loses convenient access; finding a capability later requires manual discovery, comparison, trust evaluation, installation, and configuration.
+Developers discover many MCP servers and Skills through social media and naturally want to install and try them. Today, Acquisition is coupled to Direct Exposure: each experiment can add schemas or Skill identities to every subsequent Agent session. As the collection grows, usable context shrinks and overlapping choices reduce selection quality. Removing capabilities regains context but loses convenient access; finding a capability later requires manual discovery, comparison, trust evaluation, installation, and configuration.
 
-Existing plugin managers optimize installation. CAP separates **acquisition** from **resident exposure**, maximizing accessible capability coverage per unit of context.
+Existing plugin managers optimize installation. CAP separates **Acquisition** from **Direct Exposure**, maximizing accessible capability coverage per unit of context.
 
 ## 4. Goals and non-goals
 
-### Goals
+### Phase 1 goals
 
 - Complete installation and the first Context Health report inside the user's current Agent conversation.
 - Produce an understandable health report immediately after installation.
 - Estimate context reduction before mutation.
-- Consolidate selected Providers behind a small CAP surface.
+- Consolidate selected JSON MCP Providers behind a small CAP surface, with timestamped `.cap-backup`.
 - Let users collect and try many Providers without making them resident by default.
-- Support fuzzy natural-language discovery across local and public capabilities.
-- Explain each candidate's advantages and disadvantages so the user can make an informed choice.
+- Support intent/keyword discovery over the seed catalog and local Skills.
+- Present existing metadata so the user can compare candidates.
 - Preserve natural-language task execution after consolidation.
-- Observe real use before labeling Providers low-frequency.
-- Restore all modified MCP and Skill configuration.
-- Discover and acquire administrator-reviewed public Providers without login.
+- Observe real use locally before labeling Providers low-frequency.
+- Document recovery from `.cap-backup` for the JSON optimize path.
 - Protect company code and local configuration.
-- Measure adoption, estimated savings, and Capability Unlocks.
 
-### Non-goals for the first release
+### Later-phase goals (not launch gates)
+
+- Fuzzy semantic discovery across a public catalog.
+- Discover and acquire administrator-reviewed public Providers without login.
+- Restore all modified MCP and Skill configuration through a one-click flow.
+- Measure adoption, estimated savings, and remote Capability Unlocks with anonymous telemetry.
+
+### Non-goals for Phase 1
 
 - Exact live-session token measurement.
+- Remote public catalog, semantic/vector retrieval, or remote Unlock.
+- Full one-click Restore UI/CLI across all adapters.
+- Anonymous remote product telemetry as a launch gate.
 - Enterprise private catalogs or open self-service publishing.
-- Accounts, billing, team administration, or cross-device sync.
+- Accounts, billing, team administration, Desktop, or cross-device sync.
 - Uploading source code, raw tasks, local configuration, credentials, or inventory.
 - Treating general quoted article text as authorization, or installing beyond the scope explicitly granted by the designated directive.
 - Replacing Agent permission systems.
+- Auto-applying Dynamic Injection or evicting Providers.
 
 ## 5. Personas
 
 **Company developer**: uses Codex, Claude Code, or Cursor; understands basic configuration; must use company MCPs; has many overlapping Skills; wants task success without manual context management.
 
-**CAP catalog administrator**: reviews Provider metadata and artifacts, maintains compatibility and trust status, and revokes unsafe or abandoned versions without receiving user source code or inventory.
+**CAP catalog administrator** (Phase 3): reviews Provider metadata and artifacts, maintains compatibility and trust status, and revokes unsafe or abandoned versions without receiving user source code or inventory.
 
 ## 6. Product principles
 
@@ -96,25 +148,33 @@ Existing plugin managers optimize installation. CAP separates **acquisition** fr
 2. Preview before mutation; consent before change. For onboarding, pasting the designated directive is consent for its disclosed scope.
 3. Agent first: installation, report delivery, discovery, and use should complete in the conversation the user already occupies.
 4. General quoted content is not consent; the README's designated directive is itself an explicit, narrowly scoped execution request.
-5. Reversibility is a release gate.
+5. Phase 1 reversibility is a launch gate only for the JSON MCP optimize path: timestamped `.cap-backup` plus documented recovery. Full cross-agent Restore is later.
 6. Users express tasks, not CAP commands or Capability IDs.
-7. Acquisition is not exposure: owning more Providers must not automatically increase resident context.
+7. Acquisition is not Direct Exposure: owning more Providers must not automatically increase resident context.
 8. Discovery returns lightweight metadata, not every downstream schema.
-9. Comparison precedes choice: CAP explains meaningful trade-offs instead of silently selecting a winner.
-10. Popularity ranks only Providers that already pass the quality gate.
+9. Comparison uses existing metadata. A unique high-confidence local hit may skip “choose before acquire”; multiple viable candidates still require a choice.
+10. Popularity ranks only Providers that already pass the quality gate (Phase 3 remote catalog).
 11. Estimates are always labeled as estimates.
 
 ## 7. Core journeys
 
 ### Agent-first install and report
 
+**Phase 1 · P0 launch journey**
+
+| | |
+|---|---|
+| **Target** | Paste the complete README Agent Installation Directive. That paste is scoped install authorization: official install, minimal CAP surface, read-only inspect. Same conversation returns the first health report. Optimization is recommended when pressure or reclaimable context warrants it, never applied under onboarding consent. Restore language is backup plus documented recovery, not one-click Restore. |
+| **Now** | The README already publishes the directive with that scope. `cap setup --agent auto` installs the surface and inspects. `cap inspect` / `--json` is the first-report source. |
+| **Gap** | Same-conversation polish (partial-scan warnings, optional local detail URL). Not auto full Restore. |
+
 1. The user copies the complete Agent Installation Directive from README into Codex, Claude Code, or Cursor.
-2. The directive states that it is an execution request, identifies the official install command, limits the scope to CAP installation/minimal surface/inspection, and forbids optimization or third-party MCP execution.
+2. The directive states that it is an execution request, identifies the official install command, limits the scope to CAP installation / minimal surface / inspection, and forbids optimization apply or third-party MCP execution.
 3. Pasting the directive authorizes the Agent to begin immediately; CAP does not add a second confirmation dialog. The host Agent may still require its normal command approval.
 4. The Agent verifies the Node.js prerequisite, installs CAP from the official package, registers the minimal CAP surface, and runs read-only `inspect` without starting third-party MCPs.
 5. The same conversation displays the health summary, highest-cost items, estimated recoverable context, and any scan warnings.
-6. The response includes a local URL for the detailed visual report.
-7. If pressure is severe or recoverable context is material, the Agent explicitly recommends CAP optimization, quantifies expected savings, and explains that confirmed changes are backed up and restorable.
+6. A local detailed-report URL may be offered when the visual page is running; it is not a substitute for the conversation summary.
+7. If pressure is severe or recoverable context is material, the Agent explicitly recommends CAP optimization, quantifies expected savings, and explains that confirmed JSON changes create a timestamped `.cap-backup` and can be recovered from that backup.
 8. The recommendation offers a read-only Optimization Plan preview; it never applies that plan during first inspection.
 9. The first report uses cost and duplication, not frequency, and does not migrate existing Providers.
 10. Any later optimization plan receives its own preview and confirmation.
@@ -123,159 +183,203 @@ If the Agent cannot execute local commands, it provides one copyable official in
 
 ### Optimize
 
+**Phase 1 · P0 launch journey**
+
+| | |
+|---|---|
+| **Target** | Identify high-context and duplicate Providers. Preview. Require explicit confirmation. Apply JSON MCP consolidation only. Write a timestamped `.cap-backup`. Document how to recover from that file. |
+| **Now** | `cap optimize` previews; `cap optimize --apply --yes` mutates supported JSON MCP configs, keeps `cap-mcp`, indexes local Skills, and writes `*.cap-backup`. Codex TOML is inspect-only. |
+| **Gap** | Other adapters and a dedicated one-click Restore command/UI. Those are not Phase 1 P0. |
+
 1. CAP identifies high-context and duplicate Providers.
 2. It previews current and proposed footprint, savings, affected files, risks, and retained entries.
-3. User selects items and explicitly confirms.
-4. CAP creates a Restore Point, applies atomically, validates configuration, and reruns inspection.
+3. User selects items and explicitly confirms (`--apply --yes`).
+4. CAP writes a timestamped `.cap-backup` for each mutated JSON file, applies the supported change, and reruns inspection.
 
 ### Transparent use
 
-1. User asks for an outcome in natural language.
-2. Agent searches local CAP-managed capabilities through the resident CAP surface.
-3. CAP returns a small lightweight candidate set.
-4. Agent selects a Provider; CAP loads the Skill body or mapped MCP input only on demand.
+**Phase 1 · P0 launch journey**
 
-### Fuzzy discovery and comparison
+| | |
+|---|---|
+| **Target** | Natural-language search over seed catalog and local Skills. Lightweight candidates. Add or implicit add-on-use registers a ManagedBinding without Direct Exposure. Use loads Skill body or mapped MCP input on demand. |
+| **Now** | `cap.search` / `cap.add` / `cap.use`, local Skills overlay, implicit add on first `use`, mapped MCP gateway, honest `connection_required`. |
+| **Gap** | — for the local path. Semantic/vector retrieval and remote catalog are Phase 3. |
+
+1. User asks for an outcome in natural language.
+2. Agent searches local CAP-managed and seed/local-skill capabilities through the resident CAP surface.
+3. CAP returns a small lightweight candidate set from existing metadata.
+4. A unique high-confidence local hit may be acquired and used without a choice step. Multiple viable candidates still require a choice.
+5. Agent invokes the Provider; implicit `cap.use` register is Acquisition plus ManagedBinding, not Direct Exposure.
+6. CAP loads the Skill body or mapped MCP input only on demand.
+
+### Local Unlock (seed catalog and local Skills)
+
+**Phase 1 · P0 launch journey**
+
+| | |
+|---|---|
+| **Target** | When the user describes an outcome, CAP finds a relevant seed or local-skill Provider that was not already in their working set, presents metadata, and makes it usable without Direct Exposure. |
+| **Now** | Keyword/intent ranking over `data/catalog.json` plus local `SKILL.md`. Misses are honest. |
+| **Gap** | No result when seed and local Skills lack a match. That is not an install failure. Remote Unlock is Phase 3. |
 
 1. The user describes an outcome in ordinary language, for example “我想生成一份 PPT”.
-2. CAP searches acquired local Providers first, then the public catalog when local confidence is insufficient.
-3. CAP returns a small set of relevant Skill and MCP candidates across Provider types.
-4. Each candidate states why it matches, its strengths, limitations, context behavior, permissions, trust, maintenance, and setup effort.
-5. The Agent presents the comparison without loading full Skill bodies or MCP schemas.
-6. The user chooses a candidate; CAP acquires/configures it if necessary and makes it usable in the current task.
-7. After use, the Provider remains acquired but non-resident unless the user explicitly pins it.
+2. CAP searches the seed catalog and local Skills.
+3. Each candidate is compared from existing metadata: match reason, permissions, trust, maintenance, compatibility, estimated context behavior, setup effort.
+4. After use, the Provider remains acquired and CAP-managed but non-resident unless the user explicitly pins it.
+
+### Dynamic Injection (plan-only)
+
+**Phase 1 · P0 launch journey**
+
+| | |
+|---|---|
+| **Target** | Given a task, return a load / defer / keepResident plan. Do not mutate Agent configs. |
+| **Now** | `cap inject` (`mutates: false`). Default MCP surface stays search / add / use. |
+| **Gap** | Auto mutate or evict is a later meaning of Dynamic Injection. |
 
 ### Remote Capability Unlock
 
-1. Local search has no adequate match.
-2. CAP locally reduces the task to a privacy-safe Capability Intent.
-3. The public catalog returns a bounded set of eligible candidates ranked by relevance and popularity.
-4. Agent selects a candidate.
-5. CAP downloads and verifies safe static assets automatically.
-6. CAP pauses before scripts, external authorization, privilege elevation, or access outside the authorized workspace.
-7. CAP registers and invokes the Provider and records the outcome.
+**Phase 3 · not a launch gate**
+
+| | |
+|---|---|
+| **Target** | Local search has no adequate match. CAP reduces the task to a Capability Intent. A public catalog returns a bounded eligible set. Safe static assets verify; scripts and new permissions pause. |
+| **Now** | Seed catalog only. No remote public catalog. |
+| **Gap** | Entire remote Unlock path: catalog service, ranking, acquisition gates, revocation. |
 
 ### Restore
 
-1. User previews a Restore Point and confirms.
-2. CAP detects changes made after migration.
-3. With no conflict it restores atomically; with a conflict it preserves both versions and never overwrites silently.
-4. CAP validates that original MCP and Skill definitions are visible again.
+**Phase 1 (scoped) and later (full)**
+
+| | |
+|---|---|
+| **Phase 1 Target** | Every JSON MCP optimize mutation writes a timestamped `.cap-backup`. Recovery from that file is documented. Marketing and launch language do not claim one-click Restore. |
+| **Phase 1 Now** | `*.cap-backup` is written before supported JSON mutation. README states the backup exists and that automatic full Restore is not shipped. |
+| **Phase 1 Gap** | Clearer operator steps for copying a backup back. Not a Restore CLI/UI. |
+| **Later Target** | Preview a Restore Point, confirm, restore atomically when safe, preserve both versions on conflict, expose restore through CLI, Agent, and local UI, across shipped adapters. |
 
 ## 8. Functional requirements
 
-P0 is required for launch; P1 completes the first product iteration.
+`P0` is a Phase 1 launch gate only. Later-phase rows keep IDs and show Target / Now / Gap; they are not launch gates.
 
 ### Agent-first onboarding
 
-| ID | Pri | Requirement |
-|---|---:|---|
-| ONB-01 | P0 | Make Agent conversation the primary documented installation and first-report path. |
-| ONB-02 | P0 | Publish one copyable README Agent Installation Directive whose wording is an explicit execution request with a narrowly disclosed scope. |
-| ONB-03 | P0 | The directive identifies the official command, prerequisite, CAP surface change, read-only inspection, prohibited optimization, and third-party MCP prohibition. |
-| ONB-04 | P0 | Treat pasting the complete directive as scoped onboarding authorization and do not add a redundant CAP confirmation; preserve host Agent approvals. |
-| ONB-05 | P0 | Do not include migration of existing MCPs/Skills in onboarding consent; optimization requires a separate plan and confirmation. |
-| ONB-06 | P0 | Return the first health summary directly in the originating conversation and include a local detailed-report URL. |
-| ONB-07 | P0 | If installation succeeds but one scan source fails, return a partial report with a scoped warning instead of losing the whole result. |
-| ONB-08 | P0 | If the Agent cannot execute locally, provide one official copyable command and continue inspection after installation is detected. |
-| ONB-09 | P1 | Detect an existing compatible CAP install and upgrade/reuse it rather than creating duplicate surfaces or state. |
-| ONB-10 | P1 | Track time from explicit install request to first rendered health report. |
-| ONB-11 | P0 | When Context Pressure is `high`, `critical`, or `emergency`, explicitly recommend previewing CAP optimization. |
-| ONB-12 | P0 | Also recommend optimization when reclaimable context crosses a material-savings threshold; the proposed default is 10% of effective budget. |
-| ONB-13 | P0 | State why the recommendation triggered, current/projected footprint, estimated savings, affected capability classes, confirmation requirement, and restore guarantee. |
-| ONB-14 | P0 | First inspection may offer or run a read-only optimization preview but must not apply it under onboarding authorization. |
+| ID | Phase | Pri | Target | Now | Gap |
+|---|:---:|:---:|---|---|---|
+| ONB-01 | 1 | P0 | Agent conversation is the primary documented installation and first-report path. | README leads with the Agent Installation Directive. | — |
+| ONB-02 | 1 | P0 | Publish one copyable README directive whose wording is an explicit execution request with a narrowly disclosed scope. | Directive exists in README. | — |
+| ONB-03 | 1 | P0 | The directive identifies the official command, prerequisite, CAP surface change, read-only inspection, prohibited optimize-apply, and third-party MCP prohibition. | README directive includes those limits. | — |
+| ONB-04 | 1 | P0 | Treat pasting the complete directive as scoped onboarding authorization; do not add a redundant CAP confirmation; preserve host Agent approvals. | README states this. | — |
+| ONB-05 | 1 | P0 | Onboarding consent does not include migration of existing MCPs/Skills; optimization requires a separate plan and confirmation. | Directive forbids `optimize --apply --yes`. | — |
+| ONB-06 | 1 | P0 | Return the first health summary in the originating conversation. A local detailed-report URL is optional when the visual page is available. | Inspect JSON can be summarized in-conversation. `cap web` exists separately. | Optional URL in the same flow. |
+| ONB-07 | 1 | P0 | If installation succeeds but one scan source fails, return a partial report with a scoped warning. | Inspect continues across sources and surfaces warnings. | Consistent Agent wording. |
+| ONB-08 | 1 | P0 | If the Agent cannot execute locally, provide one official copyable command and continue after install is detected. | README documents the official command. | — |
+| ONB-09 | 1 | P1 | Detect an existing compatible CAP install and upgrade/reuse it. | Setup updates marked launchers. | Dedup of duplicate surfaces. |
+| ONB-10 | 1 | P1 | Track time from explicit install request to first rendered health report. | Not shipped. | Local timing only if useful; not remote TEL. |
+| ONB-11 | 1 | P0 | When Context Pressure is `high`, `critical`, or `emergency`, explicitly recommend previewing CAP optimization. | README directive requires this. Inspect exposes pressure. | — |
+| ONB-12 | 1 | P0 | Also recommend optimization when reclaimable context crosses a material-savings threshold (proposed default 10% of effective budget). | Reclaimable estimate exists; threshold policy is still open. | Final threshold. |
+| ONB-13 | 1 | P0 | State why the recommendation triggered, current/projected footprint, estimated savings, affected classes, confirmation requirement, and that a `.cap-backup` will be written. Do not claim one-click Restore. | README asks the Agent to explain backup and recovery. | Keep launch copy aligned with scoped Restore. |
+| ONB-14 | 1 | P0 | First inspection may offer a read-only optimization preview but must not apply it under onboarding authorization. | Directive and optimize default are preview-only. | — |
 
 ### Inventory and reporting
 
-| ID | Pri | Requirement |
-|---|---:|---|
-| INV-01 | P0 | Detect Codex, Claude Code, and Cursor on macOS, Windows, and Linux. |
-| INV-02 | P0 | Discover supported user, project, shared, and plugin MCP/Skill definitions. |
-| INV-03 | P0 | Never connect to or execute third-party MCPs during inspection. |
-| INV-04 | P0 | Estimate MCP schema/description cost and resident Skill identity cost separately. |
-| INV-05 | P0 | Mark values as estimated and publish the method. |
-| INV-06 | P0 | Identify duplicate definitions and probable overlapping Skills. |
-| INV-07 | P0 | Distinguish installed, configured, directly exposed, CAP-managed, and observed-used. |
-| INV-08 | P0 | Show effective budget, footprint, pressure, score, warnings, recoverable tokens, and projected after-state. |
-| INV-09 | P0 | Use one report model for CLI, Agent response, and local visual UI. |
-| INV-10 | P1 | Filter details by Agent, scope, source, type, status, cost, and reason. |
+| ID | Phase | Pri | Target | Now | Gap |
+|---|:---:|:---:|---|---|---|
+| INV-01 | 1 | P0 | Detect Codex, Claude Code, and Cursor on macOS, Windows, and Linux. | Scanners exist for those Agents. | Published OS/Agent matrix verification. |
+| INV-02 | 1 | P0 | Discover supported user, project, shared, and plugin MCP/Skill definitions. | Inspect walks those locations. | — |
+| INV-03 | 1 | P0 | Never connect to or execute third-party MCPs during inspection. | Inspect is read-only. | — |
+| INV-04 | 1 | P0 | Estimate MCP schema/description cost and resident Skill identity cost separately. | Cost segments exist; Skill identity is name+description. | — |
+| INV-05 | 1 | P0 | Mark values as estimated and publish the method. | Estimates are labeled; method is documented. | — |
+| INV-06 | 1 | P0 | Identify duplicate definitions and probable overlapping Skills. | Duplicate paths/names are flagged. | Semantic overlap method is open. |
+| INV-07 | 1 | P0 | Distinguish installed, configured, Direct Exposure, CAP-managed, and Invoked. | Funnel and item `status` exist. | Vocabulary in UI copy vs glossary. |
+| INV-08 | 1 | P0 | Show effective budget, footprint, pressure, score, warnings, recoverable tokens, and projected after-state. | Inspect / Health report includes these. | — |
+| INV-09 | 1 | P0 | Use one report model for CLI, Agent response, and local visual UI. | Shared inspect JSON; CLI/Web render it. | Agent prose is derived, not a second model. |
+| INV-10 | 1 | P1 | Filter details by Agent, scope, source, type, status, cost, and reason. | Basic listing. | Richer filters. |
 
 ### Observation and recommendations
 
-| ID | Pri | Requirement |
-|---|---:|---|
-| REC-01 | P0 | Initially recommend only high-context and duplicate capabilities. |
-| REC-02 | P0 | Record local CAP-mediated search, selection, invocation, outcome, and time. |
-| REC-03 | P0 | Never label low-frequency until the observation threshold is satisfied. |
-| REC-04 | P1 | Proposed default observation period is 14 days; expose and validate the final policy before GA. |
-| REC-05 | P1 | Explain cost, duplication, usage, and recency signals separately. |
-| REC-06 | P1 | Let users pin a Provider resident or exclude it from recommendations. |
-| REC-07 | P0 | Never recommend the CAP surface itself for removal. |
-| REC-08 | P0 | Put reversibility beside every optimization call to action: what is backed up, how restore works, and how conflicts are handled. |
+| ID | Phase | Pri | Target | Now | Gap |
+|---|:---:|:---:|---|---|---|
+| REC-01 | 1 | P0 | Initially recommend only high-context and duplicate capabilities. | Inspect recommendations start from cost/duplication. | — |
+| REC-02 | 1 | P0 | Record local CAP-mediated search, selection, invocation, outcome, and time in Registry Activity. | Registry Activity records add/use. | Search-selection events if missing. |
+| REC-03 | 1 | P0 | Never label low-frequency until the Observation Period is satisfied. | Value Analysis leaves unused signals as underused without a day-one frequency verdict. | Formal readiness policy (open). |
+| REC-04 | 1 | P1 | Observation Period default is proposed at 14 days; validate before calling it final. | Not finalized. | Open decision. |
+| REC-05 | 2 | — | Explain cost, duplication, usage, and recency signals separately. | Value Analysis ranks value-per-cost. | Formal signal breakdown. |
+| REC-06 | 2 | — | Let users pin a Provider resident or exclude it from recommendations. | Not a first-class pin UX. | Pin = Direct Exposure. |
+| REC-07 | 1 | P0 | Never recommend the CAP surface itself for removal. | `cap-mcp` is excluded from Move → CAP. | — |
+| REC-08 | 1 | P0 | Beside every optimize call to action, say what is backed up (timestamped `.cap-backup`), how to recover from that file, and that one-click Restore is not claimed. | README states backup honesty. | Keep Agent copy from over-claiming Restore. |
 
 ### Optimization and restore
 
-| ID | Pri | Requirement |
-|---|---:|---|
-| OPT-01 | P0 | Produce a dry-run plan with affected files, before/after estimate, savings, retained entries, and reload needs. |
-| OPT-02 | P0 | Require explicit confirmation immediately before applying. |
-| OPT-03 | P0 | Preserve Provider executables and Skill bodies; consolidation is not uninstall. |
-| OPT-04 | P0 | Apply supported changes atomically and validate afterward. |
-| OPT-05 | P0 | Refuse ambiguous/unsupported mutations and provide manual guidance. |
-| OPT-06 | P1 | Support selective migration and every shipped Agent/OS adapter. |
-| RST-01 | P0 | Create a Restore Point before every mutation. |
-| RST-02 | P0 | Record original bytes/checksum, path, Agent, scope, time, and plan ID. |
-| RST-03 | P0 | Preview and confirm restoration. |
-| RST-04 | P0 | Restore exact original configuration when no later edit conflicts. |
-| RST-05 | P0 | Detect conflicts, preserve both versions, and never overwrite silently. |
-| RST-06 | P0 | Verify original definitions are discoverable after restore. |
-| RST-07 | P0 | Expose restore through CLI, Agent conversation, and local UI. |
-| RST-08 | P0 | A migration adapter cannot ship until automated apply/restore tests pass. |
-| RST-09 | P0 | Never describe an optimization as safely reversible unless its Restore Point is created and validated before mutation. |
+| ID | Phase | Pri | Target | Now | Gap |
+|---|:---:|:---:|---|---|---|
+| OPT-01 | 1 | P0 | Produce a dry-run plan with affected files, before/after estimate, savings, retained entries, and reload needs. | `cap optimize` preview. | — |
+| OPT-02 | 1 | P0 | Require explicit confirmation immediately before applying. | `--apply --yes`. | — |
+| OPT-03 | 1 | P0 | Preserve Provider executables and Skill bodies; consolidation is not uninstall. | JSON MCP entries move behind CAP; Skills are indexed, not rewritten. | — |
+| OPT-04 | 1 | P0 | Apply supported JSON MCP changes and validate afterward. | Guarded JSON apply. | Not all adapters. |
+| OPT-05 | 1 | P0 | Refuse ambiguous/unsupported mutations and provide manual guidance. | TOML and unsafe paths are refused. | — |
+| OPT-06 | 2 | — | Support selective migration and every shipped Agent/OS adapter. | JSON MCP only. | TOML and remaining adapters. |
+| RST-01 | 1 | P0 | Write a timestamped `.cap-backup` before every supported JSON optimize mutation. | `*.cap-backup` is created. | — |
+| RST-02 | 1 | P0 | Keep enough backup identity to recover the file (path and timestamp). | Timestamped sibling backup files. | Richer plan-ID metadata is later. |
+| RST-03 | later | — | Preview and confirm restoration through a Restore command. | Not shipped. | Full Restore UI/CLI. |
+| RST-04 | later | — | Restore exact original configuration when no later edit conflicts. | Manual copy from `.cap-backup`. | Automated exact restore. |
+| RST-05 | later | — | Detect conflicts, preserve both versions, and never overwrite silently. | Not shipped. | Conflict-aware Restore. |
+| RST-06 | later | — | Verify original definitions are discoverable after restore. | Re-inspect after manual recovery. | Automated verify. |
+| RST-07 | later | — | Expose restore through CLI, Agent conversation, and local UI. | Documented backup recovery only. | One-click surfaces. |
+| RST-08 | later | — | A migration adapter cannot ship a Restore claim until automated apply/restore tests pass. | JSON apply is tested; Restore command is not. | Adapter Restore tests. |
+| RST-09 | 1 | P0 | Never describe an optimization as one-click restorable unless a full Restore Point flow exists. Phase 1 may say: backed up, recoverable from `.cap-backup`. | README already refuses auto full Restore. | Keep PRD/README/Agent copy aligned. |
 
 ### Discovery, catalog, and acquisition
 
-| ID | Pri | Requirement |
-|---|---:|---|
-| USE-01 | P0 | Natural-language tasks require no CAP command or ID knowledge. |
-| USE-02 | P0 | Search local capabilities before remote catalog. |
-| USE-03 | P0 | Support fuzzy semantic intent such as “生成一份 PPT” without requiring exact Provider names or catalog keywords. |
-| USE-04 | P0 | On-demand Skills must become usable in the active task. |
-| USE-05 | P0 | MCP use exposes only the mapped tool input for the selected Capability. |
-| USE-06 | P0 | Report connection, authorization, install, and execution failures honestly. |
-| USE-07 | P0 | Return lightweight summaries; never load candidate bodies or full schemas merely to compare them. |
-| USE-08 | P0 | Compare candidates by match reason, strengths, limitations, estimated context behavior, permissions, trust, maintenance, compatibility, and setup effort. |
-| USE-09 | P0 | Let the user make the final choice before acquisition or first use when multiple viable candidates exist. |
-| USE-10 | P0 | Keep acquired Providers non-resident by default after use; only explicit pinning makes one resident. |
-| USE-11 | P1 | Support a temporary try mode that can remove downloaded assets and bindings while retaining an anonymous outcome record. |
-| CAT-01 | P0 | Search the public catalog anonymously using only simplified Capability Intent. |
-| CAT-02 | P0 | Return only administrator-approved, compatible, non-revoked Providers. |
-| CAT-03 | P0 | Keep Capability and Provider as separate many-to-many objects. |
-| CAT-04 | P0 | Include version, compatibility, maintenance, permissions, risk, source, trust, install type, and I/O metadata. |
-| CAT-05 | P0 | Apply quality eligibility before tunable relevance/popularity ranking. |
-| CAT-06 | P0 | Return a bounded candidate set; proposed default is three. |
-| CAT-07 | P0 | Cache verifiable catalog metadata for resilience and offline browsing. |
-| CAT-08 | P1 | Support version pinning, deprecation, revocation, advisories, and admin audit/rollback. |
-| ACQ-01 | P0 | Auto-download verified static assets after selection. |
-| ACQ-02 | P0 | Verify integrity and show source, version, and permissions. |
-| ACQ-03 | P0 | Confirm scripts, external account access, new service permissions, elevation, and access outside the workspace. |
-| ACQ-04 | P0 | Do not add a prompt for reads already authorized inside the active workspace. |
-| ACQ-05 | P0 | Fail closed when trust, integrity, compatibility, or permission metadata is missing. |
+| ID | Phase | Pri | Target | Now | Gap |
+|---|:---:|:---:|---|---|---|
+| USE-01 | 1 | P0 | Natural-language tasks require no CAP command or ID knowledge. | Search accepts ordinary task phrasing. | — |
+| USE-02 | 1 | P0 | Search local seed catalog and local Skills. There is no remote catalog in Phase 1, so local is the only path. | Seed + `SKILL.md` overlay. | Remote comes in Phase 3 (CAT-*). |
+| USE-03 | 3 | — | Fuzzy semantic / vector intent such as “生成一份 PPT” without requiring catalog keywords. | Keyword/intent ranking; some CJK needles match. | Semantic/vector retrieval. Not a Phase 1 P0. |
+| USE-04 | 1 | P0 | On-demand Skills become usable in the active task (path/summary; body on request). | Local Skill overlay, add, use. | CAP does not execute Skill workflows. |
+| USE-05 | 1 | P0 | MCP use exposes only the mapped tool input for the selected Capability. | Gateway + on-demand `input_schema`. | — |
+| USE-06 | 1 | P0 | Report connection, authorization, install, and execution failures honestly. | `connection_required` / `failed`; no fake success. | — |
+| USE-07 | 1 | P0 | Return lightweight summaries; never load candidate bodies or full schemas merely to compare them. | Search returns summaries and metadata. | — |
+| USE-08 | 1 | P0 | Compare candidates using existing metadata fields (match reason, permissions, trust, maintenance, compatibility, estimated context, setup effort). No separate pros/cons authoring engine. | Catalog and search already expose those fields. | — |
+| USE-09 | 1 | P0 | When multiple viable candidates exist, the user chooses before Acquisition or first use. A unique high-confidence local hit may skip that choice. Implicit `cap.use` register is allowed for that hit. | Implicit add-on-use exists. Agent prompts still choose among several search hits. | Document the unique-hit exception in Agent copy. |
+| USE-10 | 1 | P0 | Acquisition plus ManagedBinding stay non-resident by default. Only explicit pin / resident config is Direct Exposure. | Implicit add updates Registry, not Agent tool lists. | First-class pin UX is Phase 2 (REC-06). |
+| USE-11 | 2 | — | Temporary try mode that can remove downloaded assets while retaining an anonymous outcome record. | Not shipped. | Later. |
+| INJ-01 | 1 | P0 | `cap inject` returns a task-specific load/defer plan and does not mutate configs. | Delivered (`mutates: false`). | — |
+| INJ-02 | later | — | Auto mutate or evict from an injection plan. | Plan-only. | Later Dynamic Injection meaning. |
+| CAT-01 | 3 | — | Search a public catalog anonymously using only simplified Capability Intent. | Seed catalog only. | Remote catalog. |
+| CAT-02 | 3 | — | Return only administrator-approved, compatible, non-revoked Providers. | Local seed is hand-maintained. | Public review workflow. |
+| CAT-03 | 3 | — | Keep Capability and Provider as separate many-to-many objects in the public catalog. | Already true for the local seed. | Public catalog service. |
+| CAT-04 | 3 | — | Public catalog metadata: version, compatibility, maintenance, permissions, risk, source, trust, install type, I/O. | Seed has a subset. | Full remote metadata. |
+| CAT-05 | 3 | — | Apply quality eligibility before tunable relevance/popularity ranking. | Local keyword/intent ranking only. | Remote ranker. |
+| CAT-06 | 3 | — | Return a bounded remote candidate set (proposed default three). | Local search already bounds results. | Remote bound. |
+| CAT-07 | 3 | — | Cache verifiable catalog metadata for resilience and offline browsing. | No remote cache. | Phase 3. |
+| CAT-08 | 3 | — | Version pinning, deprecation, revocation, advisories, admin audit/rollback. | Not shipped. | Phase 3. |
+| ACQ-01 | 3 | — | Auto-download verified static assets after selection. | Local bind only. | Remote download. |
+| ACQ-02 | 3 | — | Verify integrity and show source, version, and permissions for remote artifacts. | Local metadata only. | Remote integrity. |
+| ACQ-03 | 3 | — | Confirm scripts, external account access, new service permissions, elevation, and access outside the workspace. | Honest connection/auth failures locally. | Remote permission gates. |
+| ACQ-04 | 1 | P0 | Do not add a CAP prompt for reads already authorized inside the active workspace. | Local use inherits Agent workspace auth. | — |
+| ACQ-05 | 3 | — | Fail closed when remote trust, integrity, compatibility, or permission metadata is missing. | Local missing launch fails closed with `connection_required`. | Remote fail-closed policy. |
 
-### Anonymous telemetry
+### Activity and telemetry
 
-| ID | Pri | Requirement |
-|---|---:|---|
-| TEL-01 | P0 | Record anonymous install, active-use, search, exposure, acquisition, invocation result, and estimated savings events. |
-| TEL-02 | P0 | Provide an immediate user-visible opt-out. |
-| TEL-03 | P0 | Never transmit source code, raw task, config, inventory, paths, credentials, or raw errors. |
-| TEL-04 | P0 | Use coarse errors and a rotating anonymous installation identifier. |
-| TEL-05 | P0 | Publish event fields and retention. |
-| TEL-06 | P1 | Distinguish Provider invocation success from full task success unless the Agent supplies an explicit completion signal. |
+| ID | Phase | Pri | Target | Now | Gap |
+|---|:---:|:---:|---|---|---|
+| TEL-LCL | 1 | P0 | Local Registry Activity is sufficient for Value Analysis and underused advice. | Activity records add/use outcomes. | — |
+| TEL-01 | 3 | — | Record anonymous install, active-use, search, exposure, acquisition, invocation result, and estimated savings events. | No product-wide anonymous contract. | Not a Phase 1 gate. |
+| TEL-02 | 3 | — | Provide an immediate user-visible opt-out. | N/A until remote TEL exists. | Phase 3. |
+| TEL-03 | 3 | — | Never transmit source code, raw task, config, inventory, paths, credentials, or raw errors. | Nothing is transmitted today. | Keep as a hard rule when TEL ships. |
+| TEL-04 | 3 | — | Use coarse errors and a rotating anonymous installation identifier. | Not shipped. | Phase 3. |
+| TEL-05 | 3 | — | Publish event fields and retention. | Not shipped. | Phase 3. |
+| TEL-06 | 3 | — | Distinguish Provider invocation success from full task success unless the Agent supplies an explicit completion signal. | Local Activity is invocation-level. | Completion protocol is open. |
 
 ## 9. Local visual report
 
-The detailed page contains: health summary; before/after comparison; inventory with cost attribution; duplicates; explained recommendations; observation readiness; Restore Points; sanitized remote activity; and privacy/telemetry controls. It must be keyboard accessible and must not rely on color alone.
+**Phase 1 Target:** health summary; before/after estimate; inventory with cost attribution; duplicates; high-cost/duplicate recommendations; scoped backup note.
+
+**Now:** Web Health / inspect JSON cover health, inventory, duplicates, Value Analysis, and recommendations.
+
+**Gap:** observation-readiness chrome, Restore Point browser, sanitized remote activity, and privacy/telemetry controls are later. The page must stay keyboard accessible and must not rely on color alone.
 
 ## 10. State model
 
@@ -285,119 +389,163 @@ CAP must not collapse these states:
 discovered -> recommended -> selected -> acquired -> configured -> CAP-managed -> invoked
 ```
 
-A search hit is not acquired. Acquisition is not configuration. Configuration is not Direct Exposure. A CAP-managed Provider can remain non-resident and still be usable on demand. Invocation success is not necessarily full task success.
+Acquisition ≠ Direct Exposure ≠ CAP-managed ≠ Invoked.
 
-Core local entities are `LocalInventoryItem`, `ContextCost`, `Capability`, `Provider`, `ManagedBinding`, `ActivityEvent`, `OptimizationPlan`, `RestorePoint`, and `AcquisitionRecord`. Remote entities are `CatalogCapability`, `CatalogProvider`, `CatalogReview`, `PopularityAggregate`, and `Revocation`.
+- A search hit is not acquired.
+- Acquisition creates a ManagedBinding. It is not configuration and not Direct Exposure.
+- A CAP-managed Provider can remain non-resident and still be usable on demand.
+- Implicit `cap.use` register is Acquisition plus ManagedBinding. Default is not Direct Exposure.
+- Pin or resident configuration is Direct Exposure.
+- Invocation success is not necessarily full task success.
+
+Core local entities are Local Inventory item, Context Footprint, Capability, Provider, ManagedBinding, Activity, Optimization Plan, Restore Point (scoped), and Acquisition. Remote entities (Phase 3) are public catalog Capability/Provider, review, popularity, and revocation.
 
 ## 11. Privacy and security
 
+**Phase 1 Now**
+
 - Inspection is read-only and never starts scanned MCPs.
-- Task simplification happens locally; remote search receives only Capability Intent and coarse compatibility data.
 - Workspace reads inherit Agent authorization; CAP never broadens it silently.
-- New permissions are purpose-specific and deny-by-default.
-- Writes use least privilege, atomic replacement, restrictive state permissions where available, and recoverable backups.
+- Writes use least privilege, restrictive state permissions where available, and timestamped `.cap-backup` for supported JSON optimize.
+- Provider environment secrets never enter reports or logs.
+
+**Phase 3 Target (not a launch gate)**
+
+- Task simplification happens locally; remote search receives only Capability Intent and coarse compatibility data.
 - Catalog artifacts and metadata are verifiable.
-- Provider environment secrets never enter reports, logs, search, or telemetry.
-- Disabling telemetry does not disable local features.
+- New remote permissions are purpose-specific and deny-by-default.
+- Disabling anonymous telemetry does not disable local features.
+- Remote telemetry never includes source code, raw task, config, inventory, paths, credentials, or raw errors.
 
 ## 12. Non-functional requirements
 
-| Area | Requirement |
-|---|---|
-| Performance | Show a local summary within 5 seconds on a typical machine with 100 Skills, excluding exceptional trees. |
-| Reliability | One failed scan source does not block others; failure is visible and scoped. |
-| Safety | Apply and restore are atomic and idempotent where the filesystem permits. |
-| Offline | Inspect, restore, local search, and managed local use work without the catalog. |
-| Compatibility | Publish and test the supported OS/Agent version matrix. |
-| Explainability | Every cost, score, recommendation, and ranking exposes its reason. |
-| Runtime | Preserve zero npm runtime dependencies unless separately approved. |
+| Area | Phase | Target | Now | Gap |
+|---|:---:|---|---|---|
+| Performance | 1 | Show a local summary within 5 seconds on a typical machine with 100 Skills, excluding exceptional trees. | Local inspect is the path. | Formal timing check. |
+| Reliability | 1 | One failed scan source does not block others; failure is visible and scoped. | Multi-source inspect. | Agent wording. |
+| Safety | 1 | Supported JSON apply writes `.cap-backup` first. Full atomic Restore is later. | Backup-before-apply. | Cross-adapter Restore. |
+| Offline | 1 | Inspect, documented backup recovery, local search, inject plan, and managed local use work without a public catalog. | No remote catalog dependency. | — |
+| Compatibility | 1 | Publish the supported OS/Agent matrix. | Codex / Claude Code / Cursor scanners exist. | Verified published matrix. |
+| Explainability | 1 | Every cost, score, and recommendation exposes its reason. | Estimates and recommendation reasons exist. | Ranking weights still open. |
+| Runtime | 1 | Preserve zero npm runtime dependencies unless separately approved. | Zero runtime deps. | — |
 
 ## 13. Success metrics
 
-### North stars
+### Phase 1 north stars
 
-- **Active CAP users**: anonymous installations with meaningful activity in the window.
-- **Estimated tokens saved**: sum and median of validated before/after footprint reductions.
-- **Capability Unlocks**: no adequate local Capability existed, a remote Provider was acquired, and its relevant invocation succeeded.
-- **Non-resident library size**: accessible acquired Providers per user that do not add Direct Exposure.
-- **Intent-to-first-use conversion**: fuzzy searches that lead to a chosen Provider and successful first invocation.
 - **Agent onboarding completion**: explicit Agent install requests that reach a rendered first health report.
-- **Time to first health report**: median time from user confirmation to report delivery in the same conversation.
+- **Time to first health report**: median time from the pasted directive to report delivery in the same conversation (local observation; not remote TEL).
+- **Non-resident library size**: acquired / CAP-managed Providers that do not add Direct Exposure.
+- **Local Unlock**: seed or local-skill Provider acquired and Invoked when it was not already in the working set.
 
-### Guardrails
+### Later-phase north stars (not launch gates)
 
-- Restore success and mutation failure rates.
-- Post-optimization invocation regression rate.
-- Remote zero-result, irrelevant-selection, acquisition, and permission-abandonment rates.
+- **Active CAP users** via anonymous installations.
+- **Estimated tokens saved** from validated before/after reductions, aggregated remotely.
+- **Remote Capability Unlocks**.
+- **Intent-to-first-use conversion** across the public catalog.
+
+### Phase 1 guardrails
+
+- JSON optimize apply failure rate.
+- Post-optimization invocation regression (local).
 - Percentage of projected savings confirmed by post-change inspection.
+- Copy never claims one-click Restore or remote Unlock as shipped.
+
+### Later guardrails
+
+- Full Restore success and mutation failure rates.
+- Remote zero-result, irrelevant-selection, acquisition, and permission-abandonment rates.
 - Revoked Provider invocations prevented.
 
 Token savings remain explicitly estimated. Capability Unlock means Provider-level success unless the Agent provides a full-task completion signal.
 
 ## 14. Acceptance scenarios
 
-1. A heavy DingTalk MCP appears in the first report with estimated cost, without being started.
-2. About 100 overlapping Skills are priced and grouped, with no day-one low-frequency claim.
-3. Confirmed optimization creates a Restore Point and can reproduce the original configuration.
-4. Restore after a later manual edit detects conflict and preserves both versions.
-5. A consolidated Skill remains discoverable and usable from a natural-language task.
-6. A company task sends only simplified intent to remote search—no code, raw task, paths, config, or inventory.
-7. A reviewed static Skill downloads and verifies automatically.
-8. A Provider needing a script or DingTalk authorization pauses for informed confirmation.
-9. Local inspection, restore, search, and managed use continue when the catalog is offline.
-10. “生成一份 PPT” returns a small relevant mix of Skills/MCPs with concrete pros and cons; after selection the chosen Provider works in the current task without all candidates becoming resident.
-11. A user can acquire and try multiple social-media discoveries while the post-inspection resident footprint stays limited to CAP plus explicitly pinned Providers.
-12. A user pastes the complete README Agent Installation Directive; the Agent starts installation without another CAP question and returns the first health report plus a local detail link in the same conversation.
-13. A user pastes ordinary CAP prose or asks to summarize README without the designated execution directive; the Agent does not infer installation authorization.
-14. Agent-first onboarding does not migrate existing MCPs or Skills; selecting “优化” later produces a separate preview and confirmation.
-15. A first inspection with `high` Context Pressure recommends CAP optimization, shows estimated before/after savings, and explains that confirmed changes create a Restore Point and can be undone.
-16. The same first inspection does not apply the recommendation until the user separately reviews and confirms the Optimization Plan.
+Each scenario is labeled. Only Phase 1 scenarios are launch-relevant.
+
+1. **Phase 1.** A heavy DingTalk MCP appears in the first report with estimated cost, without being started.
+2. **Phase 1.** About 100 overlapping Skills are priced and grouped, with no day-one low-frequency claim.
+3. **Phase 1.** Confirmed JSON MCP optimize writes a timestamped `.cap-backup`; recovery from that file is documented and can reproduce the prior JSON.
+4. **Later.** Restore after a later manual edit detects conflict and preserves both versions. Not a Phase 1 gate.
+5. **Phase 1.** A consolidated or seed Skill remains discoverable and usable from a natural-language task.
+6. **Phase 3.** A company task sends only simplified Capability Intent to remote search. Not a Phase 1 gate.
+7. **Phase 3.** A reviewed static Skill downloads and verifies automatically. Not a Phase 1 gate.
+8. **Phase 3.** A Provider needing a script or DingTalk authorization pauses for informed confirmation. Not a Phase 1 gate.
+9. **Phase 1.** Local inspection, backup recovery, search, inject plan, and managed use continue with no public catalog.
+10. **Phase 1 (local) / Phase 3 (semantic+remote).** “生成一份 PPT” searches seed and local Skills and compares existing metadata. A miss is honest. Semantic/public-catalog hits are Phase 3.
+11. **Phase 1.** A user can acquire and try multiple discoveries while the resident footprint stays limited to the CAP surface plus explicitly pinned Providers. Implicit `use` does not create Direct Exposure.
+12. **Phase 1.** A user pastes the complete README Agent Installation Directive; the Agent starts installation without another CAP question and returns the first health report in the same conversation.
+13. **Phase 1.** A user pastes ordinary CAP prose or asks to summarize README without the designated execution directive; the Agent does not infer installation authorization.
+14. **Phase 1.** Agent-first onboarding does not migrate existing MCPs or Skills; selecting “优化” later produces a separate preview and confirmation.
+15. **Phase 1.** A first inspection with `high` Context Pressure recommends CAP optimization, shows estimated before/after savings, and explains that confirmed JSON changes write `.cap-backup` and can be recovered from that backup — not that one-click Restore exists.
+16. **Phase 1.** The same first inspection does not apply the recommendation until the user separately reviews and confirms the Optimization Plan.
+17. **Phase 1.** `cap inject` for a task returns a load/defer plan with `mutates: false`.
+18. **Phase 1.** A unique high-confidence local search hit may be used (and implicitly registered) without a choice step; two viable hits still require a choice.
 
 ## 15. Delivery phases
 
-**Phase 1 — Agent-first trustworthy local control**: same-conversation installation and first report, cross-platform inventory, unified report, high-cost/duplicate recommendations, selective migration, Restore Points, transparent local use, and the acquired-versus-resident state distinction.
+Panorama only. **Launch gates in §18 bind Phase 1.**
 
-**Phase 2 — observed optimization**: observation readiness, frequency/value advice, resident pinning, and regression/savings validation.
+**Phase 1 — Agent-first trustworthy local control (launch):** same-conversation installation and first report; local inventory and Context Health; high-cost/duplicate recommendations; JSON MCP optimize plus timestamped `.cap-backup` and documented recovery; transparent local use (search / add / use, Skills overlay, implicit add-on-use); seed-catalog local Unlock; `cap inject` plan-only; Acquisition versus Direct Exposure versus CAP-managed versus Invoked.
 
-**Phase 3 — public Capability Unlock**: fuzzy intent search, candidate pros/cons comparison, anonymous catalog, local intent simplification, admin curation, verifiable metadata, relevance/popularity ranking, acquisition gates, revocation, and unlock telemetry.
+**Phase 2 — observed optimization:** Observation Period readiness, frequency/value advice, resident pinning, remaining adapters, and savings validation. Not a Phase 1 launch gate.
 
-Remote discovery must not be marketed as generally available until acquisition, permission handling, and revocation work end to end.
+**Phase 3 — public Capability Unlock:** semantic retrieval, remote catalog, local intent simplification, admin curation, verifiable metadata, relevance/popularity ranking, remote acquisition gates, revocation, anonymous product telemetry, and full one-click Restore. Not a Phase 1 launch gate.
+
+Do not market remote discovery, anonymous telemetry, or full Restore as generally available until those Phase 3 paths work end to end.
 
 ## 16. Current implementation and gaps
 
-| Area | Current state | Gap |
-|---|---|---|
-| Agent onboarding | `cap setup` installs the CAP surface and runs inspection; setup output can be shown by an Agent. | First-class same-conversation contract, safe pasted-content handling, preflight summary, partial-failure UX, and time-to-report telemetry. |
-| Inventory | Scans MCP/Skill locations and estimates footprint. | Validate full OS/Agent matrix and semantic overlap. |
-| Health | Budget, pressure, funnel, costs, reclaimable estimate, and value analysis exist. | Unified install presentation and richer visual report. |
-| Optimization | Preview and guarded JSON MCP consolidation; local Skill indexing. | Selectivity, all adapters, conflict-safe restore command/UI, verification. |
-| Dynamic use | Stable search/add/use, keyword/intent ranking, local Skill overlay, mapped MCP gateway. | Semantic fuzzy retrieval, candidate trade-off explanations, explicit choice, and transparent task parity. |
-| Observation | Registry activity supports usage/value analysis. | Formal readiness; forbid premature low-frequency labels. |
-| Catalog | Small bundled seed catalog. | Remote service, admin workflow, signing, caching, versioning, revocation. |
-| Acquisition | Local bindings and honest connection-required responses. | Download, integrity, permission gates, cross-platform installation. |
-| Telemetry | No product-wide anonymous contract. | Schema, opt-out, aggregation, retention, privacy tests. |
+| Area | Phase | Target | Now | Gap |
+|---|:---:|---|---|---|
+| Agent onboarding | 1 | Directive-scoped install + first health report | README Agent Installation Directive; `cap setup --agent auto`; `cap inspect` | Conversation polish and optional detail URL. Not auto Restore. |
+| Inventory and health | 1 | Local inventory and Context Health | Inspect: budget, pressure, funnel, costs, reclaimable estimate, Value Analysis | Published OS/Agent matrix; richer visual filters |
+| Recommendations | 1 | High-cost and duplicate only | Inspect recommendations; profiler underused list | Formal Observation Period (open) |
+| Optimize | 1 | JSON MCP consolidation after `--apply --yes` | Preview + guarded JSON apply; Skill index; TOML inspect-only | Other adapters (Phase 2+) |
+| Restore | 1 | Timestamped `.cap-backup` + documented recovery | Backups are written; README refuses one-click Restore | Full Restore UI/CLI across adapters is later, not Phase 1 P0 |
+| Transparent use | 1 | search / add / use + Skills overlay + implicit add-on-use | Delivered | — |
+| Compare | 1 | Existing metadata fields | Catalog and search metadata | No separate pros/cons engine (settled) |
+| Local Unlock | 1 | Seed + local Skills | Keyword/intent search; honest misses | Remote catalog is Phase 3 |
+| Dynamic Injection | 1 | Plan-only | `cap inject` (`mutates: false`) | Auto mutate/evict later |
+| Remote catalog | 3 | Public Unlock | Bundled seed only | Service, admin workflow, signing, cache, revocation |
+| Remote acquisition | 3 | Download, integrity, permission gates | Local bindings; honest `connection_required` | Remote install path |
+| Activity | 1 | Local Registry Activity | Add/use outcomes on disk | — |
+| Anonymous telemetry | 3 | Opt-out product telemetry | Not shipped | Not a Phase 1 gate |
 
 ## 17. Open decisions
 
-- Observation duration/evidence threshold; 14 days is proposed.
-- Ranking weights and popularity anti-manipulation.
+Settled by this Grill and removed from this list: Installation Directive as scoped install auth; Phase 1 Restore scope; Compare via metadata (no authoring engine); local Activity versus remote TEL; inject plan-only; Acquisition ≠ Direct Exposure ≠ CAP-managed ≠ Invoked; unique-hit exception on USE-09; remote catalog / semantic retrieval / full Restore / enterprise out of Phase 1 P0.
+
+Still open:
+
+- Observation Period duration and evidence threshold; 14 days is proposed.
+- Ranking weights (and, in Phase 3, popularity anti-manipulation).
 - “High context” thresholds by effective budget.
 - Final material-savings threshold for first-report recommendations; 10% of effective budget is proposed.
 - Semantic duplicate method and acceptable false positives.
-- Semantic retrieval approach and quality targets for vague multilingual intents.
-- Which candidate advantages and disadvantages are administrator-authored versus derived from metadata and observed outcomes.
-- Minimum supported OS and Agent versions.
-- Administrator review checklist, staffing, and publication SLA.
-- Artifact hosting, licensing, and telemetry retention.
+- Semantic retrieval approach and quality targets for vague multilingual intents (Phase 3; not a launch gate).
+- Minimum supported OS and Agent versions for the published matrix.
+- Administrator review checklist, staffing, and publication SLA (Phase 3).
+- Artifact hosting, licensing, and telemetry retention (Phase 3).
 - Agent protocol for signaling full task completion.
 
 ## 18. Launch gates
 
-- All shipped P0 requirements pass acceptance tests.
-- Every mutation adapter has tested conflict-aware restore.
-- Inspection never executes a scanned third-party MCP.
-- Privacy tests exclude prohibited fields from search and telemetry.
+These are the real Phase 1 gates. They are not “all historical P0 rows.”
+
+- Phase 1 `P0` rows in §8 pass their acceptance scenarios.
+- README Agent Installation Directive exists and is treated as scoped install + minimal CAP surface + read-only inspect authorization.
+- First health report can be produced in the Agent conversation without executing a scanned third-party MCP.
+- First-report advice uses cost and duplication only; no day-one low-frequency label.
+- JSON MCP optimize requires `--apply --yes`, writes timestamped `.cap-backup`, and documents recovery from that file.
+- Launch copy does not claim full one-click Restore across adapters.
+- Transparent local use works: search / add / use, local Skills overlay, implicit add-on-use as Acquisition plus ManagedBinding (not Direct Exposure).
+- Unique high-confidence local hit may skip choose-before-acquire; multiple viable candidates still require a choice.
+- Compare uses existing metadata; no pros/cons authoring engine is required.
+- `cap inject` is plan-only (`mutates: false`).
 - Context values consistently say “estimated.”
-- Core local features work offline.
-- The shipped compatibility matrix is verified and published.
-- Acquired Providers cannot run scripts or gain new permissions without confirmation.
+- Core local features work offline (no public catalog required).
+- The supported Agent scan set (Codex, Claude Code, Cursor) is documented.
+
+Not launch gates: remote public catalog, semantic/vector retrieval, full Restore UI/CLI, anonymous product telemetry, enterprise / Desktop / team.

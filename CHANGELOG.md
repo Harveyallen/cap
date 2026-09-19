@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Docs
+
+- PRD encodes the Grill-settled Phase 1 boundary: P0 and launch gates bind Phase 1 only; every journey and requirement ID has Phase plus Target / Now / Gap. Restore is the JSON optimize `.cap-backup` path; remote catalog, semantic retrieval, full one-click Restore, and anonymous product telemetry are not Phase 1 gates.
+- Root `CONTEXT.md` is the domain glossary (Acquisition, Direct Exposure, CAP-managed, ManagedBinding, Invoked, scoped Restore Point, plan-only Dynamic Injection).
+- README no longer calls full one-click Restore a P0 capability.
+
 ## 0.4.1
 
 Ships **local Agent skill auto-register**, **implicit `cap.add` on first `cap.use`**, and a **reliable DingTalk / CJK search → inject → bind path**. Also installs persistent `cap` / `cap-mcp` launchers after `npx` setup and keeps the Agent-first README. Install with `npx -y @harvey2008/cap@0.4.1 setup` (or `@harvey2008/cap` for current). GitHub `npx -y github:Harveyallen/cap setup` remains a fallback. npm publish / git tag / GitHub Release stay with the coordinator after merge.

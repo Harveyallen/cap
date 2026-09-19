@@ -1,6 +1,6 @@
-# CAP Domain Language
+# CAP
 
-CAP uses intent-first language to separate what a user wants from the software that implements it.
+CAP is the domain of acquiring many Capabilities while exposing few of them in an Agent’s resident context.
 
 ## Capability model
 
@@ -13,73 +13,71 @@ An implementation of one or more Capabilities, such as an MCP server, Skill, CLI
 _Avoid_: Capability
 
 **Skill**:
-An instruction-based Provider whose identity is resident and whose body can be loaded on demand.
+An instruction-based Provider whose identity can be resident and whose body can be loaded on demand.
 _Avoid_: Scale
 
 **Capability Intent**:
 A locally simplified, privacy-safe description of the outcome being searched for.
-_Avoid_: Full task, prompt
+_Avoid_: Full task, prompt, raw query
 
-## Local control
+## Binding and exposure
 
-**Agent-first Onboarding**:
-The first-use flow in which a user pastes CAP's designated installation directive into their current Agent and gets the first health report in the same conversation; pasting the directive is the scoped installation request.
-_Avoid_: Silent install
+These four are not interchangeable. A Provider may be acquired and CAP-managed without Direct Exposure and without having been Invoked.
 
-**Local Inventory**:
-MCP and Skill Providers discovered from supported Agent configurations on the user's computer.
-_Avoid_: Catalog
+**Acquisition**:
+The act of registering a Provider with CAP so it can be used later.
+_Avoid_: Install, Direct Exposure, pin
 
-**Direct Exposure**:
-A Provider definition made resident in an Agent's context without going through CAP.
-_Avoid_: Installed
+**ManagedBinding**:
+The registration that makes a Provider CAP-managed and invocable through the CAP surface without making it resident.
+_Avoid_: Pin, resident config, Direct Exposure
 
 **CAP-managed**:
-A Capability or Provider registered with CAP and available through its stable surface.
-_Avoid_: Installed, enabled
+The state of a Capability or Provider that has a ManagedBinding and is available through the CAP surface.
+_Avoid_: Installed, enabled, Invoked, Direct Exposure
 
-**Acquired Provider**:
-A Provider downloaded or registered for possible use without being permanently exposed to an Agent.
-_Avoid_: Resident Provider, Direct Exposure
+**Direct Exposure**:
+The state of a Provider definition made resident in an Agent’s context. Pinning or resident configuration is Direct Exposure; Acquisition is not.
+_Avoid_: Installed, Acquisition, CAP-managed
+
+**Invoked**:
+The state of a CAP-managed Provider that has been executed for a task.
+_Avoid_: Installed, acquired, used (when that means resident)
 
 **CAP Surface**:
 The small set of stable CAP entry points kept visible while downstream Providers remain on demand.
-_Avoid_: Full catalog
+_Avoid_: Full catalog, Direct Exposure
+
+## Context control
 
 **Context Footprint**:
-CAP's estimate of resident context occupied by Provider definitions and Skill identities.
+CAP’s estimate of resident context occupied by Provider definitions and Skill identities.
 _Avoid_: Exact token usage
 
 **Context Health**:
 An assessment of Context Footprint relative to an effective context budget.
-_Avoid_: Model quality score
+_Avoid_: Model quality score, telemetry
+
+**Value Analysis**:
+An assessment of a Capability’s observed usefulness relative to its Context Footprint.
+_Avoid_: Anonymous telemetry, popularity
 
 **Optimization Plan**:
 A preview of reversible configuration changes that reduce Direct Exposure without removing Providers.
-_Avoid_: Cleanup, uninstall
+_Avoid_: Cleanup, uninstall, Restore Point
+
+**Restore Point**:
+A recoverable copy of the configuration an Optimization Plan changed, scoped to that plan. It is not a return of every Agent’s entire setup.
+_Avoid_: Full restore, one-click restore, backup (as a synonym that hides the scoped meaning)
+
+**Dynamic Injection**:
+A task-specific decision about which Capabilities to load versus defer. The current meaning is a plan only; automatic mutation or eviction is a later meaning of the same term.
+_Avoid_: Auto-prune, restore, optimize apply
 
 **Observation Period**:
 The interval in which CAP records invocation activity before classifying a Provider as low-frequency.
-_Avoid_: Trial period
-
-**Restore Point**:
-A recoverable snapshot of every configuration changed by an applied Optimization Plan.
-_Avoid_: Log
-
-## Remote discovery
-
-**CAP Catalog**:
-The administrator-curated public directory of Capabilities and reviewed Providers.
-_Avoid_: Remote CAP, marketplace
-
-**Curated Provider**:
-A Provider that passed CAP administrator review and may appear in the CAP Catalog.
-_Avoid_: Popular Provider
-
-**Candidate Comparison**:
-A concise, task-specific comparison of eligible Providers, including strengths, limitations, cost, permissions, and fit.
-_Avoid_: Search results list
+_Avoid_: Trial period, telemetry window
 
 **Capability Unlock**:
-A successful task enabled by a Provider absent from the user's Local Inventory.
-_Avoid_: Search hit, download
+A successful task enabled by a Provider that was not already in the user’s local library. Local Unlock uses already-available seed or local Providers; remote Unlock uses a public catalog and is a later-phase meaning.
+_Avoid_: Search hit, download, Direct Exposure
