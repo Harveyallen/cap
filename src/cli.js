@@ -8,6 +8,7 @@ import { useCapability } from './use.js';
 import { planInjection } from './inject.js';
 import { applyOptimization, buildOptimizationPlan, writeOptimizationPlan } from './optimize.js';
 import { excludeProvider, includeProvider, pinProvider, unpinProvider } from './pin.js';
+import { cleanupTrial, tryCapability } from './try.js';
 import { setupCap } from './setup.js';
 import { DEFAULT_WEB_URL, startWebServer } from './web-server.js';
 import { packageVersion } from './paths.js';
@@ -22,6 +23,8 @@ Usage:
   cap inject <task> [--json]
   cap add <capability-id> [--provider <provider-id>] [--server <mcp-name>] [--json]
   cap use <capability-id> [--input <json>] [--json]
+  cap try <capability-id> [--input <json>] [--provider <provider-id>] [--json]
+  cap cleanup <capability-id> [--json]
   cap pin <provider> [--json]
   cap unpin <provider> [--json]
   cap exclude <provider> [--json]
@@ -56,6 +59,10 @@ function activityLine(item) {
   if (item.action === 'search') {
     const pick = item.selected_id ?? item.top_id ?? '-';
     return `${item.at}  search  q=${item.query ?? ''}  hits=${item.hit_count ?? 0}  ${pick}  ${outcome}`;
+  }
+  if (item.action === 'try' || item.action === 'cleanup') {
+    const anon = item.anonymous || item.local ? '  local-anonymous' : '';
+    return `${item.at}  ${item.action}  ${item.capability_id ?? '-'}  ${outcome}${anon}`;
   }
   return `${item.at}  ${item.action}  ${item.capability_id ?? '-'}  ${outcome}`;
 }
@@ -333,6 +340,26 @@ export function injectText(plan) {
   return lines.join('\n');
 }
 
+export function tryText(result) {
+  const lines = [
+    `Tried ${result.capability_id} via ${result.provider_id}`,
+    result.persistent
+      ? 'Provider was already CAP-managed; cleanup keeps the persistent binding.'
+      : 'Temporary ManagedBinding (not Direct Exposure).',
+    `Outcome: ${result.outcome?.status ?? 'unknown'} (local, anonymous; no remote telemetry)`,
+    `Cleanup: ${result.cleanup?.command ?? `cap cleanup ${result.capability_id}`}`
+  ];
+  const body = result.result?.stdout || result.result?.message;
+  if (body) lines.push('', body);
+  if (result.result?.next_steps?.length) lines.push(...result.result.next_steps.map((step) => `  ${step}`));
+  return lines.join('\n');
+}
+
+export function cleanupText(result) {
+  const removed = result.removed?.length ? `Removed: ${result.removed.join(', ')}` : 'No temporary assets to remove.';
+  return [result.message, removed, `Outcomes retained: ${result.outcomes?.length ?? 0}`].join('\n');
+}
+
 export async function main(args, options = {}) {
   const command = args[0] ?? 'help';
   const rest = args.slice(1);
@@ -373,6 +400,19 @@ export async function main(args, options = {}) {
     const input = JSON.parse(flag(rest, '--input') ?? '{}');
     const result = await useCapability(capabilityId, input, options);
     return print(json ? result : (result.stdout || [result.message, ...(result.next_steps ?? [])].filter(Boolean).join('\n') || JSON.stringify(result, null, 2)), json);
+  }
+  if (command === 'try') {
+    const capabilityId = positional(rest)[0];
+    if (!capabilityId) throw new Error('Capability id is required');
+    const input = JSON.parse(flag(rest, '--input') ?? '{}');
+    const result = await tryCapability(capabilityId, input, {...options, provider: flag(rest, '--provider')});
+    return print(json ? result : tryText(result), json);
+  }
+  if (command === 'cleanup') {
+    const capabilityId = positional(rest)[0];
+    if (!capabilityId) throw new Error('Capability id is required');
+    const result = await cleanupTrial(capabilityId, options);
+    return print(json ? result : cleanupText(result), json);
   }
   if (command === 'pin' || command === 'unpin' || command === 'exclude' || command === 'include') {
     const provider = positional(rest)[0];

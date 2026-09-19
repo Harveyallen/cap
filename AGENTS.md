@@ -16,7 +16,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `bin/cap-mcp.js` | MCP stdio entry |
 | `src/cli.js` | Command routing |
 | `src/search.js` | Intent/keyword capability search (seed catalog + local skills); writes privacy-safe search Activity |
-| `src/registry.js` | Catalog + `~/.cap/registry.json` state + local skill index + Activity (search/select/add/use) |
+| `src/registry.js` | Catalog + `~/.cap/registry.json` state + local skill index + Activity (search/select/add/use/try/cleanup) |
 | `src/use.js` | Execute managed providers (git / ripgrep builtins, stdio MCP gateway, or local skill path); first use implicitly `add`s if unmanaged |
 | `src/mcp-bind.js` | Resolve MCP stdio launch from catalog / local `mcpServers` / Registry |
 | `src/mcp-client.js` | Line-delimited JSON-RPC client (`tools/call` for `cap.use`, `tools/list` for on-demand input schema) |
@@ -29,6 +29,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/optimize.js` | Preview / apply MCP consolidation (JSON + dotted-table Codex TOML; keeps `cap-mcp`), index local skills, and post-apply savings / regression validation |
 | `src/codex-toml.js` | Codex `config.toml` MCP parse / format safety / table removal (setup, inspect, bind, optimize) |
 | `src/pin.js` | Pin / unpin Direct Exposure; exclude / include optimize recommendations |
+| `src/try.js` | Temporary try + cleanup (trial ManagedBinding, local anonymous outcome) |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
 | `src/mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection |
 | `src/web-server.js` | Local Discover UI + JSON APIs |
@@ -40,7 +41,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `test/*.test.js` | Node test suite |
 | `.agents/skills/` | Shared agent skills: CAP (`add-capability`, `cap-develop`) plus the full `mattpocock/skills` pack (also scanned by `cap inspect`) |
 
-Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Local skills: `docs/local-skills.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime in `src/profiler.js`, 0.3.0; V4 Dynamic Injection plan in `src/inject.js`, 0.4.0; 0.2.0 was docs-only for V3). MCP gateway + on-demand `input_schema`: `docs/mcp-gateway.md` (0.4.0). Agent first-report copy: `docs/agent-onboarding.md`. `.cap-backup` recovery: `docs/restore-from-backup.md`. OS/Agent scan + optimize-apply matrix: `docs/compatibility.md`. LLM index: `llms.txt`.
+Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Local skills: `docs/local-skills.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime in `src/profiler.js`, 0.3.0; V4 Dynamic Injection plan in `src/inject.js`, 0.4.0; 0.2.0 was docs-only for V3). MCP gateway + on-demand `input_schema`: `docs/mcp-gateway.md` (0.4.0). Temporary try mode: `docs/try-mode.md`. Agent first-report copy: `docs/agent-onboarding.md`. `.cap-backup` recovery: `docs/restore-from-backup.md`. OS/Agent scan + optimize-apply matrix: `docs/compatibility.md`. LLM index: `llms.txt`.
 
 ## Commands
 
@@ -55,6 +56,8 @@ node ./bin/cap.js add git.repository.status
 node ./bin/cap.js use git.repository.status --input '{"path":"."}' --json
 node ./bin/cap.js pin github --json
 node ./bin/cap.js exclude postgres --json
+node ./bin/cap.js try git.repository.status --input '{"path":"."}' --json
+node ./bin/cap.js cleanup git.repository.status --json
 node ./bin/cap.js optimize
 node ./bin/cap-mcp.js   # stdio MCP; optional CAP_MCP_INSPECT=1 / CAP_MCP_INJECT=1
 ```
@@ -74,7 +77,7 @@ Project `.mcp.json` uses a relative `./bin/cap-mcp.js` path. Start the MCP serve
 - `loadCatalog`
 - `loadState`
 
-Registry writes, pin/exclude, optimize apply, MCP/web server starters, Value Analysis (`profiler.js`), and Dynamic Injection (`planInjection` in `inject.js`) stay in their modules. Do not re-export them from the package root.
+Registry writes, pin/exclude, try/cleanup, optimize apply, MCP/web server starters, Value Analysis (`profiler.js`), and Dynamic Injection (`planInjection` in `inject.js`) stay in their modules. Do not re-export them from the package root.
 
 ## Always do
 

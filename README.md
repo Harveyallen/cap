@@ -147,6 +147,8 @@ Capability 描述“能完成什么”，Provider 描述“由谁实现”。同
 | `cap inject <任务>` | 生成最小能力装载计划 | 否，只生成计划 |
 | `cap add <id>` | 将能力与 Provider 加入 CAP（显式启用） | 是，更新 Registry |
 | `cap use <id>` | 调用 CLI、MCP 或按需读取本地 Skill；未托管时先登记 | 是，可能更新 Registry 并执行 |
+| `cap try <id>` | 临时试用（临时 ManagedBinding，不是 Direct Exposure） | 是，更新 Registry 并执行 |
+| `cap cleanup <id>` | 去掉试用绑定，保留本地匿名结果 | 是，只改 Registry |
 | `cap pin <provider>` | 将 Provider 固定为 Direct Exposure | 是，可能写回 JSON MCP |
 | `cap unpin <provider>` | 取消固定，恢复非驻留 CAP-managed | 是，可能迁出 JSON MCP |
 | `cap exclude <provider>` | 从 optimize 建议中排除，不卸载 | 是，只改 Registry |
@@ -169,6 +171,7 @@ cap inject "分析 PostgreSQL 慢查询" --json
 - `cap inject` 只生成 load / defer 计划，不修改 Agent 配置。
 - `cap optimize` 默认只预览；只有 `cap optimize --apply --yes` 才修改支持的 JSON MCP 与 Codex 点分表 TOML，并持久化 Skill 索引。应用成功后会再跑一次 inspect，对比 **projected vs actual** 估算节省；配置损坏或 CAP 入口丢失时失败（不是一键 Restore）。
 - `cap pin` 把 Provider 写成 Direct Exposure；`cap unpin` 再收回到 CAP-managed。`cap exclude` 只从建议里拿掉，不卸载。默认 MCP 入口仍是 search / add / use。
+- `cap try` 临时试用种子 / 本地 Skill / 已托管 Provider，不写 Agent 配置；`cap cleanup` 去掉试用绑定并保留本地匿名结果。远程目录下载试用要等 Phase 3。详见 [try mode](./docs/try-mode.md)。
 - 修改配置前会创建带时间戳的 `*.cap-backup`；从备份恢复见 [runbook](./docs/restore-from-backup.md)。这不是一键 Restore。Registry 文件权限为 `0600`。
 - 不支持的格式（JSON `mcp.servers`、Codex inline-table / `[mcp_servers]` / `[mcp.servers.*]`）会被拒绝并给出手工指引，不会静默改写。详见 [兼容性矩阵](./docs/compatibility.md)。
 - Context footprint 是字符和 Schema 的稳定估算，不是模型 tokenizer 的精确计数。
@@ -180,6 +183,7 @@ cap inject "分析 PostgreSQL 慢查询" --json
 - 公共 Registry 在线同步、语义向量检索和通用 OAuth 尚未实现。
 - 内置 Git 与 ripgrep 能力可直接调用；MCP 能力需要本地 stdio 启动配置或 Registry 绑定。
 - 本地 Skill 可以直接搜索和按需读取，但 CAP 不会自行执行 Skill 中描述的工作流。
+- `cap try` 只覆盖种子 / 本地 Skill / 已托管 Provider；远程目录下载试用尚未实现。
 - 产品当前面向开发者，不包含 Desktop、企业权限和团队治理。
 
 ## 从源码运行

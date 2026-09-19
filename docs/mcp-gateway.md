@@ -12,7 +12,7 @@ Three pieces have to line up. Missing any one is `connection_required` (or a pre
 | Provider → local server name | Catalog `mcp_server` | `dingtalk.mcp` → `dingtalk` |
 | How to spawn stdio JSON-RPC | Binding in `$CAP_HOME/registry.json` `mcp_bindings` | `{command, args, env}` |
 
-`cap add` resolves the launch config (does not spawn) and stores it under `mcp_bindings[provider_id]`. `cap.use` on a capability that is not yet managed runs that same add first (Registry Installed→Enabled), then spawns the bound command with `shell: false`, speaks line-delimited JSON-RPC (same framing as `cap-mcp`), calls **one** mapped tool with `input`, then stops the process. Explicit `cap.add` remains for inspect / enablement workflows. The Agent path after search is fill `input_schema` → `cap.use`; add is not required on every one-shot intent.
+`cap add` resolves the launch config (does not spawn) and stores it under `mcp_bindings[provider_id]`. `cap.use` on a capability that is not yet managed runs that same add first (Registry Installed→Enabled), then spawns the bound command with `shell: false`, speaks line-delimited JSON-RPC (same framing as `cap-mcp`), calls **one** mapped tool with `input`, then stops the process. Explicit `cap.add` remains for inspect / enablement workflows. `cap try` uses the same gateway, stores a **trial** binding, and `cap cleanup` can drop that Registry launch copy without writing Agent configs — see [try-mode.md](./try-mode.md). The Agent path after search is fill `input_schema` → `cap.use`; add is not required on every one-shot intent.
 
 ## On-demand `input_schema`
 

@@ -346,7 +346,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | USE-08 | 1 | P0 | Compare candidates using existing metadata fields (match reason, permissions, trust, maintenance, compatibility, estimated context, setup effort). No separate pros/cons authoring engine. | Catalog and search already expose those fields. | — |
 | USE-09 | 1 | P0 | When multiple viable candidates exist, the user chooses before Acquisition or first use. A unique high-confidence local hit may skip that choice. Implicit `cap.use` register is allowed for that hit. | Implicit add-on-use exists. Unique-hit vs multi-hit copy: [agent-onboarding.md](./agent-onboarding.md) and README. | — |
 | USE-10 | 1 | P0 | Acquisition plus ManagedBinding stay non-resident by default. Only explicit pin / resident config is Direct Exposure. | Implicit add updates Registry, not Agent tool lists. | First-class pin UX is Phase 2 (REC-06). |
-| USE-11 | 2 | — | Temporary try mode that can remove downloaded assets while retaining an anonymous outcome record. | Not shipped. | Later. |
+| USE-11 | 2 | — | Temporary try mode that can remove downloaded assets while retaining an anonymous outcome record. | Local `cap try` / `cap cleanup`: temporary ManagedBinding for seed/local/managed Providers; cleanup drops the trial binding and keeps anonymous local Activity. Remote catalog download waits for Phase 3. | Remote ACQ-* assets. |
 | INJ-01 | 1 | P0 | `cap inject` returns a task-specific load/defer plan and does not mutate configs. | Delivered (`mutates: false`). | — |
 | INJ-02 | later | — | Auto mutate or evict from an injection plan. | Plan-only. | Later Dynamic Injection meaning. |
 | CAT-01 | 3 | — | Search a public catalog anonymously using only simplified Capability Intent. | Seed catalog only. | Remote catalog. |
@@ -367,7 +367,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 
 | ID | Phase | Pri | Target | Now | Gap |
 |---|:---:|:---:|---|---|---|
-| TEL-LCL | 1 | P0 | Local Registry Activity is sufficient for Value Analysis and underused advice. | Activity records search/select/add/use. Value Analysis still scores from `use` only. `frequencyVerdicts` follows Observation Period readiness ([ADR 0003](./adr/0003-observation-period-readiness.md)). | — |
+| TEL-LCL | 1 | P0 | Local Registry Activity is sufficient for Value Analysis and underused advice. | Activity records search/select/add/use plus try/cleanup. Value Analysis still scores from `use` only. `frequencyVerdicts` follows Observation Period readiness ([ADR 0003](./adr/0003-observation-period-readiness.md)). | — |
 | TEL-01 | 3 | — | Record anonymous install, active-use, search, exposure, acquisition, invocation result, and estimated savings events. | No product-wide anonymous contract. | Not a Phase 1 gate. |
 | TEL-02 | 3 | — | Provide an immediate user-visible opt-out. | N/A until remote TEL exists. | Phase 3. |
 | TEL-03 | 3 | — | Never transmit source code, raw task, config, inventory, paths, credentials, or raw errors. | Nothing is transmitted today. | Keep as a hard rule when TEL ships. |
@@ -491,7 +491,7 @@ Panorama only. **Launch gates in §18 bind Phase 1.**
 
 **Phase 1 — Agent-first trustworthy local control (launch):** same-conversation installation and first report; local inventory and Context Health; high-cost/duplicate recommendations; JSON MCP optimize plus timestamped `.cap-backup` and documented recovery; transparent local use (search / add / use, Skills overlay, implicit add-on-use); seed-catalog local Unlock; `cap inject` plan-only; Acquisition versus Direct Exposure versus CAP-managed versus Invoked.
 
-**Phase 2 — observed optimization:** Observation Period readiness, frequency/value advice, resident pinning, remaining adapters, and savings validation. Not a Phase 1 launch gate.
+**Phase 2 — observed optimization:** Observation Period readiness, frequency/value advice, resident pinning, remaining adapters, savings validation, and local try mode (USE-11). Not a Phase 1 launch gate.
 
 **Phase 3 — public Capability Unlock:** semantic retrieval, remote catalog, local intent simplification, admin curation, verifiable metadata, relevance/popularity ranking, remote acquisition gates, revocation, anonymous product telemetry, and full one-click Restore. Not a Phase 1 launch gate.
 
@@ -506,13 +506,13 @@ Do not market remote discovery, anonymous telemetry, or full Restore as generall
 | Recommendations | 2 | High-cost / duplicate always; frequency/value advice after readiness | Inspect recommendations stay cost/duplication. After 14 UTC days + 3 activity days, `profiler.advice` explains cost, duplication, usage, and recency separately ([ADR 0003](./adr/0003-observation-period-readiness.md)). Until ready, `frequencyVerdicts: false` and `underused` is a value signal only. | Pin/exclude UX (#36) |
 | Optimize | 1–2 | JSON + shipped adapters after `--apply --yes`; post-apply savings validation | Preview + guarded JSON and Codex dotted-table apply; Skill index; remaining layouts refused; post-apply re-inspect reports projected vs actual estimates and fails closed on invalid config / broken CAP surface | Other layouts; Restore UI |
 | Restore | 1 | Timestamped `.cap-backup` + documented recovery | Backups are written; [restore-from-backup.md](./restore-from-backup.md); copy refuses one-click Restore | Full Restore UI/CLI across adapters is later, not Phase 1 P0 |
-| Transparent use | 1 | search / add / use + Skills overlay + implicit add-on-use | Delivered | — |
+| Transparent use | 1 | search / add / use + Skills overlay + implicit add-on-use | Delivered. Local try/cleanup is Phase 2 USE-11 (`cap try` / `cap cleanup`). | Remote try is Phase 3 |
 | Compare | 1 | Existing metadata fields | Catalog and search metadata | No separate pros/cons engine (settled) |
 | Local Unlock | 1 | Seed + local Skills | Keyword/intent search; honest misses | Remote catalog is Phase 3 |
 | Dynamic Injection | 1 | Plan-only | `cap inject` (`mutates: false`) | Auto mutate/evict later |
 | Remote catalog | 3 | Public Unlock | Bundled seed only | Service, admin workflow, signing, cache, revocation |
 | Remote acquisition | 3 | Download, integrity, permission gates | Local bindings; honest `connection_required` | Remote install path |
-| Activity | 1 | Local Registry Activity | Search/select/add/use on disk (privacy-safe query; no remote telemetry). `cap inject` ranking does not write search events. | — |
+| Activity | 1 | Local Registry Activity | Search/select/add/use/try/cleanup on disk (privacy-safe query; no remote telemetry). `cap inject` ranking does not write search events. | — |
 | Anonymous telemetry | 3 | Opt-out product telemetry | Not shipped | Not a Phase 1 gate |
 
 ## 17. Open decisions
