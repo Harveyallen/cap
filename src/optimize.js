@@ -31,7 +31,7 @@ export async function buildOptimizationPlan(options = {}) {
     reductionPercent: inspection.summary.estimatedReductionPercent,
     migrations: inspection.recommendations,
     skills: skillPlan(overlayLocalSkills(catalog, skills)),
-    rollback: 'Every changed JSON config is copied to a timestamped .cap-backup file before modification.'
+    rollback: 'Each changed JSON file is copied to <source>.<ISO-stamp>.cap-backup before modification. Recover by copying that backup over the live file (docs/restore-from-backup.md). This is not one-click Restore.'
   };
 }
 

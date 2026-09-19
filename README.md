@@ -64,15 +64,15 @@ CAP 的主要使用场景是在 Agent 里，而不是让用户记住一组 CLI �
 2. 运行 npx -y @harvey2008/cap setup --agent auto。
 3. 如果 setup 输出了更新 PATH 的命令，请执行它。
 4. 运行 cap inspect --json。
-5. 用中文告诉我：当前发现了多少 MCP、Skills 和暴露工具；它们估算占用多少上下文；Context Health 如何；哪些能力重复或值得迁入 CAP。
-6. 如果 Context Pressure 是 high、critical 或 emergency，或者存在大量可回收上下文，请明确建议我使用 CAP 优化，并说明优化前后预计占用、预计节省量、会修改哪些配置，以及修改前会创建备份、后悔时可以复原。先只展示建议和预览命令，不要直接应用优化。
+5. 用中文告诉我：当前发现了多少 MCP、Skills 和暴露工具；它们估算占用多少上下文；Context Health 如何；哪些能力重复或值得迁入 CAP。如果某个扫描来源失败，说明这是部分报告、不是整体失败，并指出失败路径。口头报告不要因为没有可视化页面而中断；若已运行 cap web，附上 http://127.0.0.1:4173，否则可以提一句 cap web 会提供该地址。
+6. 如果 Context Pressure 是 high、critical 或 emergency，或者可回收上下文达到有效预算的 10% 及以上，请明确建议我预览 CAP 优化，并说明：触发原因、优化前后预计占用、预计节省量、会修改哪些 JSON 配置、确认后会写入时间戳 .cap-backup、按文档把备份复制回去即可恢复（不是一键 Restore）。先只展示建议和预览命令，不要直接应用优化。不要根据“尚未使用”说低频或建议移除。
 
 粘贴这段指令已经表示我同意你执行上述安装、CAP 最小入口配置和只读检查，请直接执行，不要再次询问我是否要安装。不要执行 cap optimize --apply --yes，也不要连接或运行扫描到的第三方 MCP。若 Agent 平台自身要求命令执行审批，正常发起该审批。
 ```
 
 Agent 会代你安装 `cap` / `cap-mcp`，备份并配置检测到的 MCP，索引本地 `SKILL.md`，然后把检查结果翻译成人能读懂的报告。你不需要自己分析 JSON，也不需要知道配置文件在哪里。
 
-如果 MCP / Skills 已经严重挤占上下文，Agent 应直接给出行动建议，例如“建议使用 CAP 收拢这些能力，预计可回收 18,000 tokens”。它会同时说明优化会修改什么、备份在哪里，以及如何从备份复原。首次体检只推荐和预览，不会直接应用优化；你确认方案后才会执行。当前版本会为受支持的 JSON 配置创建时间戳 `.cap-backup`；现阶段的可复原范围就是这份备份和文档中的恢复步骤，不是跨 Agent 的一键 Restore。在实现完整一键恢复之前，不能宣称已经支持自动恢复。
+如果 MCP / Skills 已经严重挤占上下文（压力带为 high / critical / emergency，或可回收量达到有效预算的 10%），Agent 应直接给出行动建议，例如“建议预览 CAP 优化，预计可回收 18,000 tokens”。它会同时说明优化会修改什么、备份写成 `<配置文件>.<时间戳>.cap-backup`，以及按 [从备份恢复](./docs/restore-from-backup.md) 把该文件复制回去。首次体检只推荐和预览，不会直接应用优化；你确认方案后才会执行。当前版本会为受支持的 JSON 配置创建时间戳 `.cap-backup`；可复原范围就是这份备份和文档中的复制步骤，不是跨 Agent 的一键 Restore。不要宣称已经支持自动恢复。
 
 首次接入 MCP 后，Agent 可能会提示重启或新开一个会话。安装阶段仍可通过终端执行 `cap inspect`；重启后，Agent 才能直接调用 `cap.search`、`cap.add`、`cap.use` 和已启用的诊断入口。
 
@@ -92,10 +92,10 @@ Agent 会代你安装 `cap` / `cap-mcp`，备份并配置检测到的 MCP，索�
 - 估算的上下文成本
 - 当前是否已经可用，还是需要安装、连接或授权
 
-先让我选择，不要自动执行需要脚本、新权限或外部账号的 Provider。等我选择后，再通过 CAP 添加并使用这个能力。
+如果只有一个高置信的本机命中，可以直接通过 CAP 使用（尚未托管时会先登记到 Registry：这是 Acquisition，不会变成 Direct Exposure）。如果有多个可用候选，先让我选择。不要自动执行需要脚本、新权限或外部账号的 Provider。
 ```
 
-Agent 会把这段模糊意图交给 `cap.search`，只返回少量相关候选。你选择后，Agent 用命中项的 `input_schema` 调用 `cap.use`（尚未托管时会先登记，效果与 `cap.add` 相同）。`cap.add` 仍可用于显式启用。如果命中的是本地 Skill，CAP 可以按需读取它的正文；如果命中的是 MCP，CAP 会尝试绑定已有的 `mcpServers` 配置。
+Agent 会把这段模糊意图交给 `cap.search`，只返回少量相关候选。唯一高置信本机命中可以跳过选择、直接 `cap.use`；多个可用候选仍需你先选。`cap.use` 在尚未托管时会先登记（与 `cap.add` 同一账本），这是 CAP-managed，不是把工具列表写进 Agent。`cap.add` 仍可用于显式启用。如果命中的是本地 Skill，CAP 可以按需读取它的正文；如果命中的是 MCP，CAP 会尝试绑定已有的 `mcpServers` 配置。
 
 如果没有匹配能力、缺少连接或需要额外授权，Agent 应明确说明原因和下一步，而不是假装已经生成 PPT。
 
@@ -119,7 +119,7 @@ cap search "发送钉钉消息"
 cap search "把 PDF 转成 Markdown"
 ```
 
-搜索命中不等于 Provider 已连接。结果中的 `Available`、`CAP Managed`、权限和连接状态会说明下一步。本地 Skill 默认只返回名称、摘要和路径，正文仅在明确请求时加载。
+搜索命中不等于 Provider 已连接，也不等于 Direct Exposure。结果中的 `Available` / `Local skill` 表示尚未 Acquisition；`CAP Managed` 表示已有 ManagedBinding，可通过 `cap.use` 调用。本地 Skill 默认只返回名称、摘要和路径，正文仅在明确请求时加载。
 
 ## 工作方式
 
@@ -164,11 +164,11 @@ cap inject "分析 PostgreSQL 慢查询" --json
 - `cap search` 只读取本地 Skill 的名称和描述，不默认加载正文。
 - `cap inject` 只生成 load / defer 计划，不修改 Agent 配置。
 - `cap optimize` 默认只预览；只有 `cap optimize --apply --yes` 才修改支持的 JSON MCP 配置并持久化 Skill 索引。
-- 修改配置前会创建带时间戳的 `*.cap-backup`；Registry 文件权限为 `0600`。
+- 修改配置前会创建带时间戳的 `*.cap-backup`；从备份恢复见 [runbook](./docs/restore-from-backup.md)。Registry 文件权限为 `0600`。
 - Codex TOML 当前只检查，不由 optimize 自动修改。
 - Context footprint 是字符和 Schema 的稳定估算，不是模型 tokenizer 的精确计数。
 
-扫描范围包括 Claude Code、Cursor、Codex 和共享目录中的用户级/项目级 MCP 配置与 Skills，也包括 Cursor 插件缓存中的 Skills。
+扫描范围以 [OS/Agent 兼容性矩阵](./docs/compatibility.md) 为准：Claude Code、Cursor、Codex 以及共享目录中的用户级/项目级 MCP 与 Skills（含 Cursor 插件缓存中的 Skills）。矩阵标为 unknown 的路径不要当成已支持。
 
 ## 当前边界
 
@@ -196,6 +196,9 @@ node ./bin/cap.js search "查看 Git 仓库状态"
 
 - [产品需求文档](./docs/product-requirements.md)
 - [领域词汇](./CONTEXT.md)
+- [Agent 体检与推荐用语](./docs/agent-onboarding.md)
+- [从 `.cap-backup` 恢复 JSON MCP](./docs/restore-from-backup.md)
+- [OS / Agent 兼容性矩阵](./docs/compatibility.md)
 - [架构与模块边界](./docs/architecture.md)
 - [本地 Agent Skills 的发现与按需读取](./docs/local-skills.md)
 - [Context Health、Value Analysis 与 Dynamic Injection](./docs/context-health.md)

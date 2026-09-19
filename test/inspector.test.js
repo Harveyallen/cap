@@ -122,10 +122,14 @@ test('CLI inspect prints Context Health sections', async (t) => {
   assert.match(text, /健康\s+.*很好/);
   assert.doesNotMatch(text, /^入口  /m);
   assert.doesNotMatch(text, /^漏斗  /m);
-  assert.match(text, /这些 MCP 现在直接暴露/);
+  assert.match(text, /这些 MCP 现在是 Direct Exposure/);
   assert.match(text, /迁到 CAP/);
   assert.match(text, /Claude Code/);
   assert.match(text, /只读本地配置，未连接 MCP/);
+  assert.match(text, /CAP Surface|Direct Exposure/);
+  assert.match(text, /127\.0\.0\.1:4173/);
+  assert.doesNotMatch(text, /一键恢复/);
+  assert.doesNotMatch(text, /建议减负|可考虑卸载/);
   assert.equal(compactTokens(37800), '~37.8k');
   const logs = [];
   const original = console.log;
@@ -144,8 +148,44 @@ test('optimize backs up JSON config and moves providers into CAP state', async (
   const config = JSON.parse(await fs.readFile(path.join(options.userHome, '.claude.json'), 'utf8'));
   assert.deepEqual(config.mcpServers, {});
   await fs.access(result.changed[0].backup);
+  assert.match(result.changed[0].backup, /\.claude\.json\.\d{4}-\d{2}-\d{2}T[\d-]+Z\.cap-backup$/);
+  assert.match(result.plan.rollback, /not one-click Restore/i);
   const state = JSON.parse(await fs.readFile(path.join(options.home, 'registry.json'), 'utf8'));
   assert.deepEqual(state.external_providers.map((item) => item.name).sort(), ['github', 'postgres']);
+});
+
+test('copying .cap-backup over the JSON file restores MCP names for inspect', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const source = path.join(options.userHome, '.claude.json');
+  const before = JSON.parse(await fs.readFile(source, 'utf8'));
+  const applied = await applyOptimization(options);
+  await fs.copyFile(applied.changed[0].backup, source);
+  const restored = JSON.parse(await fs.readFile(source, 'utf8'));
+  assert.deepEqual(Object.keys(restored.mcpServers).sort(), Object.keys(before.mcpServers).sort());
+  const afterRestore = await inspectLocal(options);
+  assert.ok(afterRestore.items.some((item) => item.name === 'github'));
+  assert.ok(afterRestore.items.some((item) => item.name === 'postgres'));
+});
+
+test('inspect copy treats a failed source as a partial report', async (t) => {
+  const options = await fixture();
+  t.after(() => fs.rm(options.root, {recursive: true, force: true}));
+  const broken = path.join(options.userHome, '.cursor', 'mcp.json');
+  await fs.mkdir(path.dirname(broken), {recursive: true});
+  await fs.writeFile(broken, '{not json');
+  const report = await inspectLocal({
+    ...options,
+    jsonConfigs: [
+      [path.join(options.userHome, '.claude.json'), 'Claude Code'],
+      [broken, 'Cursor']
+    ]
+  });
+  assert.equal(report.summary.warnings, 1);
+  assert.ok(report.items.some((item) => item.kind === 'warning' && item.source === broken));
+  const text = inspectText(report, options);
+  assert.match(text, /部分扫描失败（其余来源已完整报告，不是整体失败）/);
+  assert.match(text, /github/);
 });
 
 test('CAP mcp surface uses known tools and is not a migrate target', async (t) => {
@@ -218,7 +258,7 @@ test('CLI inspect treats project CAP as the surface', async (t) => {
   });
   const text = inspectText(report, options);
   assert.match(text, /没有需要迁走的第三方 MCP/);
-  assert.doesNotMatch(text, /这些 MCP 现在直接暴露/);
+  assert.doesNotMatch(text, /这些 MCP 现在是 Direct Exposure/);
   assert.doesNotMatch(text, /^入口  /m);
   assert.doesNotMatch(text, /^漏斗  /m);
   assert.match(text, /3 个工具/);

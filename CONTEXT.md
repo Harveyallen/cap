@@ -75,11 +75,15 @@ A task-specific decision about which Capabilities to load versus defer. The curr
 _Avoid_: Auto-prune, restore, optimize apply
 
 **Activity**:
-The local Registry record of CAP-mediated search, selection, invocation, outcome, and time.
-_Avoid_: Telemetry, log
+The local Registry record of CAP-mediated search, selection, invocation, outcome, and time. It is not anonymous product telemetry, and it does not by itself create a frequency verdict.
+_Avoid_: Telemetry, log, Observation Period
+
+**Local Inventory**:
+MCP and Skill Providers discovered from supported Agent configuration files on the machine. Inspect `funnel.installed` counts distinct scanned names. That count is not Acquisition and not the seed catalog.
+_Avoid_: Catalog, CAP-managed, Direct Exposure
 
 **Observation Period**:
-The interval in which CAP records invocation activity before classifying a Provider as low-frequency.
+The interval in which CAP records invocation activity before classifying a Provider as low-frequency. Phase 1 defers that classification until Phase 2; unused Value Analysis signals are not a low-frequency verdict.
 _Avoid_: Trial period, telemetry window
 
 **Capability Unlock**:

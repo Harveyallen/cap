@@ -5,8 +5,12 @@
 ## Docs
 
 - [README](README.md): human quick start and product overview
-- [CONTEXT.md](CONTEXT.md): domain glossary (Acquisition, Direct Exposure, CAP-managed, ManagedBinding, Invoked)
+- [CONTEXT.md](CONTEXT.md): domain glossary (Acquisition, Direct Exposure, CAP-managed, ManagedBinding, Invoked, Local Inventory, Activity, Observation Period)
 - [Product requirements](docs/product-requirements.md): Phase 1 P0 / launch gates with Target / Now / Gap
+- [Agent onboarding copy](docs/agent-onboarding.md): first-report URL, partial scan, 10% savings, scoped Restore, USE-09, inspect label map
+- [Restore from `.cap-backup`](docs/restore-from-backup.md): JSON MCP optimize recovery (not one-click Restore)
+- [OS/Agent compatibility](docs/compatibility.md): inspect paths with tested / expected / unknown
+- [ADRs](docs/adr/): material-savings 10%; defer frequency labels until Phase 2
 - [AGENTS.md](AGENTS.md): instructions for coding agents
 - [Architecture](docs/architecture.md): module boundaries and data flow
 - [Local skills](docs/local-skills.md): discover SKILL.md, overlay catalog, search/add/use without dumping bodies
