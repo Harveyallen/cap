@@ -12,7 +12,7 @@ Verification notes:
 
 Home in the tables is `os.homedir()`: `~` on macOS/Linux, `%USERPROFILE%` on Windows. CAP does **not** scan `%APPDATA%`, `%LOCALAPPDATA%`, or ProgramData.
 
-Optimize `--apply` mutates **JSON MCP** rows only. Codex TOML is inspect-only.
+Optimize `--apply` mutates **JSON MCP** (`mcpServers` / `mcp_servers`) and **dotted-table Codex TOML** (`[mcp_servers.name]`). Other inspected layouts are refused, not rewritten.
 
 ## MCP configs CAP inspects
 
@@ -23,9 +23,23 @@ Optimize `--apply` mutates **JSON MCP** rows only. Codex TOML is inspect-only.
 | `~/.cursor/mcp.json` | Cursor | tested | expected | expected | JSON yes |
 | `<project>/.cursor/mcp.json` | Cursor | expected | expected | expected | JSON yes |
 | `<project>/.mcp.json` | Project (Claude Code and Cursor both read) | tested | expected | expected | JSON yes |
-| `~/.codex/config.toml` | Codex | tested (missing file = empty; setup writes TOML) | expected | expected | **no** (inspect-only) |
+| `~/.codex/config.toml` | Codex | tested (inspect + dotted-table apply) | expected | expected | **yes** (`[mcp_servers.name]` only) |
 
 `~/.claude/settings.json` is in the default inspect list (`defaultMcpJsonConfigs`) but tests usually override `jsonConfigs` with `~/.claude.json` only, so that row is **expected**, not **tested**.
+
+## Optimize apply formats (this slice)
+
+| Adapter | Mutate | Backup | Notes |
+|---|---|---|---|
+| JSON `mcpServers` / `mcp_servers` | yes | `<source>.<stamp>.cap-backup` | Existing path. Keeps `cap-mcp`. Validates after write. |
+| Codex `[mcp_servers.name]` (+ `[mcp_servers.name.env]`) | yes | same sibling pattern | OPT-06 slice. Non-MCP tables (model, projects, …) are kept. Nested `.env` is removed with the parent server. |
+| JSON `mcp.servers` | no | — | Inspected; apply refuses with guidance. |
+| Codex `mcp_servers = { … }` inline table | no | — | Refused. |
+| Codex `[mcp_servers]` table form | no | — | Refused. |
+| Codex `[mcp.servers.*]` | no | — | Refused. |
+| Skills / SKILL.md | no | — | Indexed only. |
+
+Recovery: [restore-from-backup.md](./restore-from-backup.md). There is no one-click Restore CLI/UI.
 
 ## Skills CAP inspects
 
@@ -62,11 +76,11 @@ Safe:
 
 - CAP inspects Codex, Claude Code, and Cursor MCP/Skill files under the home and project paths above on macOS, Windows, and Linux.
 - JSON MCP optimize apply is the Claude/Cursor/project JSON rows, with `.cap-backup`.
-- Codex TOML is read for inventory; it is not auto-migrated.
+- Codex optimize apply is **only** dotted-table `[mcp_servers.name]` (and that server’s nested `.env` table), with the same `.cap-backup` pattern.
 
 Not safe:
 
 - “Every Agent on every OS.”
 - “Windows APPDATA configs.”
-- “Codex optimize apply.”
+- “Every Codex TOML layout” — inline-table, `[mcp_servers]`, and `[mcp.servers.*]` are refused.
 - “Verified on macOS and Windows CI” — this repo’s tests run on Linux; other OS cells are **expected**.

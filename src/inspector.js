@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { defaultMcpJsonConfigs } from './mcp-bind.js';
+import { listCodexMcpServers } from './codex-toml.js';
 import { loadCatalog, loadState } from './registry.js';
 import { defaultSkillRoots, walkSkillFiles } from './skills.js';
 import { exposedCapTools, isCapMcpConfig } from './mcp-tools.js';
@@ -170,17 +171,14 @@ async function inspectCodexToml(file, options = {}) {
     if (error.code === 'ENOENT') return [];
     throw error;
   }
-  const headers = [...text.matchAll(/^\[mcp_servers\.(["']?)([^\]"']+)\1\]\s*$/gm)];
-  return headers.map((match, index) => {
-    const end = headers[index + 1]?.index ?? text.length;
-    const block = text.slice(match.index, end);
-    const fingerprint = block.replace(/\s+/g, ' ');
-    if (isCapMcpConfig({}, block)) {
-      return capSurfaceItem({name: match[2], file, agent: 'Codex', options, fingerprint});
+  return listCodexMcpServers(text).map((server) => {
+    const fingerprint = server.block.replace(/\s+/g, ' ');
+    if (isCapMcpConfig(server.config, server.block)) {
+      return capSurfaceItem({name: server.name, file, agent: 'Codex', options, fingerprint});
     }
-    const cost = itemCost({schemaTokens: estimateTokens(block), estimated: true});
+    const cost = itemCost({schemaTokens: estimateTokens(server.block), estimated: true});
     return decorate({
-      kind: 'mcp', agent: 'Codex', name: match[2], source: file, direct: true,
+      kind: 'mcp', agent: 'Codex', name: server.name, source: file, direct: true,
       toolCount: 1, toolCountEstimated: true, contextTokens: cost.totalTokens, cost,
       fingerprint
     });

@@ -7,6 +7,9 @@ import { inspectLocal } from './inspector.js';
 import { isCapMcpConfig } from './mcp-tools.js';
 import { packageRoot, packageVersion } from './paths.js';
 import { registerLocalSkills } from './registry.js';
+import { codexWriteSafety } from './codex-toml.js';
+
+export {codexWriteSafety};
 
 const AGENTS = new Set(['auto', 'claude', 'codex']);
 const SERVER_NAME = 'cap';
@@ -231,22 +234,6 @@ async function resolveClaudeConfigPath(options) {
 
 function skillPath(root, name = 'cap-context-health') {
   return path.join(root, name, 'SKILL.md');
-}
-
-export function codexWriteSafety(text) {
-  if (text == null) return {ok: true};
-  if (text.includes('\0')) return {ok: false, reason: 'binary'};
-  if (/^\s*\{/.test(text)) return {ok: false, reason: 'json'};
-  if (/^mcp_servers\s*=/m.test(text)) return {ok: false, reason: 'inline-table'};
-  if (/^\[mcp\.servers/m.test(text)) return {ok: false, reason: 'mcp.servers'};
-  if (/^\[mcp_servers\]\s*$/m.test(text)) return {ok: false, reason: 'table-form'};
-  const header = text.match(/^\[mcp_servers\.(["']?)cap\1\]\s*$/m);
-  if (!header) return {ok: true};
-  const next = text.slice(header.index + header[0].length);
-  const end = next.search(/^\[/m);
-  const block = text.slice(header.index, header.index + header[0].length + (end < 0 ? next.length : end));
-  if (isCapMcpConfig({}, block)) return {ok: true, already: true};
-  return {ok: false, reason: 'existing-cap'};
 }
 
 async function writeClaudeMcp(options, launch, writes, skipped) {

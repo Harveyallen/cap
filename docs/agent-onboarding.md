@@ -46,8 +46,9 @@ Fill from inspect JSON. Do **not** say 一键恢复, one-click Restore, or “sa
 建议预览 CAP 优化（先 cap optimize，不要 cap optimize --apply --yes）。
 触发：<pressure band 和/或 可回收 tokens 已达有效预算的 10%>。
 当前常驻约 <contextTokens> tok / 有效预算 <effectiveBudget>；迁到 CAP 后预计可回收约 <reclaimableTokens> tok（估算）。
-会改动的 JSON MCP：<sources>；cap-mcp 会保留。Codex TOML 不会自动改。
-确认应用后，每个被改的 JSON 会先写成 <source>.<stamp>.cap-backup。
+会改动的支持项：JSON mcpServers / mcp_servers，以及 Codex 点分表 [mcp_servers.name]；cap-mcp 会保留。
+不支持的格式（JSON mcp.servers、Codex inline-table / [mcp_servers] / [mcp.servers.*]）会拒绝并给出手工指引，不会静默改写。
+确认应用后，每个被改的文件会先写成 <source>.<stamp>.cap-backup。
 后悔时按 docs/restore-from-backup.md 把备份复制回去，再 cap inspect 核对。这不是一键 Restore。
 ```
 

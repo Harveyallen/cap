@@ -8,6 +8,12 @@
 - **Frequency/value advice after readiness.** `profiler.advice` explains cost, duplication, usage, and recency separately. Combined action is `prefer_on_demand` — never unused→remove. Value scores still come from `use` only. Registry persists `observation_started_at` so the 100-row Activity cap cannot drift the start.
 - Human `cap inspect` and Web Health show observation progress; frequency labels appear only when ready.
 
+### Optimize (OPT-06)
+
+- **`cap optimize --apply --yes` now migrates dotted-table Codex TOML** (`[mcp_servers.name]` and that server’s `[mcp_servers.name.env]`) with the same dual confirm, timestamped `.cap-backup`, and post-write validation as JSON MCP. Non-MCP tables (model, projects, …) and `cap-mcp` stay. Nested `.env` is not treated as its own server.
+- **Unsupported layouts are refused**, not rewritten: JSON `mcp.servers`, Codex `mcp_servers = { … }`, `[mcp_servers]`, `[mcp.servers.*]`, and tables missing a quoted `command`. Preview/apply JSON lists `plan.adapters`, per-migration `apply` / `reason` / `guidance`, and `refused[]`.
+- Recovery is the same sibling `.cap-backup` copy; still not one-click Restore. See [compatibility.md](./docs/compatibility.md) and [restore-from-backup.md](./docs/restore-from-backup.md).
+
 ### Registry Activity
 
 - **`cap search` / MCP `cap.search` write a local search event.** Registry Activity now records the privacy-safe query (Capability Intent), hit count, hit ids, top id, timestamp, and `selected_id` when the result set has exactly one capability. Subsequent `add` / `use` of a recent hit also writes a `select` event. Add/use invocation and outcome records are unchanged.
