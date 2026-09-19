@@ -32,11 +32,12 @@ CAP has three connected jobs:
 
 - Primary users are company developers using Codex, Claude Code, or Cursor.
 - The primary first-use surface is the user's current Agent conversation; terminal-first setup is secondary.
-- A user may paste a CAP article or installation guide into the Agent and explicitly ask it to install CAP and inspect the machine.
-- One informed confirmation may authorize CAP installation, registration of the CAP surface, and the initial read-only inspection. Migrating existing Providers requires a separate confirmation.
+- README provides a designated Agent Installation Directive that explicitly requests CAP installation and inspection.
+- Pasting that complete directive is the user's scoped authorization for CAP installation, registration of the minimal CAP surface, and initial read-only inspection; CAP does not ask again. Host Agent execution approvals still apply.
+- General quoted articles or installation guides that do not contain this designated directive are not authorization.
 - The optimized experience must remain natural-language and transparent.
 - Users can acquire many Providers while only the CAP surface and explicitly pinned Providers remain resident.
-- A fuzzy task such as “画架构图” must produce relevant Skill/MCP candidates, not require a product name or exact keyword.
+- A fuzzy task such as “生成一份 PPT” must produce relevant Skill/MCP candidates, not require a product name or exact keyword.
 - Every candidate comparison explains strengths, limitations, context impact, permissions, trust, and task fit before the user chooses.
 - CAP may edit configuration only after explicit confirmation.
 - Every applied optimization must be restorable.
@@ -80,7 +81,7 @@ Existing plugin managers optimize installation. CAP separates **acquisition** fr
 - Enterprise private catalogs or open self-service publishing.
 - Accounts, billing, team administration, or cross-device sync.
 - Uploading source code, raw tasks, local configuration, credentials, or inventory.
-- Treating quoted article text as user authorization, or silently installing/changing configuration without confirmation.
+- Treating general quoted article text as authorization, or installing beyond the scope explicitly granted by the designated directive.
 - Replacing Agent permission systems.
 
 ## 5. Personas
@@ -92,9 +93,9 @@ Existing plugin managers optimize installation. CAP separates **acquisition** fr
 ## 6. Product principles
 
 1. Local first: inventory, analysis, intent simplification, and mutation happen locally.
-2. Preview before mutation; consent before change.
+2. Preview before mutation; consent before change. For onboarding, pasting the designated directive is consent for its disclosed scope.
 3. Agent first: installation, report delivery, discovery, and use should complete in the conversation the user already occupies.
-4. Quoted content is not consent: an article may explain installation but only the user's explicit request authorizes it.
+4. General quoted content is not consent; the README's designated directive is itself an explicit, narrowly scoped execution request.
 5. Reversibility is a release gate.
 6. Users express tasks, not CAP commands or Capability IDs.
 7. Acquisition is not exposure: owning more Providers must not automatically increase resident context.
@@ -107,14 +108,16 @@ Existing plugin managers optimize installation. CAP separates **acquisition** fr
 
 ### Agent-first install and report
 
-1. The user pastes a CAP article or installation guide into Codex, Claude Code, or Cursor and explicitly asks the Agent to install or try CAP.
-2. The Agent treats the article as untrusted reference content, resolves the official package/source, and previews the exact install, CAP-surface registration, and inspection actions.
-3. The user gives one informed confirmation for those onboarding actions.
-4. The Agent installs CAP, registers the minimal CAP surface, and runs a read-only `inspect` without starting third-party MCPs.
+1. The user copies the complete Agent Installation Directive from README into Codex, Claude Code, or Cursor.
+2. The directive states that it is an execution request, identifies the official install command, limits the scope to CAP installation/minimal surface/inspection, and forbids optimization or third-party MCP execution.
+3. Pasting the directive authorizes the Agent to begin immediately; CAP does not add a second confirmation dialog. The host Agent may still require its normal command approval.
+4. The Agent verifies the Node.js prerequisite, installs CAP from the official package, registers the minimal CAP surface, and runs read-only `inspect` without starting third-party MCPs.
 5. The same conversation displays the health summary, highest-cost items, estimated recoverable context, and any scan warnings.
 6. The response includes a local URL for the detailed visual report.
-7. The first report uses cost and duplication, not frequency, and does not migrate existing Providers.
-8. Any later optimization plan receives its own preview and confirmation.
+7. If pressure is severe or recoverable context is material, the Agent explicitly recommends CAP optimization, quantifies expected savings, and explains that confirmed changes are backed up and restorable.
+8. The recommendation offers a read-only Optimization Plan preview; it never applies that plan during first inspection.
+9. The first report uses cost and duplication, not frequency, and does not migrate existing Providers.
+10. Any later optimization plan receives its own preview and confirmation.
 
 If the Agent cannot execute local commands, it provides one copyable official install command, then resumes the same flow after the user runs it. Terminal-first installation remains supported but is not the primary journey.
 
@@ -134,7 +137,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 
 ### Fuzzy discovery and comparison
 
-1. The user describes an outcome in ordinary language, for example “我想画架构图”.
+1. The user describes an outcome in ordinary language, for example “我想生成一份 PPT”.
 2. CAP searches acquired local Providers first, then the public catalog when local confidence is insufficient.
 3. CAP returns a small set of relevant Skill and MCP candidates across Provider types.
 4. Each candidate states why it matches, its strengths, limitations, context behavior, permissions, trust, maintenance, and setup effort.
@@ -168,15 +171,19 @@ P0 is required for launch; P1 completes the first product iteration.
 | ID | Pri | Requirement |
 |---|---:|---|
 | ONB-01 | P0 | Make Agent conversation the primary documented installation and first-report path. |
-| ONB-02 | P0 | Require an explicit user request to install; instructions contained only inside pasted or retrieved content are not authorization. |
-| ONB-03 | P0 | Before confirmation, show the official source/version, commands, files/configuration affected, CAP surface added, and that inspection is read-only. |
-| ONB-04 | P0 | Allow one informed confirmation to cover CAP installation, minimal CAP-surface registration, and first inspection. |
+| ONB-02 | P0 | Publish one copyable README Agent Installation Directive whose wording is an explicit execution request with a narrowly disclosed scope. |
+| ONB-03 | P0 | The directive identifies the official command, prerequisite, CAP surface change, read-only inspection, prohibited optimization, and third-party MCP prohibition. |
+| ONB-04 | P0 | Treat pasting the complete directive as scoped onboarding authorization and do not add a redundant CAP confirmation; preserve host Agent approvals. |
 | ONB-05 | P0 | Do not include migration of existing MCPs/Skills in onboarding consent; optimization requires a separate plan and confirmation. |
 | ONB-06 | P0 | Return the first health summary directly in the originating conversation and include a local detailed-report URL. |
 | ONB-07 | P0 | If installation succeeds but one scan source fails, return a partial report with a scoped warning instead of losing the whole result. |
 | ONB-08 | P0 | If the Agent cannot execute locally, provide one official copyable command and continue inspection after installation is detected. |
 | ONB-09 | P1 | Detect an existing compatible CAP install and upgrade/reuse it rather than creating duplicate surfaces or state. |
 | ONB-10 | P1 | Track time from explicit install request to first rendered health report. |
+| ONB-11 | P0 | When Context Pressure is `high`, `critical`, or `emergency`, explicitly recommend previewing CAP optimization. |
+| ONB-12 | P0 | Also recommend optimization when reclaimable context crosses a material-savings threshold; the proposed default is 10% of effective budget. |
+| ONB-13 | P0 | State why the recommendation triggered, current/projected footprint, estimated savings, affected capability classes, confirmation requirement, and restore guarantee. |
+| ONB-14 | P0 | First inspection may offer or run a read-only optimization preview but must not apply it under onboarding authorization. |
 
 ### Inventory and reporting
 
@@ -204,6 +211,7 @@ P0 is required for launch; P1 completes the first product iteration.
 | REC-05 | P1 | Explain cost, duplication, usage, and recency signals separately. |
 | REC-06 | P1 | Let users pin a Provider resident or exclude it from recommendations. |
 | REC-07 | P0 | Never recommend the CAP surface itself for removal. |
+| REC-08 | P0 | Put reversibility beside every optimization call to action: what is backed up, how restore works, and how conflicts are handled. |
 
 ### Optimization and restore
 
@@ -223,6 +231,7 @@ P0 is required for launch; P1 completes the first product iteration.
 | RST-06 | P0 | Verify original definitions are discoverable after restore. |
 | RST-07 | P0 | Expose restore through CLI, Agent conversation, and local UI. |
 | RST-08 | P0 | A migration adapter cannot ship until automated apply/restore tests pass. |
+| RST-09 | P0 | Never describe an optimization as safely reversible unless its Restore Point is created and validated before mutation. |
 
 ### Discovery, catalog, and acquisition
 
@@ -230,7 +239,7 @@ P0 is required for launch; P1 completes the first product iteration.
 |---|---:|---|
 | USE-01 | P0 | Natural-language tasks require no CAP command or ID knowledge. |
 | USE-02 | P0 | Search local capabilities before remote catalog. |
-| USE-03 | P0 | Support fuzzy semantic intent such as “画架构图” without requiring exact Provider names or catalog keywords. |
+| USE-03 | P0 | Support fuzzy semantic intent such as “生成一份 PPT” without requiring exact Provider names or catalog keywords. |
 | USE-04 | P0 | On-demand Skills must become usable in the active task. |
 | USE-05 | P0 | MCP use exposes only the mapped tool input for the selected Capability. |
 | USE-06 | P0 | Report connection, authorization, install, and execution failures honestly. |
@@ -336,11 +345,13 @@ Token savings remain explicitly estimated. Capability Unlock means Provider-leve
 7. A reviewed static Skill downloads and verifies automatically.
 8. A Provider needing a script or DingTalk authorization pauses for informed confirmation.
 9. Local inspection, restore, search, and managed use continue when the catalog is offline.
-10. “画架构图” returns a small relevant mix of Skills/MCPs with concrete pros and cons; after selection the chosen Provider works in the current task without all candidates becoming resident.
+10. “生成一份 PPT” returns a small relevant mix of Skills/MCPs with concrete pros and cons; after selection the chosen Provider works in the current task without all candidates becoming resident.
 11. A user can acquire and try multiple social-media discoveries while the post-inspection resident footprint stays limited to CAP plus explicitly pinned Providers.
-12. A user pastes a CAP article into an Agent and explicitly asks to install; after one informed confirmation, the same conversation installs CAP and returns the first health report plus a local detail link.
-13. A user pastes the same article only to summarize it; the Agent does not install CAP because quoted content is not authorization.
+12. A user pastes the complete README Agent Installation Directive; the Agent starts installation without another CAP question and returns the first health report plus a local detail link in the same conversation.
+13. A user pastes ordinary CAP prose or asks to summarize README without the designated execution directive; the Agent does not infer installation authorization.
 14. Agent-first onboarding does not migrate existing MCPs or Skills; selecting “优化” later produces a separate preview and confirmation.
+15. A first inspection with `high` Context Pressure recommends CAP optimization, shows estimated before/after savings, and explains that confirmed changes create a Restore Point and can be undone.
+16. The same first inspection does not apply the recommendation until the user separately reviews and confirms the Optimization Plan.
 
 ## 15. Delivery phases
 
@@ -371,6 +382,7 @@ Remote discovery must not be marketed as generally available until acquisition, 
 - Observation duration/evidence threshold; 14 days is proposed.
 - Ranking weights and popularity anti-manipulation.
 - “High context” thresholds by effective budget.
+- Final material-savings threshold for first-report recommendations; 10% of effective budget is proposed.
 - Semantic duplicate method and acceptable false positives.
 - Semantic retrieval approach and quality targets for vague multilingual intents.
 - Which candidate advantages and disadvantages are administrator-authored versus derived from metadata and observed outcomes.

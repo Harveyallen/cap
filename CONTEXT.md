@@ -23,7 +23,7 @@ _Avoid_: Full task, prompt
 ## Local control
 
 **Agent-first Onboarding**:
-The first-use flow in which a user asks their current Agent to install CAP, receives one installation confirmation, and gets the first health report in the same conversation.
+The first-use flow in which a user pastes CAP's designated installation directive into their current Agent and gets the first health report in the same conversation; pasting the directive is the scoped installation request.
 _Avoid_: Silent install
 
 **Local Inventory**:
