@@ -95,7 +95,7 @@ Agent 会代你安装 `cap` / `cap-mcp`，备份并配置检测到的 MCP，索�
 先让我选择，不要自动执行需要脚本、新权限或外部账号的 Provider。等我选择后，再通过 CAP 添加并使用这个能力。
 ```
 
-Agent 会把这段模糊意图交给 `cap.search`，只返回少量相关候选。你选择后，Agent 再调用 `cap.add` 和 `cap.use`。如果命中的是本地 Skill，CAP 可以按需读取它的正文；如果命中的是 MCP，CAP 会尝试绑定已有的 `mcpServers` 配置。
+Agent 会把这段模糊意图交给 `cap.search`，只返回少量相关候选。你选择后，Agent 用命中项的 `input_schema` 调用 `cap.use`（尚未托管时会先登记，效果与 `cap.add` 相同）。`cap.add` 仍可用于显式启用。如果命中的是本地 Skill，CAP 可以按需读取它的正文；如果命中的是 MCP，CAP 会尝试绑定已有的 `mcpServers` 配置。
 
 如果没有匹配能力、缺少连接或需要额外授权，Agent 应明确说明原因和下一步，而不是假装已经生成 PPT。
 
@@ -127,13 +127,12 @@ cap search "把 PDF 转成 Markdown"
 用户任务
    │
    ▼
-cap.search ── 找到 Capability 与候选 Provider
+cap.search ── 找到 Capability 与候选 Provider（含 input_schema）
    │
    ▼
-cap.add ───── 登记能力并绑定本地 Provider
+cap.use ───── 未托管时先登记（与 cap.add 相同账本），再执行
    │
-   ▼
-cap.use ───── 通过统一输入调用 CLI、MCP 或本地 Skill
+   └─ cap.add 仍可用于显式启用 / inspect
 ```
 
 Capability 描述“能完成什么”，Provider 描述“由谁实现”。同一个 Capability 可以有多个 Provider。CAP 不会把下游 Provider 的完整 Tool Schema 或 Skill 正文重新暴露给 Agent，只会按需返回当前能力的输入和内容。
@@ -146,8 +145,8 @@ Capability 描述“能完成什么”，Provider 描述“由谁实现”。同
 | `cap inspect` | 检查 MCP、Skills 和上下文占用 | 否，只读扫描 |
 | `cap search <任务>` | 搜索种子 Capability 与本地 Skills | 否 |
 | `cap inject <任务>` | 生成最小能力装载计划 | 否，只生成计划 |
-| `cap add <id>` | 将能力与 Provider 加入 CAP | 是，更新 Registry |
-| `cap use <id>` | 调用 CLI、MCP 或按需读取本地 Skill | 会执行对应 Provider |
+| `cap add <id>` | 将能力与 Provider 加入 CAP（显式启用） | 是，更新 Registry |
+| `cap use <id>` | 调用 CLI、MCP 或按需读取本地 Skill；未托管时先登记 | 是，可能更新 Registry 并执行 |
 | `cap optimize` | 预览 MCP 收拢与 Skill 索引计划 | 否，默认仅预览 |
 | `cap web` | 启动本地搜索与健康页面 | 否 |
 

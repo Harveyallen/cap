@@ -24,6 +24,8 @@ test('intent-first search ranks DingTalk send first', async (t) => {
   t.after(() => fs.rm(home, {recursive: true, force: true}));
   const results = await searchCapabilities('发送钉钉消息', isolated(home));
   assert.equal(results[0].capability_id, 'dingtalk.im.message.send');
+  assert.equal(results[0].installed, false);
+  assert.equal(results[0].use_registers, true);
   assert.equal(results[0].schema_source, 'catalog');
   assert.equal(results[0].input_schema.type, 'object');
   assert.equal(results[0].input_schema.properties.msgKey.type, 'string');
@@ -78,6 +80,7 @@ test('add persists managed capability and affects search', async (t) => {
   const [result] = await searchCapabilities('check git status', isolated(home));
   assert.equal(result.capability_id, 'git.repository.status');
   assert.equal(result.installed, true);
+  assert.equal(result.use_registers, undefined);
   assert.equal(result.providers[0].status, 'CAP Managed');
   const state = await loadState(isolated(home));
   assert.equal(state.activity[0].action, 'add');

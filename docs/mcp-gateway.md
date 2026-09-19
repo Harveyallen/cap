@@ -12,7 +12,7 @@ Three pieces have to line up. Missing any one is `connection_required` (or a pre
 | Provider → local server name | Catalog `mcp_server` | `dingtalk.mcp` → `dingtalk` |
 | How to spawn stdio JSON-RPC | Binding in `$CAP_HOME/registry.json` `mcp_bindings` | `{command, args, env}` |
 
-`cap add` resolves the launch config (does not spawn) and stores it under `mcp_bindings[provider_id]`. `cap.use` spawns that command with `shell: false`, speaks line-delimited JSON-RPC (same framing as `cap-mcp`), calls **one** mapped tool with `input`, then stops the process.
+`cap add` resolves the launch config (does not spawn) and stores it under `mcp_bindings[provider_id]`. `cap.use` on a capability that is not yet managed runs that same add first (Registry Installed→Enabled), then spawns the bound command with `shell: false`, speaks line-delimited JSON-RPC (same framing as `cap-mcp`), calls **one** mapped tool with `input`, then stops the process. Explicit `cap.add` remains for inspect / enablement workflows. The Agent path after search is fill `input_schema` → `cap.use`; add is not required on every one-shot intent.
 
 ## On-demand `input_schema`
 
@@ -48,8 +48,8 @@ Real DingTalk OAuth is out of scope. Plug-in path:
 
 1. Install a stdio DingTalk MCP locally. Put it in Claude / Cursor / Codex / project MCP config. CAP auto-binds keys **`dingtalk`**, **`dingtalk-mcp`**, **`dingding`**, **`钉钉`** (and compact variants). If your key is unrelated, pass `--server <that-key>`. Credentials stay in that server’s `env`.
 2. Confirm the downstream tool name. Seed mapping is `dingtalk.im.message.send` → `send_message`. If your server uses another method, change catalog `mcp_tool` (or add a Capability that matches).
-3. `cap add dingtalk.im.message.send` (optionally after `cap optimize --apply --yes` so the Agent no longer lists DingTalk tools).
-4. Agent calls `cap.use` with `capability_id` + `input`. Cap starts the DingTalk MCP behind the scenes and returns the tool result.
+3. Agent calls `cap.use` with `capability_id` + `input` (implicit add). Or `cap add dingtalk.im.message.send` first for explicit enablement. Optionally run `cap optimize --apply --yes` so the Agent no longer lists DingTalk tools.
+4. Cap starts the DingTalk MCP behind the scenes and returns the tool result.
 
 Remaining manual step: CAP does not install or authenticate the DingTalk MCP. You still place a **stdio** server in a scanned config (or pass `--server`) with credentials in that server’s `env`. Search / add / use stay the Agent surface — DingTalk’s tools are not dumped into context.
 

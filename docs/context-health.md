@@ -112,7 +112,7 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
    种子 catalog 里未入选的能力进入 `defer`（本任务不注入）。对照 `comparison.savedVsCatalog`（全量 `context_cost` − 装载 `context_cost`）。若本地 inspect 扫到 Direct MCP，再给 `savedVsResident`（常驻 inspect 估算 − CAP 入口）。装载能力走 `cap.use`，不把 Provider schema 加进常驻分子。单位不同，全部 `estimated`。
 
 3. **只出计划**  
-   `mutates: false`。不改 Agent 配置、不连接第三方 MCP、不自动 `add`。下一步仍是 `cap add` / `cap use`。MCP 工具 `cap.inject` 需 `CAP_MCP_INJECT=1`（或 `exposeInject`），**不**加入默认三工具表面。
+   `mutates: false`。不改 Agent 配置、不连接第三方 MCP、不自动 `add`。下一步是 `cap.use`（未托管会先登记）或显式 `cap add`。MCP 工具 `cap.inject` 需 `CAP_MCP_INJECT=1`（或 `exposeInject`），**不**加入默认三工具表面。
 
 仓库 `.agents/skills` 的 Matt Pocock pack 是开发 CAP 的 dogfood，不是终端用户表面，V4 不修剪它。
 

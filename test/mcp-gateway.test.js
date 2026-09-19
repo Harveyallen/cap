@@ -40,6 +40,36 @@ function mockLaunch(extraEnv) {
   };
 }
 
+test('use without prior add registers MCP then executes', async (t) => {
+  const options = await isolated(t);
+  const before = await loadState(options);
+  assert.equal(before.managed_capabilities.includes('dingtalk.im.message.send'), false);
+  const result = await useCapability('dingtalk.im.message.send', {id: 'user-1', msgKey: 'sampleText', msgParam: {content: 'hello'}}, {
+    ...options,
+    launch: mockLaunch({CAP_MOCK_MCP_TOOL: 'send_message'})
+  });
+  assert.equal(result.status, 'completed');
+  assert.equal(result.mcp_tool, 'send_message');
+  assert.equal(result.result.ok, true);
+  const state = await loadState(options);
+  assert.ok(state.managed_capabilities.includes('dingtalk.im.message.send'));
+  assert.ok(state.managed_providers.includes('dingtalk.mcp'));
+  assert.equal(state.mcp_bindings['dingtalk.mcp'].command, process.execPath);
+  assert.ok(state.activity.some((row) => row.action === 'add' && row.capability_id === 'dingtalk.im.message.send'));
+  assert.equal(state.activity[0].action, 'use');
+});
+
+test('use without add still records missing_launch after implicit register', async (t) => {
+  const options = await isolated(t);
+  const result = await useCapability('dingtalk.im.message.send', {text: 'nope'}, options);
+  assert.equal(result.status, 'connection_required');
+  assert.equal(result.reason, 'missing_launch');
+  assert.ok(Array.isArray(result.next_steps));
+  const state = await loadState(options);
+  assert.ok(state.managed_capabilities.includes('dingtalk.im.message.send'));
+  assert.ok(state.managed_providers.includes('dingtalk.mcp'));
+});
+
 test('mock MCP tool is callable via cap.use after add', async (t) => {
   const options = await isolated(t);
   const added = await addCapability('dingtalk.im.message.send', undefined, {

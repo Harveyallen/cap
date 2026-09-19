@@ -42,7 +42,7 @@ cap use skill.<slug> --input '{"include_body":true}' --json
 
 `<slug>` comes from the skill folder or frontmatter name (for example `skill.system-blueprint`). Do not add a one-off catalog row for a single diagram skill.
 
-Local skills are usable after search without a prior `add` (they are already on disk). `include_body: true` is the on-demand body; default `use` omits it. Seed catalog Skill providers that are not a local `SKILL.md` (for example `pdf.skill`) stay `connection_required`.
+Local skills are usable after search without a prior `add` (they are already on disk). First `use` also registers them in the Registry ledger (same as `cap.add`). `include_body: true` is the on-demand body; default `use` omits it. Seed catalog Skill providers that are not a local `SKILL.md` (for example `pdf.skill`) stay `connection_required`.
 
 Capability ids are `skill.<folder-or-name-slug>`. Duplicate names collapse to the first scan hit.
 

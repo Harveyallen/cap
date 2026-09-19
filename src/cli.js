@@ -189,7 +189,7 @@ export function inspectText(report, options = {}) {
     });
   } else if (capSurface) {
     lines.push('  没有需要迁走的第三方 MCP。');
-    lines.push('  还没有托管能力的话：cap search <任务>，再 cap add。');
+    lines.push('  还没有托管能力的话：cap search <任务>，再 cap use（会自动登记）。');
   } else {
     lines.push('  还没有 CAP 入口。先 cap add，或 cap optimize 预览迁移。');
   }
