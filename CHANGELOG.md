@@ -2,11 +2,9 @@
 
 ## Unreleased
 
-### Agent path
-
-- **`cap.use` implicitly adds.** Calling `use` on a catalog or local-skill capability that is not yet in the Registry registers it first (same ledger as `cap.add`: Installed→Enabled for inspect / inject / stats), then executes. Already-managed capabilities skip the add. Explicit `cap.add` stays available for intentional enablement. Search hits that are not installed include `use_registers: true`. Default Agent tools stay search / add / use.
-
 ## 0.4.1
+
+Ships **local Agent skill auto-register**, **implicit `cap.add` on first `cap.use`**, and a **reliable DingTalk / CJK search → inject → bind path**. Also installs persistent `cap` / `cap-mcp` launchers after `npx` setup and keeps the Agent-first README. Install with `npx -y @harvey2008/cap@0.4.1 setup` (or `@harvey2008/cap` for current). GitHub `npx -y github:Harveyallen/cap setup` remains a fallback. npm publish / git tag / GitHub Release stay with the coordinator after merge.
 
 ### Setup / CLI installation
 
@@ -21,11 +19,16 @@
 - **`cap setup` and `cap optimize --apply --yes` index discovered skills** into Registry `local_skills`. Optimize preview lists `plan.skills`. Skill files are not moved or rewritten. Default Agent surface stays search / add / use.
 - See [docs/local-skills.md](./docs/local-skills.md).
 
-### Agent path (DingTalk / CJK)
+### Agent path
 
+- **`cap.use` implicitly adds.** Calling `use` on a catalog or local-skill capability that is not yet in the Registry registers it first (same ledger as `cap.add`: Installed→Enabled for inspect / inject / stats), then executes. Already-managed capabilities skip the add. Explicit `cap.add` stays available for intentional enablement. Search hits that are not installed include `use_registers: true`. Default Agent tools stay search / add / use.
 - **`cap search` matches natural CJK send phrasing.** Catalog needles (keywords / intents) that appear inside the query are scored, so `帮我发钉钉消息` / `发钉钉消息` rank `dingtalk.im.message.send` the same way `发送钉钉消息` already did. Seed intents/keywords add those aliases. Latin matching is unchanged; short tokens like `im` / `pr` are not reverse-matched.
 - **`cap inject` follows search.** DingTalk-send intents now get a non-empty `load` for that capability. Still plan-only (`mutates: false`); default MCP surface stays search/add/use.
 - **Missing MCP launch is actionable.** `cap add` / `cap use` attach `next_steps`, `tried_aliases`, and `found_servers` (names only) when `binding.bound` is false / `reason: missing_launch`. Auto-bind accepts compact aliases (`dingtalk-mcp`, `dingding`, `钉钉`) and scans Cursor `~/.cursor/mcp.json` / project `.cursor/mcp.json` in addition to Claude / project `.mcp.json`. Remaining manual step: install a stdio DingTalk MCP and put credentials in that server’s `env` — see [docs/mcp-gateway.md](./docs/mcp-gateway.md).
+
+### Version surface
+
+- Package version is `0.4.1`. CLI help/banner and MCP `initialize` `serverInfo.version` still read `package.json`.
 
 ## 0.4.0
 
