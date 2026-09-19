@@ -184,7 +184,8 @@ test('web pin and exclude APIs update inspect Health', async (t) => {
   assert.equal(report.recommendations.length, 0);
   const html = await (await fetch(`http://127.0.0.1:${port}/`)).text();
   assert.match(html, /data-act=/);
-  assert.match(html, /\/api\/pin/);
+  assert.match(html, /\/api\/'\+b\.dataset\.act/);
+  assert.match(html, /Pin = Direct Exposure/);
 });
 
 test('default MCP surface does not gain pin or exclude tools', async (t) => {
