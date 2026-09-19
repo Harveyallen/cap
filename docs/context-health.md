@@ -167,6 +167,10 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
     "tracked": 0,
     "used": 0,
     "unusedManaged": 0,
+    "useAttempts": 0,
+    "searchEvents": 0,
+    "selectEvents": 0,
+    "frequencyVerdicts": false,
     "ranked": [],
     "underused": []
   }
