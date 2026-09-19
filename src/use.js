@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {callMcpTool} from './mcp-client.js';
 import {describeBinding, listMcpLaunchCandidates, missingLaunchHint, missingLaunchMessage, resolveMcpBinding, storeBinding} from './mcp-bind.js';
-import {addCapability, loadEffectiveCatalog, loadState, saveState} from './registry.js';
+import {addCapability, loadEffectiveCatalog, loadState, maybeRecordSelect, pushActivity, saveState} from './registry.js';
 import {parseSkillMarkdown} from './skills.js';
 
 function run(executable, args, options = {}) {
@@ -26,8 +26,8 @@ function run(executable, args, options = {}) {
 }
 
 async function record(state, row, options) {
-  state.activity.unshift({at: new Date().toISOString(), ...row});
-  state.activity = state.activity.slice(0, 100);
+  maybeRecordSelect(state, row.capability_id);
+  pushActivity(state, row);
   await saveState(state, options);
 }
 

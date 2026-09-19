@@ -21,14 +21,14 @@ CAP Core ── Search ── Catalog (data/catalog.json + local SKILL.md overla
 - **Capability**: stable intent-oriented id (`git.repository.status`), not an MCP server.
 - **Provider**: implementation (CLI / MCP / Skill) that declares which capabilities it covers.
 - **Managed**: Capability/Provider recorded in the CAP Registry after `add`, or after the first `use` of an unmanaged catalog / local-skill capability (implicit add).
-- **Activity**: recent add/use outcomes for later CapabilityBench work.
+- **Activity**: local search / select / add / use outcomes (query, hit ids, invocation result, time) for later observation. No remote telemetry.
 
 ## Module responsibilities
 
 | Module | Owns | Must not |
 |--------|------|----------|
-| `search.js` | Hybrid keyword/intent scoring over seed + local skills | Persist state |
-| `registry.js` | Catalog load + registry R/W + add + skill index | Execute providers |
+| `search.js` | Hybrid keyword/intent scoring over seed + local skills; appends privacy-safe search Activity via registry | Persist ranking or catalog; mutate Agent configs |
+| `registry.js` | Catalog load + registry R/W + add + skill index + Activity | Execute providers |
 | `skills.js` | Walk Agent skill dirs, parse SKILL.md, map to catalog overlay | Mutate Agent configs |
 | `use.js` | Execute managed builtins or gateway one MCP tool | Discover/search, dump downstream schemas |
 | `mcp-bind.js` | Resolve stdio launch from catalog / local mcpServers / Registry | Spawn or connect |
@@ -47,9 +47,9 @@ CAP Core ── Search ── Catalog (data/catalog.json + local SKILL.md overla
 ## Data contracts
 
 - Seed catalog: `data/catalog.json` validated by `data/catalog.schema.json` (required fields, enums, id patterns, minItems, no extra properties) on `loadCatalog` and in tests. `loadEffectiveCatalog` overlays local `SKILL.md` files (summaries + path only). See [local-skills.md](./local-skills.md).
-- Registry default path: `$CAP_HOME/registry.json` or `~/.cap/registry.json`.
+- Registry default path: `$CAP_HOME/registry.json` or `~/.cap/registry.json`. Activity rows are local only (`search` / `select` / `add` / `use`); search stores a sanitized query plus hit ids, never skill bodies or raw config.
 - Context footprint: character/4 estimate, not a vendor tokenizer.
-- Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Skill `contextTokens` are name+description only. `funnel.installed` is local scan names, not catalog size. `funnel.configured` aliases `injected` (config scan, not live session). `cap-mcp` is the CAP surface (`status: cap`), priced from known entry schemas, excluded from Move → CAP. `effectiveBudget <= 0` → pressure `unknown`. `cost.value` / `valuePerCost` are filled by V3 Value Analysis (`src/profiler.js`, 0.3.0 runtime) from Registry activity; remain `null` when there is no signal. 0.2.0 documented V3 only. Product rules: [context-health.md](./context-health.md).
+- Inspect report (additive): `budget`, `pressure`, `funnel`, per-item `cost` / `status`. Skill `contextTokens` are name+description only. `funnel.installed` is local scan names, not catalog size. `funnel.configured` aliases `injected` (config scan, not live session). `cap-mcp` is the CAP surface (`status: cap`), priced from known entry schemas, excluded from Move → CAP. `effectiveBudget <= 0` → pressure `unknown`. `cost.value` / `valuePerCost` are filled by V3 Value Analysis (`src/profiler.js`, 0.3.0 runtime) from Registry `use` activity; remain `null` when there is no signal. Search/select events do not create frequency verdicts. 0.2.0 documented V3 only. Product rules: [context-health.md](./context-health.md).
 - Injection plan (V4, 0.4.0): `planInjection(task)` returns `load` / `defer` / `keepResident` / `comparison`. Ranking reuses `searchCapabilities` with a relative score floor so weak substring hits are not loaded. `mutates: false` — plan only. `savedVsCatalog` uses seed `context_cost`. `savedVsResident` uses inspect estimates (after = CAP surface only; task caps go through `cap.use`). Default MCP surface stays 3 tools; `cap.inject` is opt-in (`CAP_MCP_INJECT=1`).
 - MCP gateway (0.4.0): Capability `mcp_tool` + Provider `mcp_server` (optional catalog `command`/`args`). `cap add` stores a stdio launch in Registry `mcp_bindings`; `cap.use` on an unmanaged capability calls `addCapability` first (same ledger), then spawns that MCP and calls the mapped tool. `cap.search` / `cap.add` attach `input_schema` + `schema_source` (`mcp` from a brief `tools/list` when a launch exists, else `catalog`). Unmanaged search hits may set `use_registers: true`. Inspect still does not connect. Binding details: [mcp-gateway.md](./mcp-gateway.md). Search scores CJK catalog needles inside the query so phrasing like `帮我发钉钉消息` ranks the mapped capability. Local `SKILL.md` files are overlaid the same way (see [local-skills.md](./local-skills.md)). Missing launch returns structured `next_steps` (plan only; default Agent surface stays search/add/use).
 - Budget env: `CAP_NOMINAL_WINDOW`, `CAP_HARNESS_SOFT_LIMIT`, `CAP_RESERVE_TOKENS`, `CAP_EFFECTIVE_BUDGET`.

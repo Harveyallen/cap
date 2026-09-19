@@ -91,7 +91,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 0.2.0 只把 V3 写在文档里；**0.3.0 交付运行时**（内部模块 `src/profiler.js`），挂在 `cap inspect` / `--json` / Web Health 的 `profiler` 上（JSON 字段名保持兼容）。
 
 1. **Usage from Activity**  
-   从 Registry Activity 按 `capability_id` 聚合 `use`（成功次数、失败 / `connection_required`、最近尝试、UTC 日会话）。`funnel.used` 仍是成功 use 的去重能力数；`funnel.useAttempts` 是全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`。
+   从 Registry Activity 按 `capability_id` 聚合 `use`（成功次数、失败 / `connection_required`、最近尝试、UTC 日会话）。`search` / `select` 会写入 Registry，但不计入 value、`useAttempts` 或低频标签。`profiler.frequencyVerdicts` 保持 `false`，直到 Observation Period 就绪。`funnel.used` 仍是成功 use 的去重能力数；`funnel.useAttempts` 是全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`。
 
 2. **Value / Cost**  
    有信号时填写 `cost.value`（0–100，由成功 use + 会话日解释）与 `cost.valuePerCost`（`value / catalog context_cost`）；无信号时仍为 `null`。不要把这当成当前会话的实测注入量。

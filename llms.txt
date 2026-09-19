@@ -17,9 +17,9 @@
 
 ## Entry points
 
-- CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `inject` / `add` / `use` / `optimize` / `web`)
+- CLI: `bin/cap.js` → `src/cli.js` (`setup` / `inspect` / `search` / `inject` / `add` / `use` / `optimize` / `activity` / `web`)
 - MCP gateway: `src/mcp-bind.js` (launch resolve) + `src/mcp-client.js` (stdio JSON-RPC); `cap.use` calls one mapped tool and implicitly `add`s if the capability is not yet managed. Search/add attach on-demand `input_schema` (`src/input-schema.js`: live `tools/list` when bound, else catalog). Agent `tools/list` stays `cap.search` / `cap.add` / `cap.use`.
-- Value Analysis: `src/profiler.js` (V3 value/cost from activity; internally the profiler module)
+- Value Analysis: `src/profiler.js` (V3 value/cost from `use` activity only; search/select are recorded but do not create frequency verdicts)
 - Dynamic Injection: `src/inject.js` (V4 task → load/defer plan; CLI `cap inject`; MCP `cap.inject` via `CAP_MCP_INJECT=1`)
 - MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect` / `cap.inject`)
 - Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`

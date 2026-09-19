@@ -15,15 +15,15 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `bin/cap.js` | CLI entry |
 | `bin/cap-mcp.js` | MCP stdio entry |
 | `src/cli.js` | Command routing |
-| `src/search.js` | Intent/keyword capability search (seed catalog + local skills) |
-| `src/registry.js` | Catalog + `~/.cap/registry.json` state + local skill index |
+| `src/search.js` | Intent/keyword capability search (seed catalog + local skills); writes privacy-safe search Activity |
+| `src/registry.js` | Catalog + `~/.cap/registry.json` state + local skill index + Activity (search/select/add/use) |
 | `src/use.js` | Execute managed providers (git / ripgrep builtins, stdio MCP gateway, or local skill path); first use implicitly `add`s if unmanaged |
 | `src/mcp-bind.js` | Resolve MCP stdio launch from catalog / local `mcpServers` / Registry |
 | `src/mcp-client.js` | Line-delimited JSON-RPC client (`tools/call` for `cap.use`, `tools/list` for on-demand input schema) |
 | `src/input-schema.js` | On-demand JSON Schema for `cap.use` input (live MCP `tools/list` or catalog) |
 | `src/skills.js` | Discover local `SKILL.md` files and map them to catalog overlay entries |
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
-| `src/profiler.js` | V3 Value Analysis (internally: profiler module; activity → value / valuePerCost / underused) |
+| `src/profiler.js` | V3 Value Analysis (internally: profiler module; `use` activity → value / valuePerCost / underused; no day-one frequency verdicts) |
 | `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
 | `src/setup.js` | `cap setup`: install persistent CLI launchers, write CAP MCP + Context Health Skill, then inspect |
 | `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) and index local skills |

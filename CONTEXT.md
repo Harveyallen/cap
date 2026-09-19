@@ -74,6 +74,10 @@ _Avoid_: Full restore, one-click restore, backup (as a synonym that hides the sc
 A task-specific decision about which Capabilities to load versus defer. The current meaning is a plan only; automatic mutation or eviction is a later meaning of the same term.
 _Avoid_: Auto-prune, restore, optimize apply
 
+**Activity**:
+The local Registry record of CAP-mediated search, selection, invocation, outcome, and time.
+_Avoid_: Telemetry, log
+
 **Observation Period**:
 The interval in which CAP records invocation activity before classifying a Provider as low-frequency.
 _Avoid_: Trial period, telemetry window

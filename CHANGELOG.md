@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Registry Activity
+
+- **`cap search` / MCP `cap.search` write a local search event.** Registry Activity now records the privacy-safe query (Capability Intent), hit count, hit ids, top id, timestamp, and `selected_id` when the result set has exactly one capability. Subsequent `add` / `use` of a recent hit also writes a `select` event. Add/use invocation and outcome records are unchanged.
+- **Queries are sanitized before they hit disk.** Paths, emails, URLs, and secret-like tokens are redacted. Skill bodies, raw Agent config, and Provider env values are not stored.
+- **`cap inject` ranking does not write search Activity.** That path reuses search scoring for a plan-only recommendation and is not a search→selection journey.
+- **Value Analysis still scores from `use` only.** Search/select events do not create value or low-frequency labels. Inspect / Web Health state `frequencyVerdicts: false` until an Observation Period policy exists (REC-03).
+- `cap activity` prints search rows as `search  q=…  hits=N  <id>`.
+
 ### Docs
 
 - PRD encodes the Grill-settled Phase 1 boundary: P0 and launch gates bind Phase 1 only; every journey and requirement ID has Phase plus Target / Now / Gap. Restore is the JSON optimize `.cap-backup` path; remote catalog, semantic retrieval, full one-click Restore, and anonymous product telemetry are not Phase 1 gates.
