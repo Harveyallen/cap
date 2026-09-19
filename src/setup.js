@@ -24,8 +24,12 @@ description: 查看 Agent 上下文占用、Context Pressure、漏斗和可回�
 
 用中文汇报：
 - Pressure（压力带 / health / 占用百分比）
-- Funnel（installed → enabled → injected → used）
+- Funnel 别名：installed = Local Inventory；injected/configured = Direct Exposure；used = Invoked
+- 清单角色：Direct Exposure / CAP-managed / CAP Surface
 - 可回收 token（\`reclaimableTokens\`）
+- 可视化报告可选：\`cap web\` → http://127.0.0.1:4173。未启动 web 时不要阻塞口头报告。
+- 压力为 high/critical/emergency，或可回收量 ≥ 有效预算的 10%，才建议预览 \`cap optimize\`。说明会写入 \`.cap-backup\`，按文档复制回去恢复，不要说一键 Restore。
+- 不要把 unused / 价值信号说成低频或建议移除。某个扫描来源失败时说明这是部分报告，不是整体失败。
 
 之后用户问「上下文占用 / MCP 是否过多」时，优先调用 \`cap.inspect\` 或运行 \`cap inspect\`，不要凭空估计。
 `;

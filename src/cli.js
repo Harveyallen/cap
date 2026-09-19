@@ -8,7 +8,7 @@ import { useCapability } from './use.js';
 import { planInjection } from './inject.js';
 import { applyOptimization, buildOptimizationPlan, writeOptimizationPlan } from './optimize.js';
 import { setupCap } from './setup.js';
-import { startWebServer } from './web-server.js';
+import { DEFAULT_WEB_URL, startWebServer } from './web-server.js';
 import { packageVersion } from './paths.js';
 
 const help = `CAP ${packageVersion()} — Capability & Context Control Plane
@@ -102,10 +102,10 @@ function bandPhrase(band) {
 }
 
 function roleLabel(item) {
-  if (item.status === 'cap' || item.capSurface) return 'CAP 入口（search / add / use）';
-  if (item.status === 'managed' || item.direct === false) return '已托管（走 cap.use）';
-  if (item.status === 'estimated' || item.toolCountEstimated) return '直接暴露（工具数是估算）';
-  return '直接暴露';
+  if (item.status === 'cap' || item.capSurface) return 'CAP Surface';
+  if (item.status === 'managed' || item.direct === false) return 'CAP-managed';
+  if (item.status === 'estimated' || item.toolCountEstimated) return 'Direct Exposure（工具数是估算）';
+  return 'Direct Exposure';
 }
 
 function kindMark(item) {
@@ -139,8 +139,8 @@ export function inspectText(report, options = {}) {
 
   const warnings = report.items.filter((item) => item.kind === 'warning');
   if (warnings.length) {
-    lines.push(rule, '警告');
-    for (const item of warnings) lines.push(`  ● ${item.message}  ${rel(item.source)}`);
+    lines.push(rule, '部分扫描失败（其余来源已完整报告，不是整体失败）');
+    for (const item of warnings) lines.push(`  ● ${rel(item.source)}  ${item.message}`);
   }
 
   if (report.duplicates.length) {
@@ -175,7 +175,7 @@ export function inspectText(report, options = {}) {
     lines.push(rule, '价值分析');
     lines.push(`  Registry 跟踪 ${profiler.tracked} 个能力 · 用过 ${profiler.used} 个 · 未使用 ${profiler.unusedManaged} 个 · ${profiler.useAttempts} 次 use`);
     if (profiler.frequencyVerdicts === false) {
-      lines.push('  频率结论：未就绪（搜索/选择已记录，不据不完整数据标低频）');
+      lines.push('  频率结论：未就绪（搜索/选择已记录，Observation Period 未完成）');
     }
     if (profiler.ranked.length) {
       lines.push('  性价比排行（value / context_cost）：');
@@ -184,7 +184,7 @@ export function inspectText(report, options = {}) {
       });
     }
     if (profiler.underused.length) {
-      lines.push('  建议减负（高成本或未使用，可考虑卸载 / 勿常驻注入）：');
+      lines.push('  价值信号（Observation Period 未完成，不是移除建议）：');
       profiler.underused.slice(0, 5).forEach((item) => {
         const signal = item.successes ? `value ${item.value} · vpc ${item.valuePerCost}` : '未使用';
         lines.push(`  ● ${item.capability_id}  ${signal} · ~${item.contextCost} tok`);
@@ -194,7 +194,7 @@ export function inspectText(report, options = {}) {
 
   lines.push(rule, '建议');
   if (report.recommendations.length) {
-    lines.push('  这些 MCP 现在直接暴露给 Agent。迁到 CAP 后可少占上下文：');
+    lines.push('  这些 MCP 现在是 Direct Exposure。迁到 CAP 后可少占上下文：');
     report.recommendations.forEach((item, index) => {
       lines.push(`  ${index + 1}. ${item.provider}  约可回收 ${compactTokens(item.estimatedTokensSaved)}`);
       lines.push(`     ${rel(item.source)}`);
@@ -207,7 +207,7 @@ export function inspectText(report, options = {}) {
   }
 
   if (!inventory.length && !warnings.length) lines.push(rule, '  未发现本地 MCP / Skills 配置。');
-  lines.push(rule, paint(2, '下一步  cap inject <任务>  ·  cap search <任务>  ·  cap optimize（仅预览）'));
+  lines.push(rule, paint(2, `下一步  cap inject <任务>  ·  cap search <任务>  ·  cap optimize（仅预览）  ·  可视化报告 cap web → ${DEFAULT_WEB_URL}（未启动也不阻塞）`));
   return lines.join('\n');
 }
 
@@ -343,7 +343,8 @@ export async function main(args, options = {}) {
     const plan = result.plan ?? result;
     const skillCount = plan.skills?.discovered ?? result.skills?.registered?.length ?? 0;
     const skillLine = skillCount ? `\nLocal skills: ${skillCount} indexed for cap search / add / use` : '';
-    return print(json ? result : `Before: ${plan.before.directTools} direct tools\nAfter: ${plan.after.directTools} CAP entry tools\nEstimated reduction: ${plan.reductionPercent}%${skillLine}${output ? `\nPlan: ${output}` : ''}${result.message ? `\n${result.message}` : '\nPreview only. Use --apply --yes to migrate supported JSON configs and index local skills.'}`, json);
+    const rollback = plan.rollback ? `\n${plan.rollback}` : '';
+    return print(json ? result : `Before: ${plan.before.directTools} direct tools\nAfter: ${plan.after.directTools} CAP entry tools\nEstimated reduction: ${plan.reductionPercent}%${skillLine}${output ? `\nPlan: ${output}` : ''}${result.message ? `\n${result.message}` : '\nPreview only. Use --apply --yes to migrate supported JSON configs and index local skills.'}${rollback}`, json);
   }
   if (command === 'activity') {
     const state = await loadState(options);

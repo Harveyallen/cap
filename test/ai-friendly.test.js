@@ -165,7 +165,24 @@ test('project .mcp.json is CAP surface not a migrate target', async () => {
 });
 
 test('agent orientation docs exist', async () => {
-  for (const relative of ['AGENTS.md', 'CLAUDE.md', 'llms.txt', 'docs/architecture.md', 'docs/context-health.md', 'docs/mcp-gateway.md', 'docs/local-skills.md', '.mcp.json', '.cursor/rules/cap.mdc']) {
+  for (const relative of [
+    'AGENTS.md',
+    'CLAUDE.md',
+    'llms.txt',
+    'CONTEXT.md',
+    'docs/architecture.md',
+    'docs/context-health.md',
+    'docs/mcp-gateway.md',
+    'docs/local-skills.md',
+    'docs/product-requirements.md',
+    'docs/agent-onboarding.md',
+    'docs/restore-from-backup.md',
+    'docs/compatibility.md',
+    'docs/adr/0001-material-savings-threshold.md',
+    'docs/adr/0002-observation-period-phase1.md',
+    '.mcp.json',
+    '.cursor/rules/cap.mdc'
+  ]) {
     await fs.access(path.join(root, relative));
   }
 });

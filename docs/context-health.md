@@ -60,12 +60,12 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 1. **Nominal vs Effective 分母**  
    不要只用 1M 当健康基线。先看 harness 软上限，再减去输出/推理预留。
 
-2. **漏斗：Installed → Enabled → Configured → Used**  
-   安装了不等于在用。Inspect **只扫配置 / Skills 文件**，不连接 MCP，也不测量当前会话是否真的加载了这些项。V2 能确定的映射：
-   - `installed`：本地扫描到的 MCP / Skill **名称去重**（本地 inventory）。**不含**种子 Catalog 里从未扫到的 Provider
+2. **漏斗：Local Inventory → configured → Direct Exposure → Invoked**  
+   安装了不等于在用，也不等于 Direct Exposure。Inspect **只扫配置 / Skills 文件**，不连接 MCP，也不测量当前会话是否真的加载了这些项。V2 能确定的映射（JSON 键名保持兼容，含义见 [CONTEXT.md](../CONTEXT.md)）：
+   - `installed`：本地扫描到的 MCP / Skill **名称去重**（Local Inventory）。**不含**种子 Catalog 里从未扫到的 Provider。**不是** Acquisition。
    - `enabled`：出现在 Agent 配置里的 MCP + Skills（配置条目数，重复项分别计数）
-   - `injected` / `configured`：`direct=true`（配置里会暴露给 Agent 的项；`configured` 是同一数字的诚实别名）
-   - `used`：来自 Registry activity 的成功 `use` 去重数；`useAttempts` 为全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`
+   - `injected` / `configured`：`direct=true` 的条数 = **Direct Exposure** 计数（`configured` 是同一数字的诚实别名）
+   - `used`：**Invoked** — Registry activity 里成功 `use` 的去重能力数；`useAttempts` 为全部 use 次数；仅当从未有过 use 尝试时 `usedUnknown: true`
    - `notes`：说明以上是 config scan
 
 3. **每条 Capability 的 Context Cost**  
@@ -82,7 +82,7 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 |------|------|------|
 | V1 | Token 可视化 | 已有：`contextTokens`、reduction % |
 | V2 | Context Health | 0.2.0：budget / pressure / funnel / 更完整清单 |
-| V3 | Value Analysis / 价值分析 | **0.3.0 运行时**：activity → value / valuePerCost、会话日引用、建议减负列表（0.2.0 仅文档；内部模块 `profiler.js`） |
+| V3 | Value Analysis / 价值分析 | **0.3.0 运行时**：activity → value / valuePerCost、会话日引用、价值信号列表（0.2.0 仅文档；内部模块 `profiler.js`） |
 | V4 | Dynamic Injection | **0.4.0 运行时**：按任务给出最小装载计划，而非常驻全量 catalog / Direct MCP |
 | V5 | Context Control Plane | 策略、SLO、自动 eviction / 压缩建议 |
 
@@ -96,8 +96,8 @@ Token 估算沿用 CAP 的可解释规则：`characters / 4`，**不是**某一�
 2. **Value / Cost**  
    有信号时填写 `cost.value`（0–100，由成功 use + 会话日解释）与 `cost.valuePerCost`（`value / catalog context_cost`）；无信号时仍为 `null`。不要把这当成当前会话的实测注入量。
 
-3. **性价比排行 + 建议减负**  
-   `profiler.ranked` 按 value-per-cost 排序（人体：性价比排行）；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力（人体：建议减负），供人类决定是否卸载或交给 V4 Dynamic Injection（`cap inject <任务>`）。CAP surface（`cap-mcp`）不是候选。
+3. **性价比排行 + 价值信号**  
+   `profiler.ranked` 按 value-per-cost 排序（人体：性价比排行）；`profiler.underused` 列出已托管但零成功 use、或高成本低性价比的能力（人体：价值信号）。**Phase 1 不会把它们标成低频，也不会据此建议移除 / 卸载**（[ADR 0002](./adr/0002-observation-period-phase1.md)）。CAP surface（`cap-mcp`）不是候选。
 
 输入仍是本地 Activity + inspect 估算，不连接第三方 MCP。
 
@@ -179,9 +179,9 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
 
 `summary` 增加 `warnings`、`managed`、`reclaimableTokens`、`capSurface`。`reclaimableTokens` 是把 **非 CAP** Direct MCP 迁到 CAP 后可回收的毛估，**不含** `cap-mcp` 自身。识别规则是启动命令/参数指向 `cap-mcp` / `cap-mcp.js`，不是服务器名叫 `cap`。对 CAP surface：用已知入口工具 schema 估价（默认 3；`CAP_MCP_INSPECT=1` 加 inspect，`CAP_MCP_INJECT=1` 加 inject），`status: "cap"`，`toolCountEstimated: false`。第三方 MCP 仍不连接，工具数继续是 minimum estimate。
 
-每条 inventory item 增加 `status`（`direct` | `managed` | `estimated` | `cap`）和 `cost`。项目 `.mcp.json` 的 `agent` 为 `Project`（Cursor 与 Claude Code 都会读）。
+每条 inventory item 增加 `status`（`direct` | `managed` | `estimated` | `cap`）和 `cost`。人体标签映射到 [CONTEXT.md](../CONTEXT.md)：`direct` / `estimated` = Direct Exposure，`managed` = CAP-managed，`cap` = CAP Surface。项目 `.mcp.json` 的 `agent` 为 `Project`（Cursor 与 Claude Code 都会读）。扫描路径与 OS 验证注记见 [compatibility.md](./compatibility.md)。Agent 用语见 [agent-onboarding.md](./agent-onboarding.md)。JSON 优化备份恢复见 [restore-from-backup.md](./restore-from-backup.md)。
 
-人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染，但人体输出不展示入口 / 漏斗（这两项只在 `--json` / `/api/inspect`）。人体用带标签的中文：健康分数、常驻占用 / 有效预算、清单角色、价值分析、建议。`summary.registryCapabilities` 是 Registry 里已 `add` 的能力数；`summary.managed` 仍是已迁入 CAP 的 MCP 条目数。
+人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染，但人体输出不展示入口 / 漏斗（这两项只在 `--json` / `/api/inspect`）。人体用带标签的中文，角色名用 glossary：Direct Exposure / CAP-managed / CAP Surface。`summary.registryCapabilities` 是 Registry 里已 `add` 的能力数；`summary.managed` 仍是已迁入 CAP 的 MCP 条目数。
 
 ## 相关命令
 

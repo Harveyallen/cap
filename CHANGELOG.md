@@ -7,14 +7,20 @@
 - **`cap search` / MCP `cap.search` write a local search event.** Registry Activity now records the privacy-safe query (Capability Intent), hit count, hit ids, top id, timestamp, and `selected_id` when the result set has exactly one capability. Subsequent `add` / `use` of a recent hit also writes a `select` event. Add/use invocation and outcome records are unchanged.
 - **Queries are sanitized before they hit disk.** Paths, emails, URLs, and secret-like tokens are redacted. Skill bodies, raw Agent config, and Provider env values are not stored.
 - **`cap inject` ranking does not write search Activity.** That path reuses search scoring for a plan-only recommendation and is not a search→selection journey.
-- **Value Analysis still scores from `use` only.** Search/select events do not create value or low-frequency labels. Inspect / Web Health state `frequencyVerdicts: false` until an Observation Period policy exists (REC-03).
+- **Value Analysis still scores from `use` only.** Search/select events do not create value or frequency labels. Inspect / Web Health keep `frequencyVerdicts: false` (Phase 1 defers frequency labels; [ADR 0002](./docs/adr/0002-observation-period-phase1.md)).
 - `cap activity` prints search rows as `search  q=…  hits=N  <id>`.
 
 ### Docs
 
+- Phase 1 launch-gap close (#26, #27 docs, #28, #29, #31): `.cap-backup` recovery runbook; Agent first-report / partial-scan / optimize copy; OS×Agent inspect matrix; inspect labels mapped to CONTEXT.md; Observation Period deferred to Phase 2.
+- Material-savings threshold frozen at **10% of effective budget** (`docs/adr/0001-material-savings-threshold.md`). Frequency labels deferred; no day-one unused→remove (`docs/adr/0002-observation-period-phase1.md`).
 - PRD encodes the Grill-settled Phase 1 boundary: P0 and launch gates bind Phase 1 only; every journey and requirement ID has Phase plus Target / Now / Gap. Restore is the JSON optimize `.cap-backup` path; remote catalog, semantic retrieval, full one-click Restore, and anonymous product telemetry are not Phase 1 gates.
 - Root `CONTEXT.md` is the domain glossary (Acquisition, Direct Exposure, CAP-managed, ManagedBinding, Invoked, scoped Restore Point, plan-only Dynamic Injection).
 - README no longer calls full one-click Restore a P0 capability.
+
+### Copy
+
+- Human inspect / Web Health / setup Context Health skill use glossary role names (Direct Exposure, CAP-managed, CAP Surface). Value Analysis `underused` is a signal, not a remove recommendation. Inspect next-step mentions optional `cap web` at `http://127.0.0.1:4173` without starting the server.
 
 ## 0.4.1
 

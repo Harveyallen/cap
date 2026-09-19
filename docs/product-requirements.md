@@ -165,8 +165,8 @@ Existing plugin managers optimize installation. CAP separates **Acquisition** fr
 | | |
 |---|---|
 | **Target** | Paste the complete README Agent Installation Directive. That paste is scoped install authorization: official install, minimal CAP surface, read-only inspect. Same conversation returns the first health report. Optimization is recommended when pressure or reclaimable context warrants it, never applied under onboarding consent. Restore language is backup plus documented recovery, not one-click Restore. |
-| **Now** | The README already publishes the directive with that scope. `cap setup --agent auto` installs the surface and inspects. `cap inspect` / `--json` is the first-report source. |
-| **Gap** | Same-conversation polish (partial-scan warnings, optional local detail URL). Not auto full Restore. |
+| **Now** | The README already publishes the directive with that scope. `cap setup --agent auto` installs the surface and inspects. `cap inspect` / `--json` is the first-report source. Agent copy for optional `cap web` URL, partial-scan warnings, 10% material-savings, and scoped `.cap-backup` recovery is in [agent-onboarding.md](./agent-onboarding.md). |
+| **Gap** | — for documented first-report copy. Not auto full Restore. |
 
 1. The user copies the complete Agent Installation Directive from README into Codex, Claude Code, or Cursor.
 2. The directive states that it is an execution request, identifies the official install command, limits the scope to CAP installation / minimal surface / inspection, and forbids optimization apply or third-party MCP execution.
@@ -255,8 +255,8 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | | |
 |---|---|
 | **Phase 1 Target** | Every JSON MCP optimize mutation writes a timestamped `.cap-backup`. Recovery from that file is documented. Marketing and launch language do not claim one-click Restore. |
-| **Phase 1 Now** | `*.cap-backup` is written before supported JSON mutation. README states the backup exists and that automatic full Restore is not shipped. |
-| **Phase 1 Gap** | Clearer operator steps for copying a backup back. Not a Restore CLI/UI. |
+| **Phase 1 Now** | `*.cap-backup` is written before supported JSON mutation. Recovery steps are [restore-from-backup.md](./restore-from-backup.md). README/Agent copy refuse one-click Restore. |
+| **Phase 1 Gap** | — for documented JSON recovery. Not a Restore CLI/UI. |
 | **Later Target** | Preview a Restore Point, confirm, restore atomically when safe, preserve both versions on conflict, expose restore through CLI, Agent, and local UI, across shipped adapters. |
 
 ## 8. Functional requirements
@@ -272,27 +272,27 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | ONB-03 | 1 | P0 | The directive identifies the official command, prerequisite, CAP surface change, read-only inspection, prohibited optimize-apply, and third-party MCP prohibition. | README directive includes those limits. | — |
 | ONB-04 | 1 | P0 | Treat pasting the complete directive as scoped onboarding authorization; do not add a redundant CAP confirmation; preserve host Agent approvals. | README states this. | — |
 | ONB-05 | 1 | P0 | Onboarding consent does not include migration of existing MCPs/Skills; optimization requires a separate plan and confirmation. | Directive forbids `optimize --apply --yes`. | — |
-| ONB-06 | 1 | P0 | Return the first health summary in the originating conversation. A local detailed-report URL is optional when the visual page is available. | Inspect JSON can be summarized in-conversation. `cap web` exists separately. | Optional URL in the same flow. |
-| ONB-07 | 1 | P0 | If installation succeeds but one scan source fails, return a partial report with a scoped warning. | Inspect continues across sources and surfaces warnings. | Consistent Agent wording. |
+| ONB-06 | 1 | P0 | Return the first health summary in the originating conversation. A local detailed-report URL is optional when the visual page is available. | Inspect JSON can be summarized in-conversation. README + inspect next-step may point at `cap web` → `http://127.0.0.1:4173` without requiring the server. | — |
+| ONB-07 | 1 | P0 | If installation succeeds but one scan source fails, return a partial report with a scoped warning. | Inspect continues across sources and surfaces warnings. Agent wording is in [agent-onboarding.md](./agent-onboarding.md). | — |
 | ONB-08 | 1 | P0 | If the Agent cannot execute locally, provide one official copyable command and continue after install is detected. | README documents the official command. | — |
 | ONB-09 | 1 | P1 | Detect an existing compatible CAP install and upgrade/reuse it. | Setup updates marked launchers. | Dedup of duplicate surfaces. |
 | ONB-10 | 1 | P1 | Track time from explicit install request to first rendered health report. | Not shipped. | Local timing only if useful; not remote TEL. |
 | ONB-11 | 1 | P0 | When Context Pressure is `high`, `critical`, or `emergency`, explicitly recommend previewing CAP optimization. | README directive requires this. Inspect exposes pressure. | — |
-| ONB-12 | 1 | P0 | Also recommend optimization when reclaimable context crosses a material-savings threshold (proposed default 10% of effective budget). | Reclaimable estimate exists; threshold policy is still open. | Final threshold. |
-| ONB-13 | 1 | P0 | State why the recommendation triggered, current/projected footprint, estimated savings, affected classes, confirmation requirement, and that a `.cap-backup` will be written. Do not claim one-click Restore. | README asks the Agent to explain backup and recovery. | Keep launch copy aligned with scoped Restore. |
+| ONB-12 | 1 | P0 | Also recommend optimization when reclaimable context crosses a material-savings threshold. | Threshold is **10% of effective budget** ([ADR 0001](./adr/0001-material-savings-threshold.md)). Inspect exposes `reclaimableTokens` and `effectiveBudget`. | — |
+| ONB-13 | 1 | P0 | State why the recommendation triggered, current/projected footprint, estimated savings, affected classes, confirmation requirement, and that a `.cap-backup` will be written. Do not claim one-click Restore. | README + [agent-onboarding.md](./agent-onboarding.md) template: backup file + documented copy-back. | — |
 | ONB-14 | 1 | P0 | First inspection may offer a read-only optimization preview but must not apply it under onboarding authorization. | Directive and optimize default are preview-only. | — |
 
 ### Inventory and reporting
 
 | ID | Phase | Pri | Target | Now | Gap |
 |---|:---:|:---:|---|---|---|
-| INV-01 | 1 | P0 | Detect Codex, Claude Code, and Cursor on macOS, Windows, and Linux. | Scanners exist for those Agents. | Published OS/Agent matrix verification. |
+| INV-01 | 1 | P0 | Detect Codex, Claude Code, and Cursor on macOS, Windows, and Linux. | Scanners exist. Published matrix: [compatibility.md](./compatibility.md) (tested / expected / unknown per path). | — for the path matrix. OS/Agent **version** floors remain open. |
 | INV-02 | 1 | P0 | Discover supported user, project, shared, and plugin MCP/Skill definitions. | Inspect walks those locations. | — |
 | INV-03 | 1 | P0 | Never connect to or execute third-party MCPs during inspection. | Inspect is read-only. | — |
 | INV-04 | 1 | P0 | Estimate MCP schema/description cost and resident Skill identity cost separately. | Cost segments exist; Skill identity is name+description. | — |
 | INV-05 | 1 | P0 | Mark values as estimated and publish the method. | Estimates are labeled; method is documented. | — |
 | INV-06 | 1 | P0 | Identify duplicate definitions and probable overlapping Skills. | Duplicate paths/names are flagged. | Semantic overlap method is open. |
-| INV-07 | 1 | P0 | Distinguish installed, configured, Direct Exposure, CAP-managed, and Invoked. | Funnel and item `status` exist. | Vocabulary in UI copy vs glossary. |
+| INV-07 | 1 | P0 | Distinguish installed, configured, Direct Exposure, CAP-managed, and Invoked. | Funnel and item `status` exist. Label map: [agent-onboarding.md](./agent-onboarding.md) and [context-health.md](./context-health.md). | — |
 | INV-08 | 1 | P0 | Show effective budget, footprint, pressure, score, warnings, recoverable tokens, and projected after-state. | Inspect / Health report includes these. | — |
 | INV-09 | 1 | P0 | Use one report model for CLI, Agent response, and local visual UI. | Shared inspect JSON; CLI/Web render it. | Agent prose is derived, not a second model. |
 | INV-10 | 1 | P1 | Filter details by Agent, scope, source, type, status, cost, and reason. | Basic listing. | Richer filters. |
@@ -302,13 +302,14 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | ID | Phase | Pri | Target | Now | Gap |
 |---|:---:|:---:|---|---|---|
 | REC-01 | 1 | P0 | Initially recommend only high-context and duplicate capabilities. | Inspect recommendations start from cost/duplication. | — |
+| REC-01 | 1 | P0 | Initially recommend only high-context and duplicate capabilities. | Inspect recommendations start from cost/duplication. | — |
 | REC-02 | 1 | P0 | Record local CAP-mediated search, selection, invocation, outcome, and time in Registry Activity. | `cap search` / `cap.search` write a privacy-safe search event; add/use of a recent hit also writes `select`. Add/use still record invocation and outcome. | — |
-| REC-03 | 1 | P0 | Never label low-frequency until the Observation Period is satisfied. | Value Analysis leaves unused signals as underused without a day-one frequency verdict. | Formal readiness policy (open). |
-| REC-04 | 1 | P1 | Observation Period default is proposed at 14 days; validate before calling it final. | Not finalized. | Open decision. |
+| REC-03 | 1 | P0 | Never label low-frequency until the Observation Period is satisfied. | Phase 1 **defers frequency labels until Phase 2** ([ADR 0002](./adr/0002-observation-period-phase1.md)). Search/select Activity is stored. Value Analysis still scores from `use` only and keeps `frequencyVerdicts: false`. `underused` is a value signal only; copy must not say remove. | — for Phase 1. |
+| REC-04 | 1 | P1 | Observation Period default is proposed at 14 days; validate before calling it final. | 14 days remains the Phase 2 default to validate. Not applied in Phase 1. | Phase 2 readiness chrome. |
 | REC-05 | 2 | — | Explain cost, duplication, usage, and recency signals separately. | Value Analysis ranks value-per-cost. | Formal signal breakdown. |
 | REC-06 | 2 | — | Let users pin a Provider resident or exclude it from recommendations. | Not a first-class pin UX. | Pin = Direct Exposure. |
 | REC-07 | 1 | P0 | Never recommend the CAP surface itself for removal. | `cap-mcp` is excluded from Move → CAP. | — |
-| REC-08 | 1 | P0 | Beside every optimize call to action, say what is backed up (timestamped `.cap-backup`), how to recover from that file, and that one-click Restore is not claimed. | README states backup honesty. | Keep Agent copy from over-claiming Restore. |
+| REC-08 | 1 | P0 | Beside every optimize call to action, say what is backed up (timestamped `.cap-backup`), how to recover from that file, and that one-click Restore is not claimed. | README + [restore-from-backup.md](./restore-from-backup.md) + onboarding template. | — |
 
 ### Optimization and restore
 
@@ -328,7 +329,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | RST-06 | later | — | Verify original definitions are discoverable after restore. | Re-inspect after manual recovery. | Automated verify. |
 | RST-07 | later | — | Expose restore through CLI, Agent conversation, and local UI. | Documented backup recovery only. | One-click surfaces. |
 | RST-08 | later | — | A migration adapter cannot ship a Restore claim until automated apply/restore tests pass. | JSON apply is tested; Restore command is not. | Adapter Restore tests. |
-| RST-09 | 1 | P0 | Never describe an optimization as one-click restorable unless a full Restore Point flow exists. Phase 1 may say: backed up, recoverable from `.cap-backup`. | README already refuses auto full Restore. | Keep PRD/README/Agent copy aligned. |
+| RST-09 | 1 | P0 | Never describe an optimization as one-click restorable unless a full Restore Point flow exists. Phase 1 may say: backed up, recoverable from `.cap-backup`. | README, runbook, and Agent template refuse one-click Restore. | — |
 
 ### Discovery, catalog, and acquisition
 
@@ -342,7 +343,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | USE-06 | 1 | P0 | Report connection, authorization, install, and execution failures honestly. | `connection_required` / `failed`; no fake success. | — |
 | USE-07 | 1 | P0 | Return lightweight summaries; never load candidate bodies or full schemas merely to compare them. | Search returns summaries and metadata. | — |
 | USE-08 | 1 | P0 | Compare candidates using existing metadata fields (match reason, permissions, trust, maintenance, compatibility, estimated context, setup effort). No separate pros/cons authoring engine. | Catalog and search already expose those fields. | — |
-| USE-09 | 1 | P0 | When multiple viable candidates exist, the user chooses before Acquisition or first use. A unique high-confidence local hit may skip that choice. Implicit `cap.use` register is allowed for that hit. | Implicit add-on-use exists. Agent prompts still choose among several search hits. | Document the unique-hit exception in Agent copy. |
+| USE-09 | 1 | P0 | When multiple viable candidates exist, the user chooses before Acquisition or first use. A unique high-confidence local hit may skip that choice. Implicit `cap.use` register is allowed for that hit. | Implicit add-on-use exists. Unique-hit vs multi-hit copy: [agent-onboarding.md](./agent-onboarding.md) and README. | — |
 | USE-10 | 1 | P0 | Acquisition plus ManagedBinding stay non-resident by default. Only explicit pin / resident config is Direct Exposure. | Implicit add updates Registry, not Agent tool lists. | First-class pin UX is Phase 2 (REC-06). |
 | USE-11 | 2 | — | Temporary try mode that can remove downloaded assets while retaining an anonymous outcome record. | Not shipped. | Later. |
 | INJ-01 | 1 | P0 | `cap inject` returns a task-specific load/defer plan and does not mutate configs. | Delivered (`mutates: false`). | — |
@@ -425,7 +426,7 @@ Core local entities are Local Inventory item, Context Footprint, Capability, Pro
 | Reliability | 1 | One failed scan source does not block others; failure is visible and scoped. | Multi-source inspect. | Agent wording. |
 | Safety | 1 | Supported JSON apply writes `.cap-backup` first. Full atomic Restore is later. | Backup-before-apply. | Cross-adapter Restore. |
 | Offline | 1 | Inspect, documented backup recovery, local search, inject plan, and managed local use work without a public catalog. | No remote catalog dependency. | — |
-| Compatibility | 1 | Publish the supported OS/Agent matrix. | Codex / Claude Code / Cursor scanners exist. | Verified published matrix. |
+| Compatibility | 1 | Publish the supported OS/Agent matrix. | [compatibility.md](./compatibility.md): OS × Agent × path with tested / expected / unknown. | Version floors still open. |
 | Explainability | 1 | Every cost, score, and recommendation exposes its reason. | Estimates and recommendation reasons exist. | Ranking weights still open. |
 | Runtime | 1 | Preserve zero npm runtime dependencies unless separately approved. | Zero runtime deps. | — |
 
@@ -499,11 +500,11 @@ Do not market remote discovery, anonymous telemetry, or full Restore as generall
 
 | Area | Phase | Target | Now | Gap |
 |---|:---:|---|---|---|
-| Agent onboarding | 1 | Directive-scoped install + first health report | README Agent Installation Directive; `cap setup --agent auto`; `cap inspect` | Conversation polish and optional detail URL. Not auto Restore. |
-| Inventory and health | 1 | Local inventory and Context Health | Inspect: budget, pressure, funnel, costs, reclaimable estimate, Value Analysis | Published OS/Agent matrix; richer visual filters |
-| Recommendations | 1 | High-cost and duplicate only | Inspect recommendations; profiler underused list | Formal Observation Period (open) |
+| Agent onboarding | 1 | Directive-scoped install + first health report | README Agent Installation Directive; `cap setup --agent auto`; `cap inspect`; [agent-onboarding.md](./agent-onboarding.md) | Not auto Restore. |
+| Inventory and health | 1 | Local inventory and Context Health | Inspect: budget, pressure, funnel, costs, reclaimable estimate, Value Analysis; [compatibility.md](./compatibility.md) | Richer visual filters; OS/Agent version floors |
+| Recommendations | 1 | High-cost and duplicate only | Inspect recommendations; profiler underused is a value signal, not a frequency verdict ([ADR 0002](./adr/0002-observation-period-phase1.md)). Search/select Activity is stored (REC-02); Value Analysis still scores from `use` and keeps `frequencyVerdicts: false`. | Phase 2 Observation Period readiness |
 | Optimize | 1 | JSON MCP consolidation after `--apply --yes` | Preview + guarded JSON apply; Skill index; TOML inspect-only | Other adapters (Phase 2+) |
-| Restore | 1 | Timestamped `.cap-backup` + documented recovery | Backups are written; README refuses one-click Restore | Full Restore UI/CLI across adapters is later, not Phase 1 P0 |
+| Restore | 1 | Timestamped `.cap-backup` + documented recovery | Backups are written; [restore-from-backup.md](./restore-from-backup.md); copy refuses one-click Restore | Full Restore UI/CLI across adapters is later, not Phase 1 P0 |
 | Transparent use | 1 | search / add / use + Skills overlay + implicit add-on-use | Delivered | — |
 | Compare | 1 | Existing metadata fields | Catalog and search metadata | No separate pros/cons engine (settled) |
 | Local Unlock | 1 | Seed + local Skills | Keyword/intent search; honest misses | Remote catalog is Phase 3 |
@@ -517,15 +518,18 @@ Do not market remote discovery, anonymous telemetry, or full Restore as generall
 
 Settled by this Grill and removed from this list: Installation Directive as scoped install auth; Phase 1 Restore scope; Compare via metadata (no authoring engine); local Activity versus remote TEL; inject plan-only; Acquisition ≠ Direct Exposure ≠ CAP-managed ≠ Invoked; unique-hit exception on USE-09; remote catalog / semantic retrieval / full Restore / enterprise out of Phase 1 P0.
 
+Closed in this Phase 1 docs pass (removed from the open list):
+
+- Material-savings threshold = **10% of effective budget** ([ADR 0001](./adr/0001-material-savings-threshold.md), #27 / ONB-12).
+- Observation Period / frequency labels: **defer until Phase 2**; Phase 1 must not emit low-frequency → remove ([ADR 0002](./adr/0002-observation-period-phase1.md), #31 / REC-03). 14 days remains the Phase 2 default to validate (REC-04), not a Phase 1 gate.
+
 Still open:
 
-- Observation Period duration and evidence threshold; 14 days is proposed.
 - Ranking weights (and, in Phase 3, popularity anti-manipulation).
-- “High context” thresholds by effective budget.
-- Final material-savings threshold for first-report recommendations; 10% of effective budget is proposed.
+- “High context” thresholds by effective budget (pressure bands are shipped; this is any extra high-cost cutoff beyond ONB-11/12).
 - Semantic duplicate method and acceptable false positives.
 - Semantic retrieval approach and quality targets for vague multilingual intents (Phase 3; not a launch gate).
-- Minimum supported OS and Agent versions for the published matrix.
+- Minimum supported OS and Agent **versions** (path matrix is published; version floors are not).
 - Administrator review checklist, staffing, and publication SLA (Phase 3).
 - Artifact hosting, licensing, and telemetry retention (Phase 3).
 - Agent protocol for signaling full task completion.
@@ -537,7 +541,7 @@ These are the real Phase 1 gates. They are not “all historical P0 rows.”
 - Phase 1 `P0` rows in §8 pass their acceptance scenarios.
 - README Agent Installation Directive exists and is treated as scoped install + minimal CAP surface + read-only inspect authorization.
 - First health report can be produced in the Agent conversation without executing a scanned third-party MCP.
-- First-report advice uses cost and duplication only; no day-one low-frequency label.
+- First-report advice uses cost and duplication only; no day-one low-frequency label and no unused→remove recommendation.
 - JSON MCP optimize requires `--apply --yes`, writes timestamped `.cap-backup`, and documents recovery from that file.
 - Launch copy does not claim full one-click Restore across adapters.
 - Transparent local use works: search / add / use, local Skills overlay, implicit add-on-use as Acquisition plus ManagedBinding (not Direct Exposure).
@@ -546,6 +550,6 @@ These are the real Phase 1 gates. They are not “all historical P0 rows.”
 - `cap inject` is plan-only (`mutates: false`).
 - Context values consistently say “estimated.”
 - Core local features work offline (no public catalog required).
-- The supported Agent scan set (Codex, Claude Code, Cursor) is documented.
+- The supported Agent scan set (Codex, Claude Code, Cursor) is documented as the published OS × path matrix; launch copy matches tested/expected cells only.
 
 Not launch gates: remote public catalog, semantic/vector retrieval, full Restore UI/CLI, anonymous product telemetry, enterprise / Desktop / team.

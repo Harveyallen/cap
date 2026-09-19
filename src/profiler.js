@@ -145,6 +145,6 @@ export function buildProfiler({catalog, state, items = []}) {
     capabilities,
     ranked: ranked.slice(0, 10),
     underused: underused.slice(0, 10),
-    notes: 'Value Analysis is derived from Registry activity (successful uses + distinct UTC days as sessions). Search and select events are stored for later observation; they do not create value scores or low-frequency labels. Frequency verdicts stay off until an Observation Period is satisfied. valuePerCost = value / catalog context_cost. Not a live-session measurement.'
+    notes: 'Value Analysis is derived from Registry activity (successful uses + distinct UTC days as sessions). Search and select events are stored for later observation; they do not create value scores or frequency labels. Frequency verdicts stay off until Phase 2 Observation Period readiness. Phase 1 must not recommend removal from unused or day-one data. valuePerCost = value / catalog context_cost. Not a live-session measurement.'
   };
 }

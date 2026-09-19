@@ -123,9 +123,11 @@ test('inspectLocal attaches profiler and fills cost.value after use', async (t) 
   assert.match(text, /价值分析/);
   assert.match(text, /git\.repository\.status/);
   assert.match(text, /性价比排行/);
-  assert.match(text, /建议减负/);
+  assert.match(text, /价值信号（Observation Period 未完成，不是移除建议）/);
   assert.match(text, /频率结论：未就绪/);
+  assert.doesNotMatch(text, /建议减负|可考虑卸载/);
   assert.equal(report.profiler.frequencyVerdicts, false);
+  assert.match(report.profiler.notes, /Frequency verdicts stay off until Phase 2/);
 });
 
 test('profiler leaves cost.value null without activity', async (t) => {

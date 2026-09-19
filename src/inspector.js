@@ -97,7 +97,7 @@ export function buildFunnel({items, activity}) {
     used: usedIds.size,
     usedUnknown: useRows.length === 0,
     useAttempts: useRows.length,
-    notes: 'Config/skill scan only. Inspect does not connect to MCP servers or measure the live session. used comes from Registry activity; usedUnknown is true only when no use attempts were recorded.'
+    notes: 'Config/skill scan only. Inspect does not connect to MCP servers or measure the live session. installed = Local Inventory (scanned names). injected/configured = Direct Exposure count. used = Invoked (successful Registry use). usedUnknown is true only when no use attempts were recorded.'
   };
 }
 
