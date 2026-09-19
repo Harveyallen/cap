@@ -5,6 +5,7 @@ import path from 'node:path';
 import { inspectLocal } from './inspector.js';
 import { isCapMcpConfig } from './mcp-tools.js';
 import { packageRoot } from './paths.js';
+import { registerLocalSkills } from './registry.js';
 
 const AGENTS = new Set(['auto', 'claude', 'codex']);
 const SERVER_NAME = 'cap';
@@ -213,6 +214,7 @@ export async function setupCap(options = {}) {
     await writeSkill(options.codexSkillRoot ?? path.join(homeOf(options), '.codex', 'skills'), writes);
   }
 
+  const skills = await registerLocalSkills(options);
   const inspection = await inspectLocal(options);
-  return {agent, targets, launch, writes, skipped, manual, inspection};
+  return {agent, targets, launch, writes, skipped, manual, skills, inspection};
 }

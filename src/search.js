@@ -1,6 +1,6 @@
-/** Intent/keyword capability ranking over the seed catalog. */
+/** Intent/keyword capability ranking over the seed catalog plus local skills. */
 import { attachInputSchemas } from './input-schema.js';
-import { loadCatalog, loadState } from './registry.js';
+import { loadEffectiveCatalog, loadState } from './registry.js';
 
 function terms(value) {
   return value.toLocaleLowerCase().match(/[\p{L}\p{N}_.+-]+/gu) ?? [];
@@ -49,14 +49,20 @@ function scoreCapability(query, capability) {
 
 export async function searchCapabilities(query, options = {}) {
   if (!query?.trim()) throw new Error('Search query is required');
-  const [catalog, state] = await Promise.all([loadCatalog(), loadState(options)]);
+  const [catalog, state] = await Promise.all([loadEffectiveCatalog(options), loadState(options)]);
   const providers = new Map(catalog.providers.map((item) => [item.provider_id, item]));
+  const registered = new Set((state.local_skills ?? []).map((item) => item.capability_id));
   const ranked = catalog.capabilities
     .map((capability) => ({
       ...capability,
       score: scoreCapability(query, capability),
       installed: state.managed_capabilities.includes(capability.capability_id),
-      providers: capability.provider_refs.map((id) => ({...providers.get(id), status: state.managed_providers.includes(id) ? 'CAP Managed' : providers.get(id).status}))
+      registered: registered.has(capability.capability_id) || capability.origin === 'local-skill',
+      providers: capability.provider_refs.map((id) => {
+        const provider = providers.get(id);
+        if (!provider) return {provider_id: id, name: id, status: 'Unknown'};
+        return {...provider, status: state.managed_providers.includes(id) ? 'CAP Managed' : provider.status};
+      })
     }))
     .filter((item) => item.score >= 4)
     .sort((a, b) => b.score - a.score || a.context_cost - b.context_cost)

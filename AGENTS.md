@@ -15,17 +15,18 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `bin/cap.js` | CLI entry |
 | `bin/cap-mcp.js` | MCP stdio entry |
 | `src/cli.js` | Command routing |
-| `src/search.js` | Intent/keyword capability search |
-| `src/registry.js` | Catalog + `~/.cap/registry.json` state |
-| `src/use.js` | Execute managed providers (git / ripgrep builtins, or stdio MCP gateway) |
+| `src/search.js` | Intent/keyword capability search (seed catalog + local skills) |
+| `src/registry.js` | Catalog + `~/.cap/registry.json` state + local skill index |
+| `src/use.js` | Execute managed providers (git / ripgrep builtins, stdio MCP gateway, or local skill path) |
 | `src/mcp-bind.js` | Resolve MCP stdio launch from catalog / local `mcpServers` / Registry |
 | `src/mcp-client.js` | Line-delimited JSON-RPC client (`tools/call` for `cap.use`, `tools/list` for on-demand input schema) |
 | `src/input-schema.js` | On-demand JSON Schema for `cap.use` input (live MCP `tools/list` or catalog) |
+| `src/skills.js` | Discover local `SKILL.md` files and map them to catalog overlay entries |
 | `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
 | `src/profiler.js` | V3 Value Analysis (internally: profiler module; activity → value / valuePerCost / underused) |
 | `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
 | `src/setup.js` | `cap setup`: write CAP MCP + Context Health Skill, then inspect |
-| `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) |
+| `src/optimize.js` | Preview / apply MCP consolidation (keeps `cap-mcp`) and index local skills |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
 | `src/mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection |
 | `src/web-server.js` | Local Discover UI + JSON APIs |
@@ -37,7 +38,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `test/*.test.js` | Node test suite |
 | `.agents/skills/` | Shared agent skills: CAP (`add-capability`, `cap-develop`) plus the full `mattpocock/skills` pack (also scanned by `cap inspect`) |
 
-Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime in `src/profiler.js`, 0.3.0; V4 Dynamic Injection plan in `src/inject.js`, 0.4.0; 0.2.0 was docs-only for V3). MCP gateway + on-demand `input_schema`: `docs/mcp-gateway.md` (0.4.0). LLM index: `llms.txt`.
+Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Local skills: `docs/local-skills.md`. Context Health: `docs/context-health.md` (V3 Value Analysis runtime in `src/profiler.js`, 0.3.0; V4 Dynamic Injection plan in `src/inject.js`, 0.4.0; 0.2.0 was docs-only for V3). MCP gateway + on-demand `input_schema`: `docs/mcp-gateway.md` (0.4.0). LLM index: `llms.txt`.
 
 ## Commands
 

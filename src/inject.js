@@ -4,7 +4,7 @@
 
 import { estimateTokens, inspectLocal } from './inspector.js';
 import { exposedCapTools } from './mcp-tools.js';
-import { loadCatalog } from './registry.js';
+import { loadEffectiveCatalog } from './registry.js';
 import { searchCapabilities } from './search.js';
 
 export const INJECT_VERSION = 4;
@@ -45,7 +45,7 @@ export async function planInjection(query, options = {}) {
   const task = query.trim();
   const [matches, catalog, inspection] = await Promise.all([
     searchCapabilities(task, {...options, limit: Math.max(limit, 5), liveSchema: false}),
-    loadCatalog(),
+    loadEffectiveCatalog(options),
     inspectLocal(options)
   ]);
   const top = matches[0]?.score ?? 0;
@@ -92,7 +92,7 @@ export async function planInjection(query, options = {}) {
       afterTokens,
       savedVsResident: Math.max(0, residentTokens - afterTokens),
       estimated: true,
-      notes: 'catalog tokens are seed context_cost (load vs full catalog). resident/after tokens are inspect estimates: after is CAP surface only because task capabilities go through cap.use, not extra resident schemas. Not a live-session measurement.'
+      notes: 'catalog tokens are effective catalog context_cost (seed plus local skills). resident/after tokens are inspect estimates: after is CAP surface only because task capabilities go through cap.use, not extra resident schemas. Not a live-session measurement.'
     }
   };
 }

@@ -54,7 +54,9 @@
             "minItems": 1,
             "items": { "type": "string", "minLength": 1 }
           },
-          "mcp_tool": { "type": "string", "minLength": 1 }
+          "mcp_tool": { "type": "string", "minLength": 1 },
+          "origin": { "enum": ["catalog", "local-skill"] },
+          "skill_path": { "type": "string", "minLength": 1 }
         }
       }
     },

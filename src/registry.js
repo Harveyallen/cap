@@ -5,12 +5,39 @@ import { validateCatalog } from './catalog-schema.js';
 import { resolveInputSchema } from './input-schema.js';
 import { describeBinding, listMcpLaunchCandidates, missingLaunchHint, resolveMcpBinding, storeBinding } from './mcp-bind.js';
 import { capHome, packageRoot } from './paths.js';
+import { discoverLocalSkills, overlayLocalSkills } from './skills.js';
 
 export async function loadCatalog() {
   const root = packageRoot();
   const catalog = JSON.parse(await fs.readFile(path.join(root, 'data', 'catalog.json'), 'utf8'));
   const schema = JSON.parse(await fs.readFile(path.join(root, 'data', 'catalog.schema.json'), 'utf8'));
   return validateCatalog(catalog, schema);
+}
+
+/** Seed catalog plus local SKILL.md overlay. Does not mutate data/catalog.json. */
+export async function loadEffectiveCatalog(options = {}) {
+  const [catalog, skills] = await Promise.all([loadCatalog(), discoverLocalSkills(options)]);
+  const overlay = overlayLocalSkills(catalog, skills);
+  return {capabilities: overlay.capabilities, providers: overlay.providers};
+}
+
+export async function registerLocalSkills(options = {}, existingState) {
+  const [catalog, skills, state] = await Promise.all([
+    loadCatalog(),
+    discoverLocalSkills(options),
+    existingState ? Promise.resolve(existingState) : loadState(options)
+  ]);
+  const overlay = overlayLocalSkills(catalog, skills);
+  const now = new Date().toISOString();
+  state.local_skills = overlay.local.map((capability) => ({
+    capability_id: capability.capability_id,
+    provider_id: capability.provider_refs[0],
+    name: capability.name,
+    source: capability.skill_path,
+    registeredAt: now
+  }));
+  if (!existingState) await saveState(state, options);
+  return {discovered: skills.length, registered: state.local_skills, catalog: overlay, state};
 }
 
 export async function loadState(options = {}) {
@@ -35,7 +62,7 @@ export async function saveState(state, options = {}) {
 }
 
 export async function addCapability(capabilityId, providerId, options = {}) {
-  const catalog = await loadCatalog();
+  const catalog = await loadEffectiveCatalog(options);
   const capability = catalog.capabilities.find((item) => item.capability_id === capabilityId);
   if (!capability) throw new Error(`Unknown capability: ${capabilityId}`);
   const selected = providerId ?? capability.provider_refs[0];

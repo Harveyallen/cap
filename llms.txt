@@ -7,6 +7,7 @@
 - [README](README.md): human quick start and product overview
 - [AGENTS.md](AGENTS.md): instructions for coding agents
 - [Architecture](docs/architecture.md): module boundaries and data flow
+- [Local skills](docs/local-skills.md): discover SKILL.md, overlay catalog, search/add/use without dumping bodies
 - [MCP gateway](docs/mcp-gateway.md): `cap.use` stdio binding model (Capability `mcp_tool` + local `mcpServers`)
 - [Context Health](docs/context-health.md): pressure, funnel, V3 Value Analysis runtime (value/cost), V4 Dynamic Injection plan, inspect/Health contract
 - [Catalog schema](data/catalog.schema.json): seed catalog contract

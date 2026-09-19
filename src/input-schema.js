@@ -35,7 +35,7 @@ export function schemaFromCatalogInputs(inputs = {}) {
   const required = [];
   for (const [name, spec] of Object.entries(inputs ?? {})) {
     properties[name] = propertyFromSpec(name, spec);
-    if (name !== 'path') required.push(name);
+    if (name !== 'path' && name !== 'include_body') required.push(name);
   }
   const schema = {type: 'object', properties};
   if (required.length) schema.required = required;

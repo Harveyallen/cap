@@ -1,9 +1,11 @@
 /** Execute CAP-managed providers: local builtins (git / ripgrep) or stdio MCP gateway. */
 import {spawn} from 'node:child_process';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import {callMcpTool} from './mcp-client.js';
 import {describeBinding, listMcpLaunchCandidates, missingLaunchHint, missingLaunchMessage, resolveMcpBinding, storeBinding} from './mcp-bind.js';
-import {loadCatalog, loadState, saveState} from './registry.js';
+import {loadEffectiveCatalog, loadState, saveState} from './registry.js';
+import {parseSkillMarkdown} from './skills.js';
 
 function run(executable, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -62,6 +64,68 @@ async function useBuiltin(capabilityId, provider, input) {
     return run(provider.executable, ['--line-number', '--color', 'never', '--', String(input.query), '.'], {cwd});
   }
   throw new Error(`No local executor is implemented for ${capabilityId}`);
+}
+
+async function useSkill(capability, provider, input, state, options) {
+  const file = capability.skill_path || provider.source;
+  if (!file || !String(file).endsWith('SKILL.md')) {
+    const result = connectionRequired({
+      capability,
+      providerId: provider.provider_id,
+      reason: 'unsupported_type',
+      message: 'The provider is registered but needs its MCP/OAuth connection before use.'
+    });
+    await record(state, {
+      action: 'use',
+      capability_id: capability.capability_id,
+      provider_id: provider.provider_id,
+      success: false,
+      status: 'connection_required',
+      reason: result.reason
+    }, options);
+    return result;
+  }
+  try {
+    const text = await fs.readFile(file, 'utf8');
+    const parsed = parseSkillMarkdown(text, {nameFallback: capability.name});
+    const skill = {
+      name: parsed.name || capability.name,
+      summary: parsed.description || capability.summary,
+      path: file
+    };
+    if (input.include_body === true) skill.body = parsed.body;
+    await record(state, {
+      action: 'use',
+      capability_id: capability.capability_id,
+      provider_id: provider.provider_id,
+      success: true,
+      skill_path: file
+    }, options);
+    return {
+      status: 'completed',
+      capability_id: capability.capability_id,
+      provider_id: provider.provider_id,
+      skill,
+      message: 'Local skill surfaced. Load SKILL.md on demand; do not keep the full body resident.'
+    };
+  } catch (error) {
+    const result = {
+      status: 'failed',
+      reason: 'skill_missing',
+      capability_id: capability.capability_id,
+      provider_id: provider.provider_id,
+      message: `Local skill file is not readable: ${error.message}`
+    };
+    await record(state, {
+      action: 'use',
+      capability_id: capability.capability_id,
+      provider_id: provider.provider_id,
+      success: false,
+      status: 'failed',
+      reason: result.reason
+    }, options);
+    return result;
+  }
 }
 
 async function useMcp(capability, provider, input, state, options) {
@@ -143,11 +207,15 @@ async function useMcp(capability, provider, input, state, options) {
 }
 
 export async function useCapability(capabilityId, input = {}, options = {}) {
-  const [catalog, state] = await Promise.all([loadCatalog(), loadState(options)]);
-  if (!state.managed_capabilities.includes(capabilityId)) throw new Error(`${capabilityId} is not CAP Managed. Run cap add ${capabilityId} first.`);
+  const [catalog, state] = await Promise.all([loadEffectiveCatalog(options), loadState(options)]);
   const capability = catalog.capabilities.find((item) => item.capability_id === capabilityId);
   if (!capability) throw new Error(`Unknown capability: ${capabilityId}`);
-  const providerId = capability.provider_refs.find((id) => state.managed_providers.includes(id));
+  const isLocalSkill = capability.origin === 'local-skill';
+  if (!state.managed_capabilities.includes(capabilityId) && !isLocalSkill) {
+    throw new Error(`${capabilityId} is not CAP Managed. Run cap add ${capabilityId} first.`);
+  }
+  const providerId = capability.provider_refs.find((id) => state.managed_providers.includes(id))
+    ?? capability.provider_refs[0];
   const provider = catalog.providers.find((item) => item.provider_id === providerId);
   if (provider?.executable) {
     const result = await useBuiltin(capabilityId, provider, input);
@@ -157,6 +225,9 @@ export async function useCapability(capabilityId, input = {}, options = {}) {
   }
   if (provider?.type === 'MCP') {
     return useMcp(capability, provider, input, state, options);
+  }
+  if (provider?.type === 'Skill') {
+    return useSkill(capability, provider, input, state, options);
   }
   const blocked = connectionRequired({
     capability,
