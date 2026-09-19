@@ -16,17 +16,38 @@ function unique(values) {
   return [...new Set(values.map((item) => String(item).trim()).filter(Boolean))];
 }
 
+const PLUGIN_WALK_DEPTH = 8;
+const PLUGIN_SKIP = new Set(['node_modules', 'dist', 'docs', 'assets', 'agents', 'automations', 'src', 'test', 'tests', 'examples']);
+
 export function defaultSkillRoots(home, project) {
   return [
     [path.join(home, '.claude', 'skills'), 'Claude Code'],
+    [path.join(home, '.claude', 'plugins'), 'Claude Code'],
     [path.join(home, '.codex', 'skills'), 'Codex'],
     [path.join(home, '.cursor', 'skills'), 'Cursor'],
+    [path.join(home, '.cursor', 'skills-cursor'), 'Cursor'],
+    [path.join(home, '.cursor', 'plugins'), 'Cursor'],
     [path.join(home, '.agents', 'skills'), 'Shared'],
     [path.join(project, '.claude', 'skills'), 'Claude Code'],
     [path.join(project, '.codex', 'skills'), 'Codex'],
     [path.join(project, '.cursor', 'skills'), 'Cursor'],
+    [path.join(project, '.cursor', 'skills-cursor'), 'Cursor'],
     [path.join(project, '.agents', 'skills'), 'Shared']
   ];
+}
+
+export function isPluginSkillTree(root) {
+  return /(?:^|[/\\])plugins(?:[/\\]|$)/.test(String(root ?? ''));
+}
+
+/** Diagram-drawing skills only — not "software architecture" or pstack /architect. */
+export function isDiagramSkillText(text) {
+  const value = String(text ?? '');
+  const hay = value.toLowerCase();
+  if (/架构图|画架构图/.test(value)) return true;
+  if (/\b(?:architecture|system|software)\s+diagrams?\b/.test(hay)) return true;
+  if (/\bdiagrams?\b/.test(hay) && /\b(?:draw|drawing|mermaid|plantuml|c4)\b/.test(hay)) return true;
+  return /\bdraw(?:ing)?\s+(?:an?\s+)?architect/.test(hay);
 }
 
 export function parseSkillMarkdown(text, options = {}) {
@@ -74,8 +95,7 @@ export function skillSearchTerms({name, description, folder} = {}) {
       if (i + 3 <= han.length) terms.add(han.slice(i, i + 3));
     }
   }
-  const hay = text.toLowerCase();
-  if (/\barchitect(?:ure|ural)?s?\b|\bdiagrams?\b/.test(hay) || /架构图|画架构图/.test(text)) {
+  if (isDiagramSkillText(text)) {
     for (const extra of ['architecture', 'diagram', 'architecture diagram', '架构图', '画架构图', '架构']) {
       terms.add(extra);
     }
@@ -155,10 +175,17 @@ export function overlayLocalSkills(catalog, skills = []) {
   return {capabilities, providers, local};
 }
 
+function shouldDescend(name, options) {
+  if (name === 'node_modules' || name.startsWith('.')) return false;
+  if (options.plugin && PLUGIN_SKIP.has(name)) return false;
+  return true;
+}
+
 export async function walkSkillFiles(root, agent, options = {}) {
   const includeBody = options.includeBody !== false;
-  const maxDepth = options.maxDepth ?? MAX_WALK_DEPTH;
-  return walkSkillTree(root, agent, 0, {includeBody, maxDepth});
+  const plugin = options.plugin ?? isPluginSkillTree(root);
+  const maxDepth = options.maxDepth ?? (plugin ? PLUGIN_WALK_DEPTH : MAX_WALK_DEPTH);
+  return walkSkillTree(root, agent, 0, {includeBody, maxDepth, plugin});
 }
 
 async function walkSkillTree(root, agent, depth, options) {
@@ -189,7 +216,7 @@ async function walkSkillTree(root, agent, depth, options) {
   if (foundHere || depth >= options.maxDepth) return skills;
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+    if (!shouldDescend(entry.name, options)) continue;
     skills.push(...await walkSkillTree(path.join(root, entry.name), agent, depth + 1, options));
   }
   return skills;

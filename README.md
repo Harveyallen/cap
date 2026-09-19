@@ -90,8 +90,8 @@ cap optimize --apply --yes
 
 ## 扫描范围
 
-- Claude Code：`~/.claude.json`、`~/.claude/settings.json`、项目 `.mcp.json`、`~/.claude/skills`、项目 `.claude/skills`
-- Cursor：`~/.cursor/mcp.json`、项目 `.cursor/mcp.json`（与 inspect / bind 同一份根；`optimize --apply` 只改扫描到的 JSON MCP）、`~/.cursor/skills`、项目 `.cursor/skills`
+- Claude Code：`~/.claude.json`、`~/.claude/settings.json`、项目 `.mcp.json`、`~/.claude/skills`、`~/.claude/plugins`、项目 `.claude/skills`
+- Cursor：`~/.cursor/mcp.json`、项目 `.cursor/mcp.json`（与 inspect / bind 同一份根；`optimize --apply` 只改扫描到的 JSON MCP）、`~/.cursor/skills`、`~/.cursor/skills-cursor`、`~/.cursor/plugins`（含 `plugins/cache/…/skills`）、项目 `.cursor/skills`
 - Codex：`~/.codex/config.toml`、`~/.codex/skills`、项目 `.codex/skills`
 - 共享 Skills：`~/.agents/skills`、项目 `.agents/skills`
 

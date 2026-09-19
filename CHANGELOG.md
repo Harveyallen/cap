@@ -4,7 +4,7 @@
 
 ### Local skills
 
-- **`cap search` finds local Agent skills.** `SKILL.md` files under Claude Code / Codex / Cursor / shared `.agents/skills` (user and project) are overlaid on the seed catalog. Intents like `画架构图` hit a skill whose description mentions architecture diagrams. Results include summary + `skill_path` only — not the skill body.
+- **`cap search` finds local Agent skills.** `SKILL.md` files under Claude Code / Codex / Cursor / shared `.agents/skills` (user and project) are overlaid on the seed catalog, including Cursor `skills-cursor` and `plugins/cache/…/skills`. Intents like `画架构图` / `架构图` hit a skill whose **description** mentions architecture diagrams — not a hardcoded name, and not nearby “architecture” skills such as pstack `architect` or `improve-codebase-architecture`. Results include summary + `skill_path` only — not the skill body.
 - **`cap add` / `cap use` work without hand-written catalog JSON.** Add accepts the generated `skill.<slug>` id. Use returns path + summary; `include_body: true` loads SKILL.md on demand. Seed Skill stubs without a local file stay `connection_required`.
 - **`cap setup` and `cap optimize --apply --yes` index discovered skills** into Registry `local_skills`. Optimize preview lists `plan.skills`. Skill files are not moved or rewritten. Default Agent surface stays search / add / use.
 - See [docs/local-skills.md](./docs/local-skills.md).

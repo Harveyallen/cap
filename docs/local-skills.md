@@ -4,20 +4,22 @@ CAP discovers `SKILL.md` files on the machine and overlays them onto the seed ca
 
 ## Scan roots
 
-Same layouts inspect already used, plus Cursor and user-level shared dirs:
+Standard Agent skill layouts (no hardcoded skill names). Cursor plugin trees are walked deeper because `SKILL.md` sits under `plugins/cache/<marketplace>/<id>/<hash>/skills/<name>/`.
 
 | Root | Agent |
 |------|--------|
-| `~/.claude/skills` | Claude Code |
+| `~/.claude/skills`, `~/.claude/plugins` | Claude Code |
 | `~/.codex/skills` | Codex |
-| `~/.cursor/skills` | Cursor |
+| `~/.cursor/skills`, `~/.cursor/skills-cursor`, `~/.cursor/plugins` | Cursor |
 | `~/.agents/skills` | Shared |
 | `<project>/.claude/skills` | Claude Code |
 | `<project>/.codex/skills` | Codex |
-| `<project>/.cursor/skills` | Cursor |
+| `<project>/.cursor/skills`, `<project>/.cursor/skills-cursor` | Cursor |
 | `<project>/.agents/skills` | Shared |
 
-Each root is walked a few levels for `*/SKILL.md` (or nested `**/SKILL.md`). Frontmatter `name` + `description` become the searchable identity. YAML folded descriptions (`>` / `|`) are flattened to one line.
+Each root is walked for `*/SKILL.md` (or nested `**/SKILL.md`). Frontmatter `name` + `description` become the searchable identity. YAML folded descriptions (`>` / `|`) are flattened to one line.
+
+CJK queries like `画架构图` / `架构图` match a skill only when its **name or description** talks about drawing diagrams (or already contains those characters). A nearby “architecture” skill is not enough: pstack `/architect` (types before code) and Matt’s `improve-codebase-architecture` stay findable by their own text, not as diagram hits.
 
 Override roots in tests / programmatic calls with `skillRoots`, `userHome`, and `projectRoot`.
 
@@ -33,10 +35,12 @@ Override roots in tests / programmatic calls with `skillRoots`, `userHome`, and 
 
 ```bash
 cap search "画架构图" --json
-cap add skill.draw-architecture --json
-cap use skill.draw-architecture --json
-cap use skill.draw-architecture --input '{"include_body":true}' --json
+cap add skill.<slug> --json
+cap use skill.<slug> --json
+cap use skill.<slug> --input '{"include_body":true}' --json
 ```
+
+`<slug>` comes from the skill folder or frontmatter name (for example `skill.system-blueprint`). Do not add a one-off catalog row for a single diagram skill.
 
 Local skills are usable after search without a prior `add` (they are already on disk). `include_body: true` is the on-demand body; default `use` omits it. Seed catalog Skill providers that are not a local `SKILL.md` (for example `pdf.skill`) stay `connection_required`.
 
