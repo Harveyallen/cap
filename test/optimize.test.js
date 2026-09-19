@@ -108,7 +108,8 @@ test('optimize apply migrates Codex TOML, keeps cap-mcp, backs up, and validates
   assert.equal(github.originalSource, ctx.codexConfig);
   assert.deepEqual(github.config, {command: 'gh-mcp', args: ['--stdio'], env: {TOKEN: 'secret-token'}});
   const inspect = await inspectLocal({...ctx.options, jsonConfigs: [], env: {}});
-  assert.equal(inspect.items.filter((item) => item.name === 'github')[0].direct, false);
+  assert.equal(inspect.items.some((item) => item.name === 'github'), false);
+  assert.equal(inspect.recommendations.some((item) => item.provider === 'github'), false);
   assert.equal(inspect.items.find((item) => item.name === 'cap').capSurface, true);
 });
 
