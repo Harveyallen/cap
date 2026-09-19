@@ -216,6 +216,9 @@ export function setupText(result, options = {}) {
     lines.push(`无法安全写入 ${rel(item.path)}${item.reason ? `（${item.reason}）` : ''}，请手动添加：`);
     lines.push(item.snippet.trimEnd());
   }
+  if (result.skills?.registered?.length) {
+    lines.push(`已索引 ${result.skills.registered.length} 个本地 Skill，可供 cap search / add / use`);
+  }
   if (result.inspection) {
     lines.push('', inspectText(result.inspection, options));
   }
@@ -229,7 +232,9 @@ function searchText(results) {
     const schemaLine = item.schema_source
       ? `\n   cap.use input_schema: ${item.schema_source}${required ? ` · required ${required}` : ''}`
       : '';
-    return `${index + 1}. ${item.name}  ${item.installed ? '[CAP Managed]' : '[Available]'}\n   ${item.capability_id}\n   ${item.summary}\n   Providers: ${item.providers.map((p) => `${p.name} (${p.status})`).join(', ')}\n   Context: ~${item.context_cost} tokens · Risk: ${item.risk}${schemaLine}`;
+    const skillLine = item.skill_path ? `\n   Skill: ${item.skill_path}` : '';
+    const mark = item.installed ? '[CAP Managed]' : item.origin === 'local-skill' ? '[Local skill]' : '[Available]';
+    return `${index + 1}. ${item.name}  ${mark}\n   ${item.capability_id}\n   ${item.summary}\n   Providers: ${item.providers.map((p) => `${p.name} (${p.status})`).join(', ')}\n   Context: ~${item.context_cost} tokens · Risk: ${item.risk}${skillLine}${schemaLine}`;
   }).join('\n\n');
 }
 
@@ -313,7 +318,10 @@ export async function main(args, options = {}) {
     const result = rest.includes('--apply') ? await applyOptimization(options) : await buildOptimizationPlan(options);
     const output = flag(rest, '--write-plan');
     if (output) await writeOptimizationPlan(output, options);
-    return print(json ? result : `Before: ${result.plan?.before?.directTools ?? result.before.directTools} direct tools\nAfter: ${result.plan?.after?.directTools ?? result.after.directTools} CAP entry tools\nEstimated reduction: ${result.plan?.reductionPercent ?? result.reductionPercent}%${output ? `\nPlan: ${output}` : ''}${result.message ? `\n${result.message}` : '\nPreview only. Use --apply --yes to migrate supported JSON configs.'}`, json);
+    const plan = result.plan ?? result;
+    const skillCount = plan.skills?.discovered ?? result.skills?.registered?.length ?? 0;
+    const skillLine = skillCount ? `\nLocal skills: ${skillCount} indexed for cap search / add / use` : '';
+    return print(json ? result : `Before: ${plan.before.directTools} direct tools\nAfter: ${plan.after.directTools} CAP entry tools\nEstimated reduction: ${plan.reductionPercent}%${skillLine}${output ? `\nPlan: ${output}` : ''}${result.message ? `\n${result.message}` : '\nPreview only. Use --apply --yes to migrate supported JSON configs and index local skills.'}`, json);
   }
   if (command === 'activity') {
     const state = await loadState(options);

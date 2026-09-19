@@ -30,11 +30,11 @@ $ cap search "分析 PostgreSQL 慢查询"
 - `cap setup`：备份并写入 Claude Code / Codex 的 CAP MCP 与 `cap-context-health` Skill，然后跑一次 `cap inspect`。
 - `cap inspect`：扫描本地 MCP 配置与 Skills（不连接 MCP），用人话输出健康分数、常驻占用、清单和 V3 价值分析。`cap-mcp` 不会被建议再迁走。详见 [docs/context-health.md](./docs/context-health.md)。
 - V3 价值分析：从 Registry Activity 计算 Value/Cost，在 `cap inspect` / Web Health 展示性价比排行与建议减负（`src/profiler.js`）。
-- `cap search`：使用任务/意图搜索 Capability，并比较 Provider、权限、风险和 Context 成本。JSON 结果带 `input_schema`（`cap.use` 入参的 JSON Schema）和 `schema_source`（`mcp` 或 `catalog`）。
+- `cap search`：使用任务/意图搜索 Capability（种子 Catalog **加上**本地 `SKILL.md`），并比较 Provider、权限、风险和 Context 成本。JSON 结果带 `input_schema`（`cap.use` 入参的 JSON Schema）和 `schema_source`（`mcp` 或 `catalog`）。本地 Skill 只返回摘要和路径。
 - `cap inject`：按任务给出 V4 最小装载计划（load / defer），对照全量 catalog 与当前常驻占用。
 - `cap add`：将 Capability 和 Provider 登记为 `CAP Managed`。
 - `cap use`：通过 Capability 抽象调用已登记的 Provider。内置 Git / ripgrep；MCP Provider 在有 stdio binding 时由 CAP 在幕后调用下游工具（Agent 仍只看到 `cap.search` / `cap.add` / `cap.use`）。详见 [docs/mcp-gateway.md](./docs/mcp-gateway.md)。
-- `cap optimize`：展示 Before / After；显式使用 `--apply --yes` 时迁移 JSON MCP 配置，并先生成时间戳备份。
+- `cap optimize`：展示 Before / After；显式使用 `--apply --yes` 时迁移 JSON MCP 配置（先备份），并索引本地 Skills。
 - `cap web`：轻量 Discover、My Capabilities、Context Health 仪表盘。
 - `cap-mcp`：MCP stdio 服务，默认仅提供 `cap.search`、`cap.add`、`cap.use`；可选暴露 `cap.inspect`、`cap.inject`。
 - Activity：记录 Add/Use 结果，为后续 CapabilityBench 积累基础数据。
@@ -90,12 +90,16 @@ cap optimize --apply --yes
 
 ## 扫描范围
 
-- Claude Code：`~/.claude.json`、`~/.claude/settings.json`、项目 `.mcp.json`、Skills 目录
-- Cursor：`~/.cursor/mcp.json`、项目 `.cursor/mcp.json`（与 inspect / bind 同一份根；`optimize --apply` 只改扫描到的 JSON）
-- Codex：`~/.codex/config.toml`、`~/.codex/skills`
-- 共享项目 Skills：`.agents/skills`
+- Claude Code：`~/.claude.json`、`~/.claude/settings.json`、项目 `.mcp.json`、`~/.claude/skills`、项目 `.claude/skills`
+- Cursor：`~/.cursor/mcp.json`、项目 `.cursor/mcp.json`（与 inspect / bind 同一份根；`optimize --apply` 只改扫描到的 JSON MCP）、`~/.cursor/skills`、项目 `.cursor/skills`
+- Codex：`~/.codex/config.toml`、`~/.codex/skills`、项目 `.codex/skills`
+- 共享 Skills：`~/.agents/skills`、项目 `.agents/skills`
 
 无法从静态配置读取 Tool Schema 时，`Direct Tools` 显示的是保守的最小估算。CAP 不会连接或执行扫描到的 MCP Server。
+
+## 本地 Skills
+
+`cap search` / `cap inject` 会把上述目录里的 `SKILL.md` 叠到种子 Catalog 上（`loadCatalog()` 仍是种子文件）。`cap setup` 与 `cap optimize --apply --yes` 把发现结果写入 Registry `local_skills`。Agent 表面仍是 `cap.search` / `cap.add` / `cap.use`：只暴露名称、摘要和路径；正文按需 `cap use … --input '{"include_body":true}'`。详见 [docs/local-skills.md](./docs/local-skills.md)。
 
 ## 架构
 
@@ -122,6 +126,7 @@ CAP Core ── Search ── Catalog
 | [`AGENTS.md`](./AGENTS.md) | Agent 工作约定（命令、边界、目录图） |
 | [`llms.txt`](./llms.txt) | LLM / Agent 文档索引 |
 | [`docs/architecture.md`](./docs/architecture.md) | 模块边界与数据流 |
+| [`docs/local-skills.md`](./docs/local-skills.md) | 本地 `SKILL.md` 扫描与 catalog overlay |
 | [`docs/mcp-gateway.md`](./docs/mcp-gateway.md) | `cap.use` 作为 MCP 网关的绑定模型（DingTalk 接入） |
 | [`docs/context-health.md`](./docs/context-health.md) | Context Pressure、漏斗与 Health 产品说明 |
 | [`.agents/skills/`](./.agents/skills/) | 可被 `cap inspect` 发现的共享 Skills（CAP + full `mattpocock/skills` pack） |

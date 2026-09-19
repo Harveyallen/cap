@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { defaultMcpJsonConfigs } from './mcp-bind.js';
 import { loadCatalog, loadState } from './registry.js';
+import { defaultSkillRoots, walkSkillFiles } from './skills.js';
 import { exposedCapTools, isCapMcpConfig } from './mcp-tools.js';
 import { buildProfiler } from './profiler.js';
 
@@ -186,56 +187,33 @@ async function inspectCodexToml(file, options = {}) {
   });
 }
 
-async function walkSkills(root, agent) {
-  let entries;
-  try { entries = await fs.readdir(root, {withFileTypes: true}); } catch (error) {
-    if (error.code === 'ENOENT') return [];
-    throw error;
-  }
-  const skills = [];
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const file = path.join(root, entry.name, 'SKILL.md');
-    try {
-      const text = await fs.readFile(file, 'utf8');
-      const frontmatter = text.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? text.slice(0, 800);
-      const body = text.replace(/^---\n[\s\S]*?\n---\n?/, '');
-      const name = frontmatter.match(/^name:\s*(.+)$/m)?.[1]?.trim() ?? entry.name;
-      const description = frontmatter.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? '';
-      const identityTokens = estimateTokens([name, description].filter(Boolean).join('\n'));
-      const cost = itemCost({
-        descriptionTokens: identityTokens,
-        instructionTokens: estimateTokens(body),
-        estimated: true,
-        instructionOnDemand: true
-      });
-      skills.push(decorate({
-        kind: 'skill', agent, name, source: file, direct: true,
-        toolCount: 0, contextTokens: identityTokens, cost,
-        fingerprint: `${name.toLowerCase()}:${identityTokens}`
-      }));
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-    }
-  }
-  return skills;
+async function inspectSkillRoot(root, agent) {
+  const skills = await walkSkillFiles(root, agent, {includeBody: true});
+  return skills.map((skill) => {
+    const identityTokens = estimateTokens([skill.name, skill.description].filter(Boolean).join('\n'));
+    const cost = itemCost({
+      descriptionTokens: identityTokens,
+      instructionTokens: estimateTokens(skill.body ?? ''),
+      estimated: true,
+      instructionOnDemand: true
+    });
+    return decorate({
+      kind: 'skill', agent: skill.agent, name: skill.name, source: skill.source, direct: true,
+      toolCount: 0, contextTokens: identityTokens, cost,
+      fingerprint: `${skill.name.toLowerCase()}:${identityTokens}`
+    });
+  });
 }
 
 export async function inspectLocal(options = {}) {
   const home = options.userHome ?? os.homedir();
   const project = path.resolve(options.projectRoot ?? process.cwd());
   const jsonConfigs = options.jsonConfigs ?? defaultMcpJsonConfigs(home, project);
-  const skillRoots = options.skillRoots ?? [
-    [path.join(home, '.claude', 'skills'), 'Claude Code'],
-    [path.join(home, '.codex', 'skills'), 'Codex'],
-    [path.join(project, '.claude', 'skills'), 'Claude Code'],
-    [path.join(project, '.codex', 'skills'), 'Codex'],
-    [path.join(project, '.agents', 'skills'), 'Shared']
-  ];
+  const skillRoots = options.skillRoots ?? defaultSkillRoots(home, project);
   const batches = await Promise.all([
     ...jsonConfigs.map(([file, agent]) => inspectJsonConfig(file, agent, options)),
     inspectCodexToml(options.codexConfig ?? path.join(home, '.codex', 'config.toml'), options),
-    ...skillRoots.map(([root, agent]) => walkSkills(root, agent))
+    ...skillRoots.map(([root, agent]) => inspectSkillRoot(root, agent))
   ]);
   const items = batches.flat();
   const state = await loadState(options);
