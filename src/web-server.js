@@ -4,6 +4,7 @@ import { searchCapabilities } from './search.js';
 import { inspectLocal } from './inspector.js';
 import { excludeProvider, includeProvider, pinProvider, unpinProvider } from './pin.js';
 import { addCapability, loadState } from './registry.js';
+import { cleanupTrial, tryCapability } from './try.js';
 
 export const DEFAULT_WEB_HOST = '127.0.0.1';
 export const DEFAULT_WEB_PORT = 4173;
@@ -87,9 +88,11 @@ const tok=n=>{n=Math.round(Number(n)||0);return n>=1000?'~'+(n/1000).toFixed(1).
 const bandClass=b=>({healthy:'ok',moderate:'warn',high:'warn',critical:'danger',emergency:'danger'}[b]||'');
 const statusChip=s=>s==='managed'||s==='cap'?'ok':s==='estimated'?'violet':'';
 async function search(){results.className='grid';results.innerHTML='<div class="empty">Searching…</div>';const r=await fetch('/api/search?q='+encodeURIComponent(q.value));const d=await r.json();render(d)}
-function render(items){results.innerHTML=items.length?items.map(x=>'<article class="card"><div><div class="id">'+esc(x.capability_id)+'</div><h3>'+esc(x.name)+(x.installed?' <span class="owned">· Managed</span>':'')+'</h3><p class="summary">'+esc(x.summary)+'</p><div class="chips">'+x.providers.map(p=>'<span class="chip">'+esc(p.name)+' · '+esc(p.status)+'</span>').join('')+'<span class="chip">'+esc(x.risk)+' risk</span><span class="chip">~'+esc(x.context_cost)+' tokens</span></div></div>'+(x.installed?'':'<button onclick="add(\\''+x.capability_id+'\\')">添加</button>')+'</article>').join(''):'<div class="empty">没有匹配结果。试试描述目标、对象和动作。</div>'}
+function render(items){results.innerHTML=items.length?items.map(x=>'<article class="card"><div><div class="id">'+esc(x.capability_id)+'</div><h3>'+esc(x.name)+(x.installed?' <span class="owned">· Managed</span>':'')+'</h3><p class="summary">'+esc(x.summary)+'</p><div class="chips">'+x.providers.map(p=>'<span class="chip">'+esc(p.name)+' · '+esc(p.status)+'</span>').join('')+'<span class="chip">'+esc(x.risk)+' risk</span><span class="chip">~'+esc(x.context_cost)+' tokens</span></div></div><div class="acts">'+(x.installed?'':'<button onclick="add(\\''+x.capability_id+'\\')">添加</button>')+'<button class="ghost" onclick="tryCap(\\''+x.capability_id+'\\')">试用</button></div></article>').join(''):'<div class="empty">没有匹配结果。试试描述目标、对象和动作。</div>'}
 async function add(id){await fetch('/api/add',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({capability_id:id})});await search()}
-async function owned(){results.className='grid';const r=await fetch('/api/state'),d=await r.json();const cards=d.managed_capabilities.length?d.managed_capabilities.map(x=>'<article class="card"><div><div class="id">CAP MANAGED</div><h3>'+esc(x)+'</h3></div></article>').join(''):'<div class="empty">还没有 CAP Managed 能力。</div>';results.innerHTML='<section class="health-head"><h2>My Capabilities</h2><p class="lead">已登记到 CAP Registry 的 Capability。Agent 通过 cap.use 调用，而不是直接暴露全部工具。</p></section>'+cards}
+async function tryCap(id){await fetch('/api/try',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({capability_id:id,input:{}})});await search()}
+async function cleanupCap(id){await fetch('/api/cleanup',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({capability_id:id})});await owned()}
+async function owned(){results.className='grid';const r=await fetch('/api/state'),d=await r.json();const trials=new Set((d.trial_bindings||[]).map(x=>x.capability_id));const cards=d.managed_capabilities.length?d.managed_capabilities.map(x=>'<article class="card"><div><div class="id">CAP MANAGED'+(trials.has(x)?' · trial':'')+'</div><h3>'+esc(x)+'</h3></div>'+(trials.has(x)?'<button class="ghost" onclick="cleanupCap(\\''+x+'\\')">清理试用</button>':'')+'</article>').join(''):'<div class="empty">还没有 CAP Managed 能力。</div>';results.innerHTML='<section class="health-head"><h2>My Capabilities</h2><p class="lead">已登记到 CAP Registry 的 Capability。Agent 通过 cap.use 调用，而不是直接暴露全部工具。试用绑定可用「清理试用」去掉，并保留本地匿名结果。</p></section>'+cards}
 function shortPath(file){if(!file)return '';const parts=String(file).replace(/\\\\/g,'/').split('/').filter(Boolean);if(parts[0]==='home'||parts[0]==='Users')return '~/'+parts.slice(2).join('/');return parts.slice(-2).join('/');}
 async function hydrateHero(){try{const d=await (await fetch('/api/inspect')).json();const p=d.pressure||{},s=d.summary||{};document.querySelector('#hero-metric').innerHTML='<div class="meta">健康分数</div><b>'+esc(p.healthScore??'—')+'</b><div>'+(p.band==='unknown'?'无法计算':('常驻占用 '+esc(p.percent)+'%'))+' · '+tok(s.contextTokens)+' 常驻 · '+tok(s.reclaimableTokens)+' 可回收</div>'}catch{}}
 async function health(){results.className='';const d=await (await fetch('/api/inspect')).json();const s=d.summary||{},p=d.pressure||{},b=d.budget||{};
@@ -155,6 +158,14 @@ export function createWebServer(options = {}) {
       if (request.method === 'POST' && url.pathname === '/api/include') {
         const input = await body(request);
         return send(response, 200, await includeProvider(input.provider ?? input.name ?? input.provider_id, options));
+      }
+      if (request.method === 'POST' && url.pathname === '/api/try') {
+        const input = await body(request);
+        return send(response, 200, await tryCapability(input.capability_id, input.input ?? {}, {...options, provider: input.provider_id ?? input.provider}));
+      }
+      if (request.method === 'POST' && url.pathname === '/api/cleanup') {
+        const input = await body(request);
+        return send(response, 200, await cleanupTrial(input.capability_id, options));
       }
       return send(response, 404, {error: 'Not found'});
     } catch (error) {

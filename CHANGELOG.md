@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Try mode (USE-11)
+
+- **`cap try` / `cap cleanup` are a local trial path.** Try runs a seed, local-skill, or already-managed Provider through a temporary ManagedBinding (same executors as `cap.use`) and does **not** write Agent configs — not Direct Exposure. Cleanup removes that trial binding and any Registry `mcp_bindings` launch copy the trial created, and keeps an anonymous local outcome record (`try` / `use` Activity rows with `anonymous` + `local`; no input, env, or remote telemetry).
+- **`cap add` during a trial promotes it** to a persistent ManagedBinding. Cleanup then keeps the binding and still retains the outcome. Ordinary `cap.use` without try stays a persistent implicit add.
+- Remote public-catalog download/try is refused until Phase 3 ACQ-*. Local SKILL.md files are never deleted. Web: `POST /api/try` and `/api/cleanup`. Default MCP tools stay `cap.search` / `cap.add` / `cap.use`. See [docs/try-mode.md](./docs/try-mode.md).
+
 ### Pin / exclude (REC-06)
 
 - **`cap pin` / `cap unpin` are first-class Direct Exposure controls.** Pin keeps or writes a JSON MCP Provider into Agent config so inspect/Health show `status: direct` with `pinned: true`. Unpin migrates that JSON entry into Registry `external_providers` and restores non-resident CAP-managed behavior. Implicit `add` / `use` still do not pin.

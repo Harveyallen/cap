@@ -75,7 +75,7 @@ Do not connect to third-party MCP to “verify” savings. The validation loop i
 | Two or more viable hits | Present existing metadata and wait for the user to choose before acquire / first use. |
 | Weak or empty match | Say so. Do not invent a Provider. |
 
-Do not describe implicit `use` as Direct Exposure, pin, or “installed into the Agent.”
+Do not describe implicit `use` as Direct Exposure, pin, or “installed into the Agent.” `cap try` is a temporary ManagedBinding; `cap cleanup` removes it without Direct Exposure. Keep the anonymous local outcome; do not imply remote telemetry. Remote catalog try is Phase 3.
 
 ## Inspect labels ↔ glossary (INV-07)
 

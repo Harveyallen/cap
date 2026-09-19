@@ -48,6 +48,10 @@ _Avoid_: Install, favorite, add, Acquisition
 A user mark that omits a Provider from Optimization Plan recommendations without uninstalling it.
 _Avoid_: Disable, delete, unpin, uninstall
 
+**Trial**:
+A temporary ManagedBinding created by explicit `cap try`. `cap cleanup` removes that binding (and any Registry launch copy the trial created) while keeping an anonymous local outcome record. It is not Direct Exposure and not remote product telemetry. Remote catalog asset download waits for Phase 3.
+_Avoid_: Pin, download, anonymous product telemetry, uninstall
+
 **Invoked**:
 The state of a CAP-managed Provider that has been executed for a task.
 _Avoid_: Installed, acquired, used (when that means resident)
@@ -83,7 +87,7 @@ A task-specific decision about which Capabilities to load versus defer. The curr
 _Avoid_: Auto-prune, restore, optimize apply
 
 **Activity**:
-The local Registry record of CAP-mediated search, selection, invocation, outcome, and time. It is not anonymous product telemetry, and it does not by itself create a frequency verdict.
+The local Registry record of CAP-mediated search, selection, invocation, outcome, and time. It is not anonymous product telemetry, and it does not by itself create a frequency verdict. Try/cleanup outcomes stay in this local ledger.
 _Avoid_: Telemetry, log, Observation Period
 
 **Local Inventory**:

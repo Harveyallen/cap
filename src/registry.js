@@ -50,7 +50,7 @@ export async function loadState(options = {}) {
     return JSON.parse(await fs.readFile(statePath, 'utf8'));
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    return {version: 1, managed_capabilities: [], managed_providers: [], external_providers: [], mcp_bindings: {}, pinned_providers: [], excluded_providers: [], activity: []};
+    return {version: 1, managed_capabilities: [], managed_providers: [], external_providers: [], mcp_bindings: {}, pinned_providers: [], excluded_providers: [], trial_bindings: [], activity: []};
   }
 }
 
@@ -151,8 +151,21 @@ export async function addCapability(capabilityId, providerId, options = {}) {
       launch = undefined;
     }
   }
+  state.trial_bindings ??= [];
+  if (!options.trial) {
+    for (const row of state.trial_bindings) {
+      if (row.capability_id === capabilityId) {
+        row.promoted = true;
+        row.created_capability = false;
+        row.created_provider = false;
+        row.created_binding = false;
+      }
+    }
+  }
   maybeRecordSelect(state, capabilityId);
-  pushActivity(state, {action: 'add', capability_id: capabilityId, provider_id: selected, success: true});
+  if (!options.trial) {
+    pushActivity(state, {action: 'add', capability_id: capabilityId, provider_id: selected, success: true});
+  }
   const statePath = await saveState(state, options);
   const schema = await resolveInputSchema(capability, {...options, provider, state, launch});
   return {
