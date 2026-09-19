@@ -217,7 +217,7 @@ export async function inspectLocal(options = {}) {
   ]);
   const items = batches.flat();
   const state = await loadState(options);
-  const managedNames = new Set(state.external_providers.map((item) => item.name));
+  const managedNames = new Set((state.external_providers ?? []).map((item) => item.name));
   for (const item of items) {
     if (managedNames.has(item.name) && !item.capSurface) item.direct = false;
     decorate(item);

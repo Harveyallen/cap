@@ -191,8 +191,11 @@ function observationState({startDaysAgo, sessionDaysAgo, extra = []}) {
     ...extra
   ];
   return {
+    version: 1,
     managed_capabilities: ['git.repository.status', 'github.pr.review'],
     managed_providers: ['builtin.git', 'github.mcp'],
+    external_providers: [],
+    mcp_bindings: {},
     observation_started_at: start,
     activity
   };
