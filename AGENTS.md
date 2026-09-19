@@ -28,6 +28,7 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/setup.js` | `cap setup`: install persistent CLI launchers, write CAP MCP + Context Health Skill, then inspect |
 | `src/optimize.js` | Preview / apply MCP consolidation (JSON + dotted-table Codex TOML; keeps `cap-mcp`) and index local skills |
 | `src/codex-toml.js` | Codex `config.toml` MCP parse / format safety / table removal (setup, inspect, bind, optimize) |
+| `src/pin.js` | Pin / unpin Direct Exposure; exclude / include optimize recommendations |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
 | `src/mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection |
 | `src/web-server.js` | Local Discover UI + JSON APIs |
@@ -52,6 +53,8 @@ node ./bin/cap.js search "分析 PostgreSQL 慢查询" --json
 node ./bin/cap.js inject "分析 PostgreSQL 慢查询" --json
 node ./bin/cap.js add git.repository.status
 node ./bin/cap.js use git.repository.status --input '{"path":"."}' --json
+node ./bin/cap.js pin github --json
+node ./bin/cap.js exclude postgres --json
 node ./bin/cap.js optimize
 node ./bin/cap-mcp.js   # stdio MCP; optional CAP_MCP_INSPECT=1 / CAP_MCP_INJECT=1
 ```
@@ -71,7 +74,7 @@ Project `.mcp.json` uses a relative `./bin/cap-mcp.js` path. Start the MCP serve
 - `loadCatalog`
 - `loadState`
 
-Registry writes, optimize apply, MCP/web server starters, Value Analysis (`profiler.js`), and Dynamic Injection (`planInjection` in `inject.js`) stay in their modules. Do not re-export them from the package root.
+Registry writes, pin/exclude, optimize apply, MCP/web server starters, Value Analysis (`profiler.js`), and Dynamic Injection (`planInjection` in `inject.js`) stay in their modules. Do not re-export them from the package root.
 
 ## Always do
 
@@ -112,7 +115,7 @@ Builtin executors live in `src/use.js` and only apply to providers with `executa
 ## Security
 
 - Registry files: directory `0700`, file `0600`.
-- `optimize --apply --yes` must backup each mutated JSON or Codex TOML file to `*.cap-backup` before clearing MCP servers. Refuse unsupported layouts instead of rewriting them.
+- `optimize --apply --yes` must backup each mutated JSON or Codex TOML file to `*.cap-backup` before clearing MCP servers. Refuse unsupported layouts instead of rewriting them. `cap pin` / `cap unpin` use the same backup before writing or removing a JSON MCP entry.
 - Spawn builtins and downstream MCP with `shell: false`.
 - Do not log secrets from capability inputs or MCP `env`.
 

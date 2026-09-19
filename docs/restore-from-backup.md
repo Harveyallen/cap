@@ -7,6 +7,8 @@ Restore for supported optimize paths is a **file copy**, not a Restore CLI or UI
 - JSON MCP: `mcpServers` / `mcp_servers` (Claude Code, Cursor, project `.mcp.json`)
 - Codex TOML: dotted-table `[mcp_servers.name]` (and that server’s `[mcp_servers.name.env]`)
 
+`cap pin` / `cap unpin` use the same sibling pattern when they write or remove a JSON MCP Direct Exposure entry.
+
 Unsupported layouts (JSON `mcp.servers`, Codex inline-table / `[mcp_servers]` / `[mcp.servers.*]`) are refused and are not part of this path. Matrix: [compatibility.md](./compatibility.md).
 
 ## Backup path pattern

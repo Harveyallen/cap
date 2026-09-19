@@ -50,7 +50,7 @@ export async function loadState(options = {}) {
     return JSON.parse(await fs.readFile(statePath, 'utf8'));
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    return {version: 1, managed_capabilities: [], managed_providers: [], external_providers: [], mcp_bindings: {}, activity: []};
+    return {version: 1, managed_capabilities: [], managed_providers: [], external_providers: [], mcp_bindings: {}, pinned_providers: [], excluded_providers: [], activity: []};
   }
 }
 

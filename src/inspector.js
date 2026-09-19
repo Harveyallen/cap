@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { defaultMcpJsonConfigs } from './mcp-bind.js';
 import { listCodexMcpServers } from './codex-toml.js';
+import { matchesPreference } from './pin.js';
 import { loadCatalog, loadState } from './registry.js';
 import { defaultSkillRoots, walkSkillFiles } from './skills.js';
 import { exposedCapTools, isCapMcpConfig } from './mcp-tools.js';
@@ -217,7 +218,9 @@ export async function inspectLocal(options = {}) {
   const state = await loadState(options);
   const managedNames = new Set((state.external_providers ?? []).map((item) => item.name));
   for (const item of items) {
-    if (managedNames.has(item.name) && !item.capSurface) item.direct = false;
+    item.pinned = matchesPreference(state.pinned_providers, item.name);
+    item.excluded = matchesPreference(state.excluded_providers, item.name);
+    if (managedNames.has(item.name) && !item.capSurface && !item.pinned) item.direct = false;
     decorate(item);
   }
   const grouped = items.filter((item) => item.kind !== 'warning').reduce((all, item) => {
@@ -234,7 +237,7 @@ export async function inspectLocal(options = {}) {
   const contextTokens = direct.reduce((sum, item) => sum + item.contextTokens, 0);
   const capSurface = inventory.some((item) => item.capSurface);
   const capEntryTools = exposedCapTools(options).length;
-  const migrateable = direct.filter((item) => item.kind === 'mcp' && !item.capSurface);
+  const migrateable = direct.filter((item) => item.kind === 'mcp' && !item.capSurface && !item.pinned && !item.excluded);
   const migrateableTools = migrateable.reduce((sum, item) => sum + item.toolCount, 0);
   const recommendations = migrateable
     .map((item) => ({provider: item.name, action: 'Move to CAP', source: item.source, estimatedTokensSaved: item.contextTokens}))
@@ -272,7 +275,9 @@ export async function inspectLocal(options = {}) {
       estimatedReductionPercent: migrateableTools > capEntryTools ? Math.round((1 - capEntryTools / migrateableTools) * 100) : 0,
       profilerTracked: profiler.tracked,
       profilerUsed: profiler.used,
-      observationReady: profiler.observation.ready
+      observationReady: profiler.observation.ready,
+      pinned: inventory.filter((item) => item.pinned).length,
+      excluded: inventory.filter((item) => item.excluded).length
     },
     budget,
     pressure,

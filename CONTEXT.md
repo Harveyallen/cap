@@ -40,6 +40,14 @@ _Avoid_: Installed, enabled, Invoked, Direct Exposure
 The state of a Provider definition made resident in an Agent’s context. Pinning or resident configuration is Direct Exposure; Acquisition is not.
 _Avoid_: Installed, Acquisition, CAP-managed
 
+**Pin**:
+The explicit user action that makes or keeps a Provider as Direct Exposure. Unpin restores CAP-managed, non-resident behavior.
+_Avoid_: Install, favorite, add, Acquisition
+
+**Exclude**:
+A user mark that omits a Provider from Optimization Plan recommendations without uninstalling it.
+_Avoid_: Disable, delete, unpin, uninstall
+
 **Invoked**:
 The state of a CAP-managed Provider that has been executed for a task.
 _Avoid_: Installed, acquired, used (when that means resident)

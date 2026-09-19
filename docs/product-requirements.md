@@ -307,7 +307,7 @@ If the Agent cannot execute local commands, it provides one copyable official in
 | REC-03 | 1 | P0 | Never label low-frequency until the Observation Period is satisfied. | Ready only after **14 UTC days and 3 activity days** ([ADR 0003](./adr/0003-observation-period-readiness.md)). Until then `frequencyVerdicts` is `false`. `underused` is a value signal only; copy must not say remove. | — |
 | REC-04 | 2 | P1 | Observation Period default is 14 days; validate before calling it final. | **Kept at 14 UTC days** plus a 3-activity-day evidence floor. 7 days is too short for weekly tools; 30 days delays advice without extra quality. | — |
 | REC-05 | 2 | P1 | Explain cost, duplication, usage, and recency signals separately. | After readiness, `profiler.advice[]` lists those four signals and `prefer_on_demand`. Never unused→remove. | — |
-| REC-06 | 2 | — | Let users pin a Provider resident or exclude it from recommendations. | Not a first-class pin UX. | Pin = Direct Exposure. |
+| REC-06 | 2 | — | Let users pin a Provider resident or exclude it from recommendations. | `cap pin` / `unpin` / `exclude` / `include` plus Web Health. Pin is Direct Exposure; unpin restores CAP-managed. Default MCP tools stay search/add/use. Optimize apply skips pinned/excluded JSON and dotted-table TOML. | Pin write-back is JSON. |
 | REC-07 | 1 | P0 | Never recommend the CAP surface itself for removal. | `cap-mcp` is excluded from Move → CAP. | — |
 | REC-08 | 1 | P0 | Beside every optimize call to action, say what is backed up (timestamped `.cap-backup`), how to recover from that file, and that one-click Restore is not claimed. | README + [restore-from-backup.md](./restore-from-backup.md) + onboarding template. | — |
 
