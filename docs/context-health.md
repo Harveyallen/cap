@@ -179,7 +179,7 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
 }
 ```
 
-`summary` 增加 `warnings`、`managed`、`reclaimableTokens`、`capSurface`、`pinned`、`excluded`。每条 inventory item 可带 `pinned` / `excluded`。Pin 的 MCP 保持 Direct Exposure，不进入 Move → CAP；Exclude 的项仍在清单里，但不进入 `recommendations` / `optimize --apply` / `profiler.underused`。`reclaimableTokens` 是把 **非 CAP** Direct MCP 迁到 CAP 后可回收的毛估，**不含** `cap-mcp` 自身。识别规则是启动命令/参数指向 `cap-mcp` / `cap-mcp.js`，不是服务器名叫 `cap`。对 CAP surface：用已知入口工具 schema 估价（默认 3；`CAP_MCP_INSPECT=1` 加 inspect，`CAP_MCP_INJECT=1` 加 inject），`status: "cap"`，`toolCountEstimated: false`。第三方 MCP 仍不连接，工具数继续是 minimum estimate。
+`summary` 增加 `warnings`、`managed`、`reclaimableTokens`、`capSurface`、`capSurfaces`、`overlapGroups`、`pinned`、`excluded`。每条 inventory item 可带 `pinned` / `excluded` / `scope` (`user` | `project` / `shared` / `plugin`) / `reasons`。Pin 的 MCP 保持 Direct Exposure，不进入 Move → CAP；Exclude 的项仍在清单里，但不进入 `recommendations` / `optimize --apply` / `profiler.underused`。`overlaps[]` 是 Skill name+description 的有界 token 重叠（不是向量检索）。同一 Agent 上多个 `cap-mcp` 进入 `duplicates` 且 `reason: cap-surface`。`cap inspect` / `GET /api/inspect` 可用 `--agent` `--scope` `--type` `--status` `--source` `--cost-min` `--cost-max` `--reason` 筛选清单；`summary` / pressure 仍是全量。`reclaimableTokens` 是把 **非 CAP** Direct MCP 迁到 CAP 后可回收的毛估，**不含** `cap-mcp` 自身。识别规则是启动命令/参数指向 `cap-mcp` / `cap-mcp.js`，不是服务器名叫 `cap`。对 CAP surface：用已知入口工具 schema 估价（默认 3；`CAP_MCP_INSPECT=1` 加 inspect，`CAP_MCP_INJECT=1` 加 inject），`status: "cap"`，`toolCountEstimated: false`。第三方 MCP 仍不连接，工具数继续是 minimum estimate。
 
 每条 inventory item 增加 `status`（`direct` | `managed` | `estimated` | `cap`）和 `cost`。人体标签映射到 [CONTEXT.md](../CONTEXT.md)：`direct` / `estimated` = Direct Exposure，`managed` = CAP-managed，`cap` = CAP Surface。项目 `.mcp.json` 的 `agent` 为 `Project`（Cursor 与 Claude Code 都会读）。扫描路径与 OS 验证注记见 [compatibility.md](./compatibility.md)。Agent 用语见 [agent-onboarding.md](./agent-onboarding.md)。JSON 优化备份恢复见 [restore-from-backup.md](./restore-from-backup.md)。
 
@@ -191,6 +191,7 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
 cap setup --agent auto
 cap inspect
 cap inspect --json
+cap inspect --type skill --reason overlap --json
 CAP_NOMINAL_WINDOW=1000000 cap inspect --json
 cap inject "分析 PostgreSQL 慢查询"
 cap inject "分析 PostgreSQL 慢查询" --json

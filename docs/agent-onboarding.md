@@ -13,7 +13,21 @@ A local visual report is **optional** and must not block CLI-only installs:
 - If `cap web` is already running, include `http://127.0.0.1:4173` (Health tab).
 - If it is not running, mention that `cap web` serves that URL. Do not start it unless the user wants the page. Do not treat a missing URL as install failure.
 
-Human `cap inspect` prints the same default URL as a next step. `cap inspect --json` remains the machine source.
+Human `cap inspect` prints the same default URL as a next step. `cap inspect --json` remains the machine source. Filter the listing with `--agent` / `--scope` / `--type` / `--status` / `--source` / `--cost-min` / `--cost-max` / `--reason` (INV-10); health tiles stay the full report.
+
+## Existing install (ONB-09)
+
+Re-running `cap setup` on a compatible CAP install must **reuse and upgrade**, not add a second CAP surface.
+
+| Situation | Agent does |
+|---|---|
+| `cap-mcp` already present (name `cap` or another name) | Report reuse. Do not add another MCP server. Setup upgrades the keeper launch and may print 复用 / 升级. |
+| Extra `cap-mcp` entries in the same Agent JSON/TOML | Setup removes extras after `.cap-backup`. JSON `install.deduped` lists removed names. |
+| Marked `cap` / `cap-mcp` launchers already on PATH | Setup updates those files; it does not install a second copy in another bin. |
+| Project `.mcp.json` also has `cap-mcp` | Inspect may list it (agent `Project`). Setup does not strip project dogfood. |
+
+After setup, inspect `summary.capSurfaces` for that Agent should be 1 in the mutated user config. Same-Agent extras remaining elsewhere show as `duplicates` with `reason: cap-surface`.
+
 
 ## Partial scan (ONB-07)
 
@@ -91,6 +105,8 @@ Do not describe implicit `use` as Direct Exposure, pin, or “installed into the
 | item `status: cap` / CLI `CAP Surface` | CAP Surface | `cap-mcp` entry tools. |
 | item `pinned: true` / CLI `pinned` | Pin → Direct Exposure | Kept or written as resident JSON MCP. Not a Move → CAP candidate. |
 | item `excluded: true` / CLI `excluded` | Exclude | Hidden from optimize recommendations; not uninstalled. |
+| item `scope` | user / project / shared / plugin | From scan path. Plugin trees and `.agents/skills` are not “user home MCP”. |
+| item `reasons` | duplicate / overlap / migrate / pinned / excluded / cap-surface | Why the row is notable. Overlap is the INV-06 heuristic, not a path/name dupe. |
 | search `[CAP Managed]` / `installed: true` | CAP-managed | Registry `managed_capabilities`. |
 | search `[Available]` / `[Local skill]` | discovered, not acquired | Not Direct Exposure. First `use` may acquire. |
 | `profiler.underused` | Value Analysis signal | **Not** a low-frequency label. **Not** a remove recommendation in Phase 1. |

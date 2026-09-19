@@ -142,7 +142,7 @@ Capability 描述“能完成什么”，Provider 描述“由谁实现”。同
 | 命令 | 用途 | 是否修改状态 |
 |---|---|---|
 | `cap setup` | 安装命令、接入 Agent 并索引本地 Skills | 是，写入前备份 |
-| `cap inspect` | 检查 MCP、Skills 和上下文占用 | 否，只读扫描 |
+| `cap inspect` | 检查 MCP、Skills 和上下文占用；可按 Agent / scope / type / status / cost / reason 筛选清单 | 否，只读扫描 |
 | `cap search <任务>` | 搜索种子 Capability 与本地 Skills | 否 |
 | `cap inject <任务>` | 生成最小能力装载计划 | 否，只生成计划 |
 | `cap add <id>` | 将能力与 Provider 加入 CAP（显式启用） | 是，更新 Registry |

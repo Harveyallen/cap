@@ -3,11 +3,11 @@ import { constants } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { listCodexMcpServers, removeCodexMcpServers, codexFormatSafety, codexWriteSafety } from './codex-toml.js';
 import { inspectLocal } from './inspector.js';
 import { isCapMcpConfig } from './mcp-tools.js';
 import { packageRoot, packageVersion } from './paths.js';
 import { registerLocalSkills } from './registry.js';
-import { codexWriteSafety } from './codex-toml.js';
 
 export {codexWriteSafety};
 
@@ -158,33 +158,63 @@ async function launcherOwned(file) {
   }
 }
 
+async function findMarkedLaunchers(options, specs) {
+  const found = [];
+  for (const dir of pathEntries(options.env ?? process.env)) {
+    if (unsafeBinDirectory(dir)) continue;
+    for (const spec of specs) {
+      const file = path.join(dir, spec.name);
+      try {
+        const text = await fs.readFile(file, 'utf8');
+        if (text.includes(LAUNCHER_MARKER)) found.push({file, spec, previous: text});
+      } catch {
+        /* missing */
+      }
+    }
+  }
+  return found;
+}
+
+async function writeLauncher(file, text) {
+  const temp = `${file}.cap-tmp`;
+  await fs.writeFile(temp, text, {mode: 0o755});
+  await fs.chmod(temp, 0o755);
+  await fs.rename(temp, file);
+}
+
 async function installCliLaunchers(options = {}) {
   if (options.installCli === false) return {installed: false, skipped: true, reason: 'disabled'};
-  const location = await resolveBinDirectory(options);
-  await fs.mkdir(location.dir, {recursive: true});
   const specs = launcherSpecs(options);
+  const marked = await findMarkedLaunchers(options, specs);
+  const location = await resolveBinDirectory(options);
   const conflicts = [];
   const installed = [];
-  for (const spec of specs) {
-    const file = path.join(location.dir, spec.name);
-    if (!await launcherOwned(file)) {
-      conflicts.push(file);
+  const upgraded = [];
+  const targets = marked.length
+    ? marked
+    : specs.map((spec) => ({file: path.join(location.dir, spec.name), spec, previous: null}));
+  const binDir = marked.length ? path.dirname(marked[0].file) : location.dir;
+  if (!marked.length) await fs.mkdir(location.dir, {recursive: true});
+  const onPath = marked.length ? true : location.onPath;
+  for (const target of targets) {
+    if (target.previous == null && !await launcherOwned(target.file)) {
+      conflicts.push(target.file);
       continue;
     }
-    const temp = `${file}.cap-tmp`;
-    await fs.writeFile(temp, spec.text, {mode: 0o755});
-    await fs.chmod(temp, 0o755);
-    await fs.rename(temp, file);
-    installed.push(file);
+    await writeLauncher(target.file, target.spec.text);
+    installed.push(target.file);
+    if (target.previous && target.previous !== target.spec.text) upgraded.push(target.file);
   }
-  const pathCommand = location.onPath ? null : `export PATH=${shellQuote(location.dir)}:"$PATH"`;
+  const pathCommand = onPath ? null : `export PATH=${shellQuote(binDir)}:"$PATH"`;
   return {
     installed: installed.length > 0,
     paths: installed,
     conflicts,
-    binDir: location.dir,
-    onPath: location.onPath,
+    binDir,
+    onPath,
     pathCommand,
+    reused: marked.length > 0,
+    upgraded: upgraded.length > 0,
     command: installed.some((file) => path.basename(file) === 'cap') ? 'cap' : null
   };
 }
@@ -193,17 +223,41 @@ function tomlString(value) {
   return `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
 
-export function renderCodexSnippet(launch = capMcpLaunch()) {
+export function renderCodexSnippet(launch = capMcpLaunch(), name = SERVER_NAME) {
   const args = launch.args.map(tomlString).join(', ');
   return [
-    `[mcp_servers.${SERVER_NAME}]`,
+    `[mcp_servers.${name}]`,
     `command = ${tomlString(launch.command)}`,
     `args = [${args}]`,
     '',
-    `[mcp_servers.${SERVER_NAME}.env]`,
+    `[mcp_servers.${name}.env]`,
     'CAP_MCP_INSPECT = "1"',
     ''
   ].join('\n');
+}
+
+function sameMcpLaunch(config = {}, launch = {}) {
+  if (config.command !== launch.command) return false;
+  if (JSON.stringify(config.args ?? []) !== JSON.stringify(launch.args ?? [])) return false;
+  const want = launch.env ?? {};
+  const have = config.env ?? {};
+  return Object.entries(want).every(([key, value]) => have[key] === value);
+}
+
+function capServerEntries(servers = {}) {
+  return Object.entries(servers)
+    .filter(([, config]) => isCapMcpConfig(config))
+    .map(([name, config]) => ({name, config}));
+}
+
+function pickCapKeeper(entries) {
+  return entries.find((item) => item.name === SERVER_NAME) ?? entries[0];
+}
+
+async function claudeConfigFiles(options) {
+  if (options.claudeConfig) return [options.claudeConfig];
+  const home = homeOf(options);
+  return [path.join(home, '.claude.json'), path.join(home, '.claude', 'settings.json')];
 }
 
 export async function detectAgents(options = {}) {
@@ -237,25 +291,46 @@ function skillPath(root, name = 'cap-context-health') {
 }
 
 async function writeClaudeMcp(options, launch, writes, skipped) {
-  const file = await resolveClaudeConfigPath(options);
-  let value = {};
-  let existed = false;
-  try {
-    const text = await fs.readFile(file, 'utf8');
-    existed = true;
-    value = JSON.parse(text);
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      skipped.push({path: file, reason: error.message ?? 'unreadable-json'});
-      return;
+  const files = await claudeConfigFiles(options);
+  const loaded = [];
+  for (const file of files) {
+    let value = {};
+    let existed = false;
+    try {
+      const text = await fs.readFile(file, 'utf8');
+      existed = true;
+      value = JSON.parse(text);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        skipped.push({path: file, reason: error.message ?? 'unreadable-json'});
+        continue;
+      }
+      if (options.claudeConfig && file === options.claudeConfig) {
+        loaded.push({file, value, key: 'mcpServers', servers: {}, existed: false});
+      }
+      continue;
     }
+    const key = value.mcpServers ? 'mcpServers' : value.mcp_servers ? 'mcp_servers' : 'mcpServers';
+    const servers = value[key] && typeof value[key] === 'object' ? {...value[key]} : {};
+    loaded.push({file, value, key, servers, existed});
   }
-  const key = value.mcpServers ? 'mcpServers' : value.mcp_servers ? 'mcp_servers' : 'mcpServers';
-  const servers = value[key] && typeof value[key] === 'object' ? {...value[key]} : {};
-  if (isCapMcpConfig(servers[SERVER_NAME])) {
-    skipped.push({path: file, reason: 'already-installed'});
+
+  const withCap = loaded.filter((entry) => capServerEntries(entry.servers).length);
+  if (withCap.length) {
+    const preferred = withCap.find((entry) => capServerEntries(entry.servers).some((item) => item.name === SERVER_NAME)) ?? withCap[0];
+    await reconcileJsonCap(preferred, launch, writes, skipped);
+    for (const extra of withCap.filter((entry) => entry.file !== preferred.file)) {
+      await stripJsonCapServers(extra, writes);
+    }
     return;
   }
+
+  const file = options.claudeConfig ?? loaded[0]?.file ?? await resolveClaudeConfigPath(options);
+  const existing = loaded.find((entry) => entry.file === file);
+  const value = existing?.value ?? {};
+  const existed = Boolean(existing?.existed);
+  const key = existing?.key ?? (value.mcpServers ? 'mcpServers' : value.mcp_servers ? 'mcp_servers' : 'mcpServers');
+  const servers = existing?.servers ?? (value[key] && typeof value[key] === 'object' ? {...value[key]} : {});
   if (servers[SERVER_NAME] && !isCapMcpConfig(servers[SERVER_NAME])) {
     skipped.push({path: file, reason: 'name-conflict'});
     return;
@@ -264,7 +339,41 @@ async function writeClaudeMcp(options, launch, writes, skipped) {
   servers[SERVER_NAME] = launch;
   value[key] = servers;
   await writeAtomic(file, `${JSON.stringify(value, null, 2)}\n`);
-  writes.push({path: file, kind: 'mcp', agent: 'claude', backup});
+  writes.push({path: file, kind: 'mcp', agent: 'claude', backup, removed: []});
+}
+
+async function stripJsonCapServers(entry, writes) {
+  const caps = capServerEntries(entry.servers);
+  if (!caps.length) return;
+  const backup = await backupIfExists(entry.file);
+  for (const item of caps) delete entry.servers[item.name];
+  entry.value[entry.key] = entry.servers;
+  await writeAtomic(entry.file, `${JSON.stringify(entry.value, null, 2)}\n`);
+  writes.push({
+    path: entry.file, kind: 'mcp', agent: 'claude', backup,
+    reused: true, upgraded: false, removed: caps.map((item) => item.name)
+  });
+}
+
+async function reconcileJsonCap(entry, launch, writes, skipped) {
+  const {file, value, key, servers} = entry;
+  const caps = capServerEntries(servers);
+  const keeper = pickCapKeeper(caps);
+  const extras = caps.filter((item) => item.name !== keeper.name).map((item) => item.name);
+  const same = sameMcpLaunch(keeper.config, launch);
+  if (same && extras.length === 0) {
+    skipped.push({path: file, reason: 'already-installed', reused: true});
+    return;
+  }
+  const backup = await backupIfExists(file);
+  servers[keeper.name] = launch;
+  for (const name of extras) delete servers[name];
+  value[key] = servers;
+  await writeAtomic(file, `${JSON.stringify(value, null, 2)}\n`);
+  writes.push({
+    path: file, kind: 'mcp', agent: 'claude', backup,
+    reused: true, upgraded: !same, removed: extras, keeper: keeper.name
+  });
 }
 
 async function writeCodexMcp(options, launch, writes, skipped, manual) {
@@ -279,9 +388,35 @@ async function writeCodexMcp(options, launch, writes, skipped, manual) {
       return;
     }
   }
+  const format = codexFormatSafety(text);
+  if (!format.ok) {
+    manual.push({path: file, reason: format.reason, snippet: renderCodexSnippet(launch)});
+    return;
+  }
+  const servers = text ? listCodexMcpServers(text) : [];
+  const caps = servers.filter((server) => isCapMcpConfig(server.config, server.block));
+  if (caps.length) {
+    const keeper = pickCapKeeper(caps);
+    const extras = caps.filter((item) => item.name !== keeper.name).map((item) => item.name);
+    const same = sameMcpLaunch(keeper.config, launch);
+    if (same && extras.length === 0) {
+      skipped.push({path: file, reason: 'already-installed', reused: true});
+      return;
+    }
+    const backup = text != null ? await backupIfExists(file) : null;
+    let next = removeCodexMcpServers(text ?? '', [keeper.name, ...extras]);
+    if (next && !next.endsWith('\n')) next += '\n';
+    next = `${next}${next.endsWith('\n\n') || !next.trim() ? '' : '\n'}${renderCodexSnippet(launch, keeper.name)}`;
+    await writeAtomic(file, next);
+    writes.push({
+      path: file, kind: 'mcp', agent: 'codex', backup,
+      reused: true, upgraded: !same, removed: extras, keeper: keeper.name
+    });
+    return;
+  }
   const safety = codexWriteSafety(text);
   if (safety.already) {
-    skipped.push({path: file, reason: 'already-installed'});
+    skipped.push({path: file, reason: 'already-installed', reused: true});
     return;
   }
   if (!safety.ok) {
@@ -291,7 +426,7 @@ async function writeCodexMcp(options, launch, writes, skipped, manual) {
   const backup = text != null ? await backupIfExists(file) : null;
   const prefix = text && !text.endsWith('\n') ? `${text}\n\n` : text ? `${text}${text.endsWith('\n\n') ? '' : '\n'}` : '';
   await writeAtomic(file, `${prefix}${renderCodexSnippet(launch)}`);
-  writes.push({path: file, kind: 'mcp', agent: 'codex', backup});
+  writes.push({path: file, kind: 'mcp', agent: 'codex', backup, removed: []});
 }
 
 async function writeSkill(root, writes) {
@@ -322,5 +457,13 @@ export async function setupCap(options = {}) {
 
   const skills = await registerLocalSkills(options);
   const inspection = await inspectLocal(options);
-  return {agent, targets, launch, cli, writes, skipped, manual, skills, inspection};
+  const removed = writes.flatMap((item) => item.removed ?? []);
+  const install = {
+    compatible: inspection.items.some((item) => item.capSurface) || writes.some((item) => item.kind === 'mcp'),
+    reused: Boolean(cli.reused || writes.some((item) => item.reused) || skipped.some((item) => item.reused || item.reason === 'already-installed')),
+    upgraded: Boolean(cli.upgraded || writes.some((item) => item.upgraded)),
+    deduped: removed,
+    surfaces: inspection.items.filter((item) => item.capSurface).length
+  };
+  return {agent, targets, launch, cli, writes, skipped, manual, skills, inspection, install};
 }

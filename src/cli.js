@@ -1,7 +1,7 @@
 /** CLI command routing and human/JSON formatting. */
 import os from 'node:os';
 import path from 'node:path';
-import { inspectLocal } from './inspector.js';
+import { inspectLocal, parseInspectFilters } from './inspector.js';
 import { searchCapabilities } from './search.js';
 import { addCapability, loadState } from './registry.js';
 import { useCapability } from './use.js';
@@ -18,7 +18,7 @@ const help = `CAP ${packageVersion()} — Capability & Context Control Plane
 
 Usage:
   cap setup [--agent auto|claude|codex] [--json]
-  cap inspect [--json]
+  cap inspect [--json] [--agent <name>] [--scope user|project|shared|plugin] [--type mcp|skill] [--status direct|estimated|managed|cap] [--source <substr>] [--cost-min <n>] [--cost-max <n>] [--reason duplicate|overlap|migrate|pinned|excluded|cap-surface]
   cap search <task> [--json]
   cap inject <task> [--json]
   cap add <capability-id> [--provider <provider-id>] [--server <mcp-name>] [--json]
@@ -38,6 +38,19 @@ Usage:
 function flag(args, name) {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : undefined;
+}
+
+function inspectFlags(args) {
+  return parseInspectFilters({
+    agent: flag(args, '--agent'),
+    scope: flag(args, '--scope'),
+    type: flag(args, '--type'),
+    status: flag(args, '--status'),
+    source: flag(args, '--source'),
+    costMin: flag(args, '--cost-min'),
+    costMax: flag(args, '--cost-max'),
+    reason: flag(args, '--reason')
+  });
 }
 
 function positional(args) {
@@ -159,7 +172,7 @@ export function inspectText(report, options = {}) {
     `${s.mcpServers} 个 MCP · ${s.skills} 个 Skill · ${s.directTools} 个暴露工具${estimateNote} · 常驻 ${compactTokens(s.contextTokens)} tok`,
     healthLine,
     `占用  常驻 ${compactTokens(s.contextTokens)} tok / 有效预算 ${compactTokens(budget.effectiveBudget)}（厂商标称 ${compactTokens(budget.nominalWindow)}）`,
-    `状态  ${s.warnings ?? 0} 个警告 · ${s.duplicateGroups} 组重复 · 已迁入 CAP 的 MCP ${s.managed ?? 0} 个 · Registry 已 add ${s.registryCapabilities ?? 0} 个能力 · pinned ${s.pinned ?? 0} · excluded ${s.excluded ?? 0}`
+    `状态  ${s.warnings ?? 0} 个警告 · ${s.duplicateGroups} 组重复 · ${s.overlapGroups ?? 0} 组 Skill 重叠 · 已迁入 CAP 的 MCP ${s.managed ?? 0} 个 · Registry 已 add ${s.registryCapabilities ?? 0} 个能力 · pinned ${s.pinned ?? 0} · excluded ${s.excluded ?? 0}`
   ];
 
   const warnings = report.items.filter((item) => item.kind === 'warning');
@@ -170,10 +183,36 @@ export function inspectText(report, options = {}) {
 
   if (report.duplicates.length) {
     lines.push(rule, '重复项');
-    for (const group of report.duplicates) lines.push(`  ● ${group.name}  ${group.sources.map(rel).join(' + ')}`);
+    for (const group of report.duplicates) {
+      const extra = group.reason === 'cap-surface' ? '  CAP Surface' : '';
+      lines.push(`  ● ${group.name}${extra}  ${group.sources.map(rel).join(' + ')}`);
+    }
   }
 
-  const inventory = report.items.filter((item) => item.kind !== 'warning');
+  if (report.overlaps?.length) {
+    lines.push(rule, 'Skill 重叠（启发式，可能误报）');
+    for (const group of report.overlaps) {
+      lines.push(`  ● ${group.names.join(' ≈ ')}  ${group.method} ${group.score}  共享 ${group.shared.join(', ')}`);
+      lines.push(`      ${group.sources.map(rel).join(' + ')}`);
+    }
+  }
+
+  const inventory = (report.filtered ?? report.items).filter((item) => item.kind !== 'warning');
+  const filters = report.filters ?? options.filters;
+  if (filters && Object.keys(filters).length) {
+    const bits = [
+      filters.agent && `agent=${filters.agent}`,
+      filters.scope && `scope=${filters.scope}`,
+      filters.type && `type=${filters.type}`,
+      filters.status && `status=${filters.status}`,
+      filters.source && `source=${filters.source}`,
+      filters.costMin != null && `cost≥${filters.costMin}`,
+      filters.costMax != null && `cost≤${filters.costMax}`,
+      filters.reason?.length && `reason=${filters.reason.join(',')}`
+    ].filter(Boolean);
+    const total = report.items.filter((item) => item.kind !== 'warning').length;
+    lines.push(rule, `筛选  ${bits.join(' · ') || '—'}  · ${inventory.length} / ${total} 项`);
+  }
   const order = ['Claude Code', 'Codex', 'Project', 'Shared'];
   const agentsPresent = [...new Set(inventory.map((item) => item.agent))];
   agentsPresent.sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b));
@@ -280,6 +319,9 @@ export function setupText(result, options = {}) {
     lines.push(`写入  ${rel(item.path)}${backup}`);
   }
   for (const item of result.skipped) lines.push(`跳过  ${rel(item.path)}  ${item.reason}`);
+  if (result.install?.reused) lines.push('复用  已有兼容 CAP 安装，未再增加 CAP Surface');
+  if (result.install?.upgraded) lines.push('升级  已更新现有 CAP 启动配置');
+  if (result.install?.deduped?.length) lines.push(`去重  移除重复 CAP Surface：${result.install.deduped.join(', ')}`);
   for (const item of result.manual) {
     lines.push(`无法安全写入 ${rel(item.path)}${item.reason ? `（${item.reason}）` : ''}，请手动添加：`);
     lines.push(item.snippet.trimEnd());
@@ -370,8 +412,9 @@ export async function main(args, options = {}) {
     return print(json ? result : setupText(result, options), json);
   }
   if (command === 'inspect') {
-    const report = await inspectLocal(options);
-    return print(json ? report : inspectText(report, options), json);
+    const filters = inspectFlags(rest);
+    const report = await inspectLocal({...options, filters});
+    return print(json ? report : inspectText(report, {...options, filters}), json);
   }
   if (command === 'search') {
     const query = positional(rest).join(' ');

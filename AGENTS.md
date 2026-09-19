@@ -22,10 +22,10 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/mcp-client.js` | Line-delimited JSON-RPC client (`tools/call` for `cap.use`, `tools/list` for on-demand input schema) |
 | `src/input-schema.js` | On-demand JSON Schema for `cap.use` input (live MCP `tools/list` or catalog) |
 | `src/skills.js` | Discover local `SKILL.md` files and map them to catalog overlay entries |
-| `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); CAP surface |
+| `src/inspector.js` | Scan local MCP + Skills; Context Health (budget / pressure / funnel); inventory filters; Skill overlap; CAP surface |
 | `src/profiler.js` | V3 Value Analysis (internally: profiler module; `use` activity → value / valuePerCost / underused; Observation Period readiness + frequency/value advice) |
 | `src/inject.js` | V4 Dynamic Injection: task → minimal load/defer plan (does not mutate configs) |
-| `src/setup.js` | `cap setup`: install persistent CLI launchers, write CAP MCP + Context Health Skill, then inspect |
+| `src/setup.js` | `cap setup`: install persistent CLI launchers, write CAP MCP + Context Health Skill, reuse/upgrade existing `cap-mcp` (no duplicate surfaces), then inspect |
 | `src/optimize.js` | Preview / apply MCP consolidation (JSON + dotted-table Codex TOML; keeps `cap-mcp`), index local skills, and post-apply savings / regression validation |
 | `src/codex-toml.js` | Codex `config.toml` MCP parse / format safety / table removal (setup, inspect, bind, optimize) |
 | `src/pin.js` | Pin / unpin Direct Exposure; exclude / include optimize recommendations |
@@ -49,7 +49,8 @@ Human overview: `README.md`. Architecture detail: `docs/architecture.md`. Local 
 npm test
 npm run check
 node ./bin/cap.js setup --agent auto
-node ./bin/cap.js inspect
+node ./bin/cap.js inspect --json
+node ./bin/cap.js inspect --type skill --reason overlap --json
 node ./bin/cap.js search "分析 PostgreSQL 慢查询" --json
 node ./bin/cap.js inject "分析 PostgreSQL 慢查询" --json
 node ./bin/cap.js add git.repository.status
