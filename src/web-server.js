@@ -2,6 +2,7 @@
 import http from 'node:http';
 import { searchCapabilities } from './search.js';
 import { inspectLocal } from './inspector.js';
+import { excludeProvider, includeProvider, pinProvider, unpinProvider } from './pin.js';
 import { addCapability, loadState } from './registry.js';
 
 export const DEFAULT_WEB_HOST = '127.0.0.1';
@@ -56,6 +57,8 @@ body[data-view="health"] .discover,body[data-view="owned"] .discover{display:non
 table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--muted);font-weight:600;padding:6px 8px}td{padding:8px;border-top:1px solid #22304c;vertical-align:top}
 .path{color:var(--muted);font:11px ui-monospace,SFMono-Regular,monospace;word-break:break-all}
 .foot{color:var(--muted);margin-top:16px;font-size:13px}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);padding:5px 9px;font-size:11px;font-weight:650;border-radius:9px}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 @media(max-width:900px){.hero,.tiles,.cols{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}.metric{display:none}table{font-size:12px}th,td{padding:6px}}
 </style></head>
 <body data-view="search">
@@ -91,10 +94,11 @@ function shortPath(file){if(!file)return '';const parts=String(file).replace(/\\
 async function hydrateHero(){try{const d=await (await fetch('/api/inspect')).json();const p=d.pressure||{},s=d.summary||{};document.querySelector('#hero-metric').innerHTML='<div class="meta">健康分数</div><b>'+esc(p.healthScore??'—')+'</b><div>'+(p.band==='unknown'?'无法计算':('常驻占用 '+esc(p.percent)+'%'))+' · '+tok(s.contextTokens)+' 常驻 · '+tok(s.reclaimableTokens)+' 可回收</div>'}catch{}}
 async function health(){results.className='';const d=await (await fetch('/api/inspect')).json();const s=d.summary||{},p=d.pressure||{},b=d.budget||{};
 const dups=(d.duplicates||[]).map(x=>'<div class="issue"><div><strong>'+esc(x.name)+'</strong><div class="path">'+esc((x.sources||[]).map(shortPath).join(' + '))+'</div></div><span class="badge">重复</span></div>').join('')||'<div class="empty">没有重复项。</div>';
-const moves=(d.recommendations||[]).map((x,i)=>'<div class="issue"><div><strong>'+(i+1)+'. '+esc(x.provider)+'</strong><div class="path">'+esc(shortPath(x.source))+'</div></div><div><span class="badge">约可回收 '+tok(x.estimatedTokensSaved)+'</span> <span class="badge ok">迁到 CAP</span></div></div>').join('')||'<div class="empty">没有需要迁走的第三方 MCP。</div>';
+const preferBtns=(name,x)=>{if(x&&x.capSurface)return '';const pin=x&&x.pinned?'unpin':'pin';const ex=x&&x.excluded?'include':'exclude';return '<div class="acts"><button class="ghost" data-act="'+pin+'" data-name="'+esc(name)+'">'+pin+'</button><button class="ghost" data-act="'+ex+'" data-name="'+esc(name)+'">'+ex+'</button></div>'};
+const moves=(d.recommendations||[]).map((x,i)=>'<div class="issue"><div><strong>'+(i+1)+'. '+esc(x.provider)+'</strong><div class="path">'+esc(shortPath(x.source))+'</div>'+preferBtns(x.provider)+'</div><div><span class="badge">约可回收 '+tok(x.estimatedTokensSaved)+'</span> <span class="badge ok">迁到 CAP</span></div></div>').join('')||'<div class="empty">没有需要迁走的第三方 MCP。</div>';
 const groups={};for(const item of (d.items||[]).filter(x=>x.kind!=='warning'))(groups[item.agent]??=[]).push(item);
-const statusLabel=x=>x.status==='managed'?'CAP-managed':x.status==='cap'||x.capSurface?'CAP Surface':x.status==='estimated'?'Direct Exposure（估算）':'Direct Exposure';
-const inventory=Object.entries(groups).map(([agent,rows])=>'<div class="agent"><h4>'+esc(agent)+' · '+rows.length+' 项</h4><table><thead><tr><th>类型</th><th>名称 / 路径</th><th>角色</th><th>工具</th><th>常驻占用</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+(x.kind==='skill'?'Skill':'MCP')+'</td><td>'+esc(x.name)+'<div class="path">'+esc(shortPath(x.source))+'</div></td><td><span class="badge '+statusChip(x.status)+'">'+esc(statusLabel(x))+'</span></td><td>'+(x.kind==='skill'?'—':(x.toolCountEstimated?'约 ':'')+x.toolCount)+'</td><td>'+tok(x.contextTokens)+(x.cost&&x.cost.instructionOnDemand?' · 正文 '+Math.round(Number(x.cost.instructionTokens)||0)+' 按需':'')+(x.cost&&x.cost.value!=null?' · value '+x.cost.value:'')+'</td></tr>').join('')+'</tbody></table></div>').join('')||'<div class="empty">未发现本地 MCP / Skills。</div>';
+const statusLabel=x=>{const base=x.status==='managed'?'CAP-managed':x.status==='cap'||x.capSurface?'CAP Surface':x.status==='estimated'?'Direct Exposure（估算）':'Direct Exposure';const marks=[x.pinned?'pinned':null,x.excluded?'excluded':null].filter(Boolean);return marks.length?base+' · '+marks.join(' · '):base};
+const inventory=Object.entries(groups).map(([agent,rows])=>'<div class="agent"><h4>'+esc(agent)+' · '+rows.length+' 项</h4><table><thead><tr><th>类型</th><th>名称 / 路径</th><th>角色</th><th>工具</th><th>常驻占用</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+(x.kind==='skill'?'Skill':'MCP')+'</td><td>'+esc(x.name)+'<div class="path">'+esc(shortPath(x.source))+'</div>'+preferBtns(x.name,x)+'</td><td><span class="badge '+statusChip(x.status)+'">'+esc(statusLabel(x))+'</span></td><td>'+(x.kind==='skill'?'—':(x.toolCountEstimated?'约 ':'')+x.toolCount)+'</td><td>'+tok(x.contextTokens)+(x.cost&&x.cost.instructionOnDemand?' · 正文 '+Math.round(Number(x.cost.instructionTokens)||0)+' 按需':'')+(x.cost&&x.cost.value!=null?' · value '+x.cost.value:'')+'</td></tr>').join('')+'</tbody></table></div>').join('')||'<div class="empty">未发现本地 MCP / Skills。</div>';
 const pf=d.profiler||{},obs=pf.observation||{};
 const ranked=(pf.ranked||[]).map((x,i)=>'<div class="issue"><div><strong>'+(i+1)+'. '+esc(x.capability_id)+'</strong><div class="path">value '+esc(x.value)+' · vpc '+esc(x.valuePerCost)+' · '+esc(x.successes)+' uses / '+esc(x.sessions)+' sessions</div></div><span class="badge ok">~'+esc(x.contextCost)+' tok</span></div>').join('')||'<div class="empty">还没有成功的 use 记录。先 cap add，再 cap use。</div>';
 const underused=(pf.underused||[]).map(x=>'<div class="issue"><div><strong>'+esc(x.capability_id)+'</strong><div class="path">'+(x.successes?'value '+esc(x.value)+' · vpc '+esc(x.valuePerCost):'未使用')+'</div></div><span class="badge warn">~'+esc(x.contextCost)+' tok</span></div>').join('')||'<div class="empty">没有明显未使用或低性价比能力。</div>';
@@ -102,7 +106,8 @@ const advice=(pf.advice||[]).map(x=>{const s=x.signals||{},c=s.cost||{},dup=s.du
 const obsLine=pf.frequencyVerdicts?'<div class="meta">Observation Period 已就绪 · '+esc(obs.elapsedDays)+' / '+esc(obs.periodDays)+' 天 · '+esc(obs.evidenceSessionDays)+' 个活动日</div>':'<div class="meta">频率结论未就绪 · 搜索/选择已记录 · Observation Period 未完成 · 已过 '+esc(obs.elapsedDays??0)+' / '+esc(obs.periodDays??14)+' 天 · 活动日 '+esc(obs.evidenceSessionDays??0)+' / '+esc(obs.evidenceSessionDaysRequired??3)+'</div>';
 const adviceBlock=pf.frequencyVerdicts?'<div class="meta" style="margin-top:12px">频率 / 价值建议（信号分列，不是移除）</div>'+advice:'<div class="meta" style="margin-top:12px">价值信号</div>'+underused;
 const profilerPanel=pf.tracked?'<section class="panel" style="margin-top:14px"><h3>价值分析</h3><div class="meta">跟踪 '+esc(pf.tracked)+' · 用过 '+esc(pf.used)+' · 未使用 '+esc(pf.unusedManaged)+' · use '+esc(pf.useAttempts)+'</div>'+obsLine+'<div class="meta" style="margin-top:12px">性价比排行</div>'+ranked+adviceBlock+'</section>':'';
-results.innerHTML='<section class="health-head"><h2>Capability Health</h2><p class="lead">只读本地配置，不连接 MCP。分数高 = 常驻占用低。用最小能力集，换最大有效上下文。</p></section><div class="tiles"><div class="tile"><div class="ico">⬡</div><div class="meta">MCP</div><b>'+s.mcpServers+'</b></div><div class="tile"><div class="ico">▦</div><div class="meta">Skills</div><b>'+s.skills+'</b></div><div class="tile"><div class="ico">⚒</div><div class="meta">Direct Exposure 工具</div><b>'+s.directTools+'</b></div><div class="tile"><div class="ico">▤</div><div class="meta">常驻占用</div><b>'+tok(s.contextTokens)+'</b></div><div class="hero-metric"><b>'+esc(p.healthScore??'—')+'</b><div>健康分数</div><div class="bar"><i style="width:'+Math.min(100,Number(p.percent)||0)+'%"></i></div><div class="meta">常驻占用了有效预算的 '+esc(p.percent)+'% · 有效预算 '+tok(b.effectiveBudget)+' / 标称 '+tok(b.nominalWindow)+'</div><div class="chips" style="margin-top:8px"><span class="badge '+bandClass(p.band)+'">压力 '+esc(p.band)+' '+esc(p.percent)+'%</span><span class="badge warn">⚠ '+(s.warnings||0)+' 警告</span><span class="badge violet">'+(s.duplicateGroups||0)+' 重复</span><span class="badge ok">CAP-managed MCP '+(s.managed||0)+' · 已 add '+(s.registryCapabilities||0)+'</span></div></div></div><div class="cols" style="margin-top:16px"><section class="panel"><h3>问题与建议</h3><div class="meta">重复项 <span class="badge">'+(d.duplicates||[]).length+'</span></div>'+dups+'<div class="meta" style="margin-top:14px">迁移建议</div>'+moves+'<p class="foot">先处理重复项，再把 Direct Exposure MCP 迁到 CAP。确认应用后写入 .cap-backup，按文档复制回去恢复，不是一键 Restore。</p></section><section class="panel"><h3>清单</h3>'+inventory+profilerPanel+'</section></div><p class="foot">只读本地配置，不会连接 MCP，也不是当前会话实测。下一步：<code>cap search</code> 然后 <code>cap use</code>（未托管会先 Acquisition） · 或 <code>cap optimize</code>（仅预览）</p>';
+if(!results.dataset.preferBound){results.dataset.preferBound='1';results.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;await fetch('/api/'+b.dataset.act,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({provider:b.dataset.name})});await health()})}
+results.innerHTML='<section class="health-head"><h2>Capability Health</h2><p class="lead">只读本地配置，不连接 MCP。分数高 = 常驻占用低。用最小能力集，换最大有效上下文。Pin = Direct Exposure；Exclude 只从建议里拿掉，不卸载。</p></section><div class="tiles"><div class="tile"><div class="ico">⬡</div><div class="meta">MCP</div><b>'+s.mcpServers+'</b></div><div class="tile"><div class="ico">▦</div><div class="meta">Skills</div><b>'+s.skills+'</b></div><div class="tile"><div class="ico">⚒</div><div class="meta">Direct Exposure 工具</div><b>'+s.directTools+'</b></div><div class="tile"><div class="ico">▤</div><div class="meta">常驻占用</div><b>'+tok(s.contextTokens)+'</b></div><div class="hero-metric"><b>'+esc(p.healthScore??'—')+'</b><div>健康分数</div><div class="bar"><i style="width:'+Math.min(100,Number(p.percent)||0)+'%"></i></div><div class="meta">常驻占用了有效预算的 '+esc(p.percent)+'% · 有效预算 '+tok(b.effectiveBudget)+' / 标称 '+tok(b.nominalWindow)+'</div><div class="chips" style="margin-top:8px"><span class="badge '+bandClass(p.band)+'">压力 '+esc(p.band)+' '+esc(p.percent)+'%</span><span class="badge warn">⚠ '+(s.warnings||0)+' 警告</span><span class="badge violet">'+(s.duplicateGroups||0)+' 重复</span><span class="badge ok">CAP-managed MCP '+(s.managed||0)+' · 已 add '+(s.registryCapabilities||0)+'</span></div></div></div><div class="cols" style="margin-top:16px"><section class="panel"><h3>问题与建议</h3><div class="meta">重复项 <span class="badge">'+(d.duplicates||[]).length+'</span></div>'+dups+'<div class="meta" style="margin-top:14px">迁移建议</div>'+moves+'<p class="foot">先处理重复项，再把 Direct Exposure MCP 迁到 CAP。确认应用后写入 .cap-backup，按文档复制回去恢复，不是一键 Restore。</p></section><section class="panel"><h3>清单</h3>'+inventory+profilerPanel+'</section></div><p class="foot">只读本地配置，不会连接 MCP，也不是当前会话实测。下一步：<code>cap search</code> 然后 <code>cap use</code>（未托管会先 Acquisition） · 或 <code>cap optimize</code>（仅预览）</p>';
 }
 document.querySelector('#search').addEventListener('submit',e=>{e.preventDefault();view='search';search()});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');view=b.dataset.view;document.body.dataset.view=view;({search,owned,health}[view])()});
@@ -134,6 +139,22 @@ export function createWebServer(options = {}) {
       if (request.method === 'POST' && url.pathname === '/api/add') {
         const input = await body(request);
         return send(response, 201, await addCapability(input.capability_id, input.provider_id, options));
+      }
+      if (request.method === 'POST' && url.pathname === '/api/pin') {
+        const input = await body(request);
+        return send(response, 200, await pinProvider(input.provider ?? input.name ?? input.provider_id, options));
+      }
+      if (request.method === 'POST' && url.pathname === '/api/unpin') {
+        const input = await body(request);
+        return send(response, 200, await unpinProvider(input.provider ?? input.name ?? input.provider_id, options));
+      }
+      if (request.method === 'POST' && url.pathname === '/api/exclude') {
+        const input = await body(request);
+        return send(response, 200, await excludeProvider(input.provider ?? input.name ?? input.provider_id, options));
+      }
+      if (request.method === 'POST' && url.pathname === '/api/include') {
+        const input = await body(request);
+        return send(response, 200, await includeProvider(input.provider ?? input.name ?? input.provider_id, options));
       }
       return send(response, 404, {error: 'Not found'});
     } catch (error) {

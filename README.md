@@ -147,6 +147,10 @@ Capability 描述“能完成什么”，Provider 描述“由谁实现”。同
 | `cap inject <任务>` | 生成最小能力装载计划 | 否，只生成计划 |
 | `cap add <id>` | 将能力与 Provider 加入 CAP（显式启用） | 是，更新 Registry |
 | `cap use <id>` | 调用 CLI、MCP 或按需读取本地 Skill；未托管时先登记 | 是，可能更新 Registry 并执行 |
+| `cap pin <provider>` | 将 Provider 固定为 Direct Exposure | 是，可能写回 JSON MCP |
+| `cap unpin <provider>` | 取消固定，恢复非驻留 CAP-managed | 是，可能迁出 JSON MCP |
+| `cap exclude <provider>` | 从 optimize 建议中排除，不卸载 | 是，只改 Registry |
+| `cap include <provider>` | 重新允许出现在建议里 | 是，只改 Registry |
 | `cap optimize` | 预览 MCP 收拢与 Skill 索引计划 | 否，默认仅预览 |
 | `cap web` | 启动本地搜索与健康页面 | 否 |
 
@@ -164,6 +168,7 @@ cap inject "分析 PostgreSQL 慢查询" --json
 - `cap search` 只读取本地 Skill 的名称和描述，不默认加载正文。
 - `cap inject` 只生成 load / defer 计划，不修改 Agent 配置。
 - `cap optimize` 默认只预览；只有 `cap optimize --apply --yes` 才修改支持的 JSON MCP 与 Codex 点分表 TOML，并持久化 Skill 索引。
+- `cap pin` 把 Provider 写成 Direct Exposure；`cap unpin` 再收回到 CAP-managed。`cap exclude` 只从建议里拿掉，不卸载。默认 MCP 入口仍是 search / add / use。
 - 修改配置前会创建带时间戳的 `*.cap-backup`；从备份恢复见 [runbook](./docs/restore-from-backup.md)。这不是一键 Restore。Registry 文件权限为 `0600`。
 - 不支持的格式（JSON `mcp.servers`、Codex inline-table / `[mcp_servers]` / `[mcp.servers.*]`）会被拒绝并给出手工指引，不会静默改写。详见 [兼容性矩阵](./docs/compatibility.md)。
 - Context footprint 是字符和 Schema 的稳定估算，不是模型 tokenizer 的精确计数。

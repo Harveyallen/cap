@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Pin / exclude (REC-06)
+
+- **`cap pin` / `cap unpin` are first-class Direct Exposure controls.** Pin keeps or writes a JSON MCP Provider into Agent config so inspect/Health show `status: direct` with `pinned: true`. Unpin migrates that JSON entry into Registry `external_providers` and restores non-resident CAP-managed behavior. Implicit `add` / `use` still do not pin.
+- **`cap exclude` / `cap include` hide a Provider from optimize recommendations without uninstalling it.** Inspect recommendations, `optimize --apply` (JSON and dotted-table Codex TOML), and Value Analysis `underused` / `advice` skip excluded Providers. The Provider stays in Local Inventory.
+- **Web Health can pin / exclude.** `POST /api/pin`, `/api/unpin`, `/api/exclude`, `/api/include`. The default MCP tool surface stays `cap.search` / `cap.add` / `cap.use` — no `cap.pin` tool.
+- Pin write-back is JSON MCP. Codex TOML pin/unpin is a preference that optimize apply honors (does not migrate pinned/excluded dotted tables).
+
 ### Observation Period
 
 - **Phase 2 readiness is 14 UTC days and 3 distinct activity days** ([ADR 0003](./docs/adr/0003-observation-period-readiness.md), REC-03/04/05). 14 days is kept (7 is too short for weekly tools; 30 delays advice). Until both gates pass, Inspect/Web keep `frequencyVerdicts: false` and show `underused` as a value signal only.

@@ -76,6 +76,8 @@ Do not describe implicit `use` as Direct Exposure, pin, or “installed into the
 | item `status: estimated` | Direct Exposure | Same, tool count estimated. |
 | item `status: managed` / CLI `CAP-managed` | CAP-managed | Registry `external_providers` (migrated MCP) or non-direct inventory. |
 | item `status: cap` / CLI `CAP Surface` | CAP Surface | `cap-mcp` entry tools. |
+| item `pinned: true` / CLI `pinned` | Pin → Direct Exposure | Kept or written as resident JSON MCP. Not a Move → CAP candidate. |
+| item `excluded: true` / CLI `excluded` | Exclude | Hidden from optimize recommendations; not uninstalled. |
 | search `[CAP Managed]` / `installed: true` | CAP-managed | Registry `managed_capabilities`. |
 | search `[Available]` / `[Local skill]` | discovered, not acquired | Not Direct Exposure. First `use` may acquire. |
 | `profiler.underused` | Value Analysis signal | **Not** a low-frequency label. **Not** a remove recommendation in Phase 1. |

@@ -1,5 +1,6 @@
 /** Capability Context Profiler — value / cost from Registry activity.
  *  User-facing name: Value Analysis / 价值分析. JSON key stays `profiler`. */
+import { matchesPreference } from './pin.js';
 
 /** REC-04 default: 14 UTC calendar days from first local Activity. */
 export const OBSERVATION_PERIOD_DAYS = 14;
@@ -172,10 +173,10 @@ function needsAdvice(item) {
   return item.managed && (item.successes === 0 || (item.contextCost >= 400 && (item.valuePerCost ?? 0) < 0.05));
 }
 
-function buildAdvice({capabilities, catalog, duplicates, observation, now}) {
+function buildAdvice({capabilities, catalog, duplicates, observation, now, skip}) {
   if (!observation.ready) return [];
   return capabilities
-    .filter(needsAdvice)
+    .filter((item) => needsAdvice(item) && !skip?.(item))
     .map((item) => ({
       capability_id: item.capability_id,
       frequency: item.successes === 0 ? 'low' : 'observed',
@@ -265,8 +266,17 @@ export function buildProfiler({
     .filter((item) => item.value != null && item.successes > 0)
     .sort((a, b) => (b.valuePerCost ?? 0) - (a.valuePerCost ?? 0) || (b.value ?? 0) - (a.value ?? 0) || b.successes - a.successes);
 
+  const excluded = (item) => {
+    if (matchesPreference(state.excluded_providers, item.capability_id, item.name)) return true;
+    const capability = catalog.capabilities.find((row) => row.capability_id === item.capability_id);
+    if (!capability) return false;
+    return capability.provider_refs.some((id) => {
+      const provider = catalog.providers.find((row) => row.provider_id === id);
+      return matchesPreference(state.excluded_providers, id, provider?.name, provider?.mcp_server);
+    });
+  };
   const underused = [...capabilities]
-    .filter(needsAdvice)
+    .filter((item) => needsAdvice(item) && !excluded(item))
     .sort((a, b) => b.contextCost - a.contextCost || a.capability_id.localeCompare(b.capability_id));
 
   const byCapability = new Map(capabilities.map((item) => [item.capability_id, item]));
@@ -293,7 +303,7 @@ export function buildProfiler({
 
   capabilities.sort((a, b) => (b.valuePerCost ?? -1) - (a.valuePerCost ?? -1) || b.successes - a.successes || a.capability_id.localeCompare(b.capability_id));
 
-  const advice = buildAdvice({capabilities, catalog, duplicates, observation, now: observation.now});
+  const advice = buildAdvice({capabilities, catalog, duplicates, observation, now: observation.now, skip: excluded});
 
   return {
     version: 3,

@@ -10,6 +10,7 @@ import {
 } from './codex-toml.js';
 import { inspectLocal } from './inspector.js';
 import { isCapMcpConfig } from './mcp-tools.js';
+import { matchesPreference } from './pin.js';
 import { loadCatalog, loadState, registerLocalSkills, saveState } from './registry.js';
 import { discoverLocalSkills, overlayLocalSkills } from './skills.js';
 
@@ -164,7 +165,7 @@ async function applyJsonSource(source, state, stamp) {
   const remaining = {};
   const migrated = [];
   for (const [name, providerConfig] of Object.entries(servers)) {
-    if (isCapMcpConfig(providerConfig)) {
+    if (isCapMcpConfig(providerConfig) || matchesPreference(state.pinned_providers, name) || matchesPreference(state.excluded_providers, name)) {
       remaining[name] = providerConfig;
       continue;
     }
@@ -188,7 +189,7 @@ async function applyTomlSource(source, state, stamp) {
   const remaining = [];
   const migrated = [];
   for (const server of servers) {
-    if (isCapMcpConfig(server.config, server.block)) {
+    if (isCapMcpConfig(server.config, server.block) || matchesPreference(state.pinned_providers, server.name) || matchesPreference(state.excluded_providers, server.name)) {
       remaining.push(server.name);
       continue;
     }

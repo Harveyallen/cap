@@ -7,6 +7,7 @@ import { addCapability, loadState } from './registry.js';
 import { useCapability } from './use.js';
 import { planInjection } from './inject.js';
 import { applyOptimization, buildOptimizationPlan, writeOptimizationPlan } from './optimize.js';
+import { excludeProvider, includeProvider, pinProvider, unpinProvider } from './pin.js';
 import { setupCap } from './setup.js';
 import { DEFAULT_WEB_URL, startWebServer } from './web-server.js';
 import { packageVersion } from './paths.js';
@@ -21,6 +22,10 @@ Usage:
   cap inject <task> [--json]
   cap add <capability-id> [--provider <provider-id>] [--server <mcp-name>] [--json]
   cap use <capability-id> [--input <json>] [--json]
+  cap pin <provider> [--json]
+  cap unpin <provider> [--json]
+  cap exclude <provider> [--json]
+  cap include <provider> [--json]
   cap optimize [--write-plan <file>] [--apply --yes] [--json]
   cap activity [--json]
   cap web [--port <number>]
@@ -103,9 +108,11 @@ function bandPhrase(band) {
 
 function roleLabel(item) {
   if (item.status === 'cap' || item.capSurface) return 'CAP Surface';
-  if (item.status === 'managed' || item.direct === false) return 'CAP-managed';
-  if (item.status === 'estimated' || item.toolCountEstimated) return 'Direct Exposure（工具数是估算）';
-  return 'Direct Exposure';
+  const marks = [item.pinned ? 'pinned' : null, item.excluded ? 'excluded' : null].filter(Boolean);
+  const suffix = marks.length ? ` · ${marks.join(' · ')}` : '';
+  if (item.status === 'managed' || item.direct === false) return `CAP-managed${suffix}`;
+  if (item.status === 'estimated' || item.toolCountEstimated) return `Direct Exposure（工具数是估算）${suffix}`;
+  return `Direct Exposure${suffix}`;
 }
 
 function kindMark(item) {
@@ -134,7 +141,7 @@ export function inspectText(report, options = {}) {
     `${s.mcpServers} 个 MCP · ${s.skills} 个 Skill · ${s.directTools} 个暴露工具${estimateNote} · 常驻 ${compactTokens(s.contextTokens)} tok`,
     healthLine,
     `占用  常驻 ${compactTokens(s.contextTokens)} tok / 有效预算 ${compactTokens(budget.effectiveBudget)}（厂商标称 ${compactTokens(budget.nominalWindow)}）`,
-    `状态  ${s.warnings ?? 0} 个警告 · ${s.duplicateGroups} 组重复 · 已迁入 CAP 的 MCP ${s.managed ?? 0} 个 · Registry 已 add ${s.registryCapabilities ?? 0} 个能力`
+    `状态  ${s.warnings ?? 0} 个警告 · ${s.duplicateGroups} 组重复 · 已迁入 CAP 的 MCP ${s.managed ?? 0} 个 · Registry 已 add ${s.registryCapabilities ?? 0} 个能力 · pinned ${s.pinned ?? 0} · excluded ${s.excluded ?? 0}`
   ];
 
   const warnings = report.items.filter((item) => item.kind === 'warning');
@@ -222,6 +229,9 @@ export function inspectText(report, options = {}) {
     lines.push('  还没有托管能力的话：cap search <任务>，再 cap use（会自动登记）。');
   } else {
     lines.push('  还没有 CAP 入口。先 cap add，或 cap optimize 预览迁移。');
+  }
+  if ((s.pinned ?? 0) || (s.excluded ?? 0)) {
+    lines.push(`  pinned ${s.pinned ?? 0} 保持 Direct Exposure · excluded ${s.excluded ?? 0} 不出现在建议里（cap unpin / cap include）。`);
   }
 
   if (!inventory.length && !warnings.length) lines.push(rule, '  未发现本地 MCP / Skills 配置。');
@@ -352,6 +362,13 @@ export async function main(args, options = {}) {
     const input = JSON.parse(flag(rest, '--input') ?? '{}');
     const result = await useCapability(capabilityId, input, options);
     return print(json ? result : (result.stdout || [result.message, ...(result.next_steps ?? [])].filter(Boolean).join('\n') || JSON.stringify(result, null, 2)), json);
+  }
+  if (command === 'pin' || command === 'unpin' || command === 'exclude' || command === 'include') {
+    const provider = positional(rest)[0];
+    if (!provider) throw new Error('Provider name, provider_id, or capability_id is required');
+    const run = {pin: pinProvider, unpin: unpinProvider, exclude: excludeProvider, include: includeProvider}[command];
+    const result = await run(provider, options);
+    return print(json ? result : result.message, json);
   }
   if (command === 'optimize') {
     if (rest.includes('--apply') && !rest.includes('--yes')) throw new Error('Refusing to edit Agent configs without both --apply and --yes');
