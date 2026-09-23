@@ -1,12 +1,12 @@
 # CAP
 
-> Intent-first capability discovery and consolidation for AI agents.
+> Capability Router for AI agents: the right capabilities for the current task. Mechanism: install more, expose less.
 
 ## Docs
 
 - [README](README.md): human quick start and product overview
-- [CONTEXT.md](CONTEXT.md): domain glossary (Acquisition, Direct Exposure, CAP-managed, ManagedBinding, Invoked, Pin, Exclude, Trial, Local Inventory, Activity, Observation Period)
-- [Product requirements](docs/product-requirements.md): Phase 1 P0 / launch gates with Target / Now / Gap
+- [CONTEXT.md](CONTEXT.md): domain glossary (Capability Router, Capability Recommendation, Capability Evaluation, Acquisition, Direct Exposure, CAP-managed, ManagedBinding, Invoked, Pin, Exclude, Trial, Local Inventory, Activity, Observation Period)
+- [Product requirements](docs/product-requirements.md): Capability Router north star (§1); Phase 1 P0 / launch gates with Target / Now / Gap
 - [Agent onboarding copy](docs/agent-onboarding.md): first-report URL, partial scan, 10% savings, scoped Restore, USE-09, inspect label map, post-optimize validation, setup reuse (ONB-09), inventory filters / Skill overlap
 - [Restore from `.cap-backup`](docs/restore-from-backup.md): JSON MCP and Codex dotted-table TOML optimize recovery (not one-click Restore)
 - [OS/Agent compatibility](docs/compatibility.md): inspect paths and optimize-apply formats with tested / expected / unknown

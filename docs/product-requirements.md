@@ -2,6 +2,7 @@
 
 Status: Grill-settled Phase 1 truth frame  
 Date: 2026-09-19  
+North star (2026-09-23): Capability Router. The Phase 1 P0 boundary below is unchanged.  
 Audience: founder and implementers  
 Derived surface: [README.md](../README.md) (do not treat the README as the requirements source of truth)
 
@@ -45,14 +46,55 @@ Former P0 rows that left the Phase 1 boundary keep their IDs so history stays tr
 
 ## 1. Product definition
 
-CAP is a local capability and context control layer for coding Agents. It lets developers freely discover and try MCP servers and Skills without permanently paying their context cost, safely reduces existing exposure, and acquires reviewed capabilities on demand.
+**CAP：让 Agent 在正确的任务里，获得正确的能力。**
+
+CAP gives the Agent the right capabilities for the current task.
+
+The long-term mainline is **B: Agent capability recommendation / Capability Router**. **A: Agent Context manager** alone is the rejected center. CAP is a **Capability Router for AI Agents**: for a given task, it dynamically assembles the **Capability Set** (Skills, MCP Providers, their tools, and the context those need). An inventory list is an input to that decision.
 
 > Install more capabilities while exposing less context, without changing how the user asks the Agent to work.
 
-CAP has three connected jobs:
+That sentence is the **mechanism**. Acquisition stays separate from Direct Exposure, so a large library can exist without resident cost. It is the way the router stays affordable.
 
-1. **Observe**: scan supported Agent configurations and visualize Context Health.
-2. **Optimize**: recommend and, after confirmation, apply reversible consolidation into CAP.
+### Product ladder
+
+Capability discovery → understanding → **recommendation** → **dynamic injection** → **effect feedback** → **recommendation optimization**.
+
+The moat is the middle loop (recommend, inject, feedback). Inventory dashboards are supporting. A native host can copy a bare inventory UI. It cannot easily copy task → Capability Set routing plus local outcome data.
+
+### Priority order
+
+1. **Capability Registry** — what exists, plus metadata (scenarios, cost, dependencies). A remote or public registry is a **separate project** (Phase 3 CAT-*; already Out of Phase 1). Cap stays the **local control plane / router**.
+2. **Capability Recommendation** — task → ranked Capability Set.
+3. **Capability Injection** — on demand; the library is not all resident. Canonical term: Dynamic Injection, plan-only in Phase 1 (INJ-01).
+4. **Capability Evaluation** — did this help? Local Activity only. Anonymous product telemetry remains TEL-* (later phase).
+5. **Capability Routing** — later selection improves from those outcomes.
+
+Context Health and token visualization stay as **supporting infrastructure and the explanation layer** (“why unload these 12?”).
+
+**Marketplace** answers “what capabilities exist?” **Cap** answers “which capabilities should this task use now?”
+
+**Capability on Demand:** the user need not know every Skill or tool. Cap selects at task time. Phase 1 does this with intent/keyword search, existing-metadata compare, and on-demand use (USE-*). A learned ranker is later.
+
+### North star vs Phase 1 slice
+
+The ladder is the long-term product. Phase 1 P0 (see [How to read this PRD](#how-to-read-this-prd)) is the local slice that makes routing possible. Recommendation, evaluation, and routing beyond current search, `cap inject`, Activity, and the Observation Period stay **Target / Gap** or a later phase. Describe only the Now column as shipped.
+
+| Ladder | Priority | Now (shipped slice) | Later (Target / Gap; not a Phase 1 claim) |
+|---|---|---|---|
+| Discovery | Registry, local | Keyword/intent search over the seed catalog and local Skills (USE-01, USE-02). | Public catalog and semantic/vector retrieval (USE-03, CAT-*). |
+| Understanding | Registry metadata | Compare uses existing Provider metadata (USE-07, USE-08). Local Inventory and Context Health explain resident cost (INV-*). | Remote catalog metadata (CAT-04). |
+| Recommendation | 2 | Search returns a small ranked candidate set from keyword/intent scoring. `cap inject` reuses that scoring for a load/defer plan (INJ-01) and does not write search Activity. | Task classification, ranking by observed success of capability combinations, and context-budget optimization inside the ranker. |
+| Dynamic injection | 3 | Plan only (`mutates: false`, INJ-01). Use loads a Skill body or one mapped MCP input on demand (USE-04, USE-05). | Auto mutate or evict (INJ-02). |
+| Evaluation / feedback | 4 | Local Activity records search, selection, invocation, and outcome (REC-02, TEL-LCL). Value Analysis scores from `use` only. The Observation Period gates frequency labels (REC-03). Invocation outcome is the current signal. | A full task-success signal (TEL-06), then feedback that updates ranking. |
+| Routing | 5 | Ranking is keyword/intent similarity. Outcomes do not retrain it. | Update ranking from Capability Feedback. |
+
+**Target feedback loop (later phases):** Task → classification → candidate retrieval → ranking → context budget optimization → inject → execution → result → capability feedback → update ranking. Future ranking may use observed success of capability combinations, not only embedding similarity. Phase 1 has keyword/intent ranking, no embeddings (USE-03 is Out), and no ranker update from outcomes.
+
+Phase 1 still ships three jobs. They serve the router:
+
+1. **Observe**: scan supported Agent configurations and visualize Context Health, so a routing or unload decision can be explained.
+2. **Optimize**: recommend and, after confirmation, apply reversible consolidation into CAP, so Direct Exposure stays small enough to inject on demand.
 3. **Explore and unlock**: search by intent, compare candidates from existing metadata, choose when needed, and use a Provider without making it permanently resident.
 
 ## 2. Interview findings
@@ -95,6 +137,8 @@ CAP has three connected jobs:
 - Full one-click Restore across shipped adapters, with conflict-aware preview.
 
 ## 3. Problem statement
+
+The product answer is in [§1](#1-product-definition): for a task, assemble the Capability Set to use now. The pressure that makes that necessary:
 
 Developers discover many MCP servers and Skills through social media and naturally want to install and try them. Today, Acquisition is coupled to Direct Exposure: each experiment can add schemas or Skill identities to every subsequent Agent session. As the collection grows, usable context shrinks and overlapping choices reduce selection quality. Removing capabilities regains context but loses convenient access; finding a capability later requires manual discovery, comparison, trust evaluation, installation, and configuration.
 
@@ -434,6 +478,8 @@ Core local entities are Local Inventory item, Context Footprint, Capability, Pro
 ## 13. Success metrics
 
 ### Phase 1 north stars
+
+Launch metrics for the Phase 1 slice. The product north star is the Capability Router in [§1](#1-product-definition).
 
 - **Agent onboarding completion**: explicit Agent install requests that reach a rendered first health report.
 - **Time to first health report**: median time from the pasted directive to report delivery in the same conversation (local observation; not remote TEL).
