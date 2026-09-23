@@ -1,6 +1,6 @@
 # CAP
 
-CAP is the domain of acquiring many Capabilities while exposing few of them in an Agent’s resident context.
+CAP is the domain of a local Capability Router: the right Capabilities for the current Agent task, acquired widely and exposed narrowly in resident context.
 
 ## Capability model
 
@@ -19,6 +19,32 @@ _Avoid_: Scale
 **Capability Intent**:
 A locally simplified, privacy-safe description of the outcome being searched for.
 _Avoid_: Full task, prompt, raw query
+
+## Routing
+
+**Capability Router**:
+CAP’s product role: the local control plane that, for one task, assembles the Capability Set to use now.
+_Avoid_: Agent Context manager, Marketplace, remote registry
+
+**Capability Set**:
+The Capabilities selected for one task, together with the context they need.
+_Avoid_: Local Inventory, CAP Surface, Direct Exposure
+
+**Capability Recommendation**:
+A ranked Capability Set for one task.
+_Avoid_: Optimization Plan, Context Health advice, Pin
+
+**Capability Evaluation**:
+A local judgment, drawn from Activity, of whether a chosen Capability helped. The current signal is invocation outcome; full task success is a later meaning of the same term.
+_Avoid_: Anonymous telemetry, Value Analysis, popularity
+
+**Capability Feedback**:
+The Activity outcome that Capability Evaluation reads.
+_Avoid_: Anonymous telemetry, Value Analysis
+
+**Capability Routing**:
+A later revision of Capability Recommendation that uses Capability Feedback.
+_Avoid_: Capability Router, Marketplace search, Dynamic Injection
 
 ## Binding and exposure
 
@@ -83,7 +109,7 @@ A recoverable copy of the configuration an Optimization Plan changed, scoped to 
 _Avoid_: Full restore, one-click restore, backup (as a synonym that hides the scoped meaning)
 
 **Dynamic Injection**:
-A task-specific decision about which Capabilities to load versus defer. The current meaning is a plan only; automatic mutation or eviction is a later meaning of the same term.
+A task-specific decision about which Capabilities to load versus defer (product ladder: Capability Injection). The current meaning is a plan only; automatic mutation or eviction is a later meaning of the same term.
 _Avoid_: Auto-prune, restore, optimize apply
 
 **Activity**:

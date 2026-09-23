@@ -2,7 +2,7 @@
 
 ## Goal
 
-Agents should see a **small, stable Capability surface**, while humans can install many Providers. CAP sits between Agent frontends (CLI / Web / MCP) and local or registered Providers.
+Agents should see a **small, stable Capability surface**, while humans can install many Providers. CAP sits between Agent frontends (CLI / Web / MCP) and local or registered Providers. The product role is a local Capability Router ([PRD §1](./product-requirements.md#1-product-definition)): for a task, assemble the Capability Set. Context Health visualization explains that choice.
 
 ```text
 CLI / Web / MCP

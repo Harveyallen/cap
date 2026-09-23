@@ -1,10 +1,16 @@
 # CAP
 
-> Install more. Expose less.
+> CAP：让 Agent 在正确的任务里，获得正确的能力。
+
+CAP 是 AI Agent 的 **Capability Router**：面对当前任务，组装此刻该用的能力集（Skill、MCP、Tool，以及它们需要的上下文）。Marketplace 回答「有哪些能力」；CAP 回答「这个任务现在该用哪些」。
+
+机制是 **Install more. Expose less.**：能力可以多收藏，默认不常驻。Context Health 用来解释取舍（例如为什么建议卸下这 12 个常驻定义），是辅助说明，不是产品中心。定义与阶段边界见 [产品需求文档 §1](./docs/product-requirements.md#1-product-definition)。
 
 ## 为什么需要 CAP
 
-在社交媒体或 GitHub 看到好用的 MCP、Skill，当然都想装来试试。问题是，许多能力安装后会长期暴露名称、描述和 Tool Schema：**装得越多，留给真实任务的上下文越少，Agent 也越容易选错工具。**
+用户说出任务即可，不必先记住每一个 Skill 或工具。CAP 在任务发生时选择相关能力。
+
+与此同时，许多能力安装后会长期暴露名称、描述和 Tool Schema：**装得越多，留给真实任务的上下文越少，Agent 也越容易选错工具。** 路由要成立，就得把收藏和常驻拆开。
 
 上下文就像随身背包。你只是下楼散步，却被迫背上帐篷、炉具和登山绳；装备以后也许有用，但不该每次出门都全部背着。Agent 也一样：它可能只需修改一行代码，却要同时“背着”钉钉、数据库、PDF、PPT 等几十套工具说明。
 
@@ -19,39 +25,41 @@
 
 > 上述数字是帮助理解量级的示意估算，不代表某个钉钉 MCP 版本的实测结果。工具数量和 Schema 大小会随版本、配置与 Agent 注入方式变化；CAP 会在本机扫描后给出当前环境的估算值。
 
-另一个问题是：用户知道想做什么，却不知道该装哪个工具。比如只说：
+例如用户只说：
 
 > 我想生成一份 PPT。
 
-CAP 应直接找到相关 Skill 或 MCP，说明各自的优缺点、权限、风险和上下文成本；用户选一个，就能立即使用。
+CAP 应直接找到相关 Skill 或 MCP，用已有元数据说明覆盖范围、权限、风险和上下文成本；用户选一个，就能立即使用。
 
 ## CAP 怎么解决
 
-CAP 把 CLI、MCP、Skill 和 API 统一成 **Capability**，围绕用户意图完成四件事：
+CAP 把 CLI、MCP、Skill 和 API 统一成 **Capability**。用户描述任务，CAP 在本机选出相关能力，只把这次需要的部分交给 Agent。
 
-1. **Inspect**：看清本机已经安装了什么，以及它们占用了多少上下文。
-2. **Search**：用模糊的自然语言描述目标，搜索相关 Capability，而不是工具名称。
-3. **Compare**：比较候选 Provider 的覆盖范围、状态、权限、风险和 Context 成本。
-4. **Add and Use**：选择 Provider，加入 CAP，然后通过统一入口调用。
+当前交付的路径：
+
+1. **Search**：用自然语言描述任务，在种子 Catalog 和本机 `SKILL.md` 里找相关 Capability，而不是先记工具名称。
+2. **Compare**：用已有元数据比较候选 Provider 的覆盖范围、状态、权限、风险和上下文成本。
+3. **Inject and Use**：`cap inject` 给出本次任务的最小装载计划（只出计划，不改配置）；`cap.use` 按需调用。尚未托管时会先登记，这是 Acquisition，不是 Direct Exposure。
+4. **Explain**：Context Health 与优化建议说明常驻占用，用来解释为什么这次不把它们全部放进上下文。
 
 ```text
 “我想生成一份 PPT”
           │
           ▼
-   搜索相关 Capability
+   按任务搜索相关 Capability
           │
           ▼
- Skill / MCP 候选与优缺点
+ Skill / MCP 候选与已有元数据
           │
           ▼
-      选择 → 添加 → 使用
+   选择 → 按需装载 → 使用
 ```
 
-与此同时，Agent 默认只需要面对 `cap.search`、`cap.add` 和 `cap.use`，而不是所有 Provider 的完整工具列表。
+Agent 默认只需要面对 `cap.search`、`cap.add` 和 `cap.use`，而不是所有 Provider 的完整工具列表。
 
-CAP 更像门口的装备柜：能力都可以收藏，只在任务需要时取出，不必一直挤在 Agent 的随身背包里。
+CAP 更像门口的装备柜：能力都可以收藏，只在当前任务需要时取出。
 
-当前版本会搜索内置种子 Catalog 和本机发现的 `SKILL.md`。在线公共 Catalog 仍在规划中，因此不是任意意图都一定有结果。
+推荐、按需注入、效果反馈，再用结果改进下一次推荐，是长期主线。效果反馈和排序优化属于后续阶段。当前版本搜索内置种子 Catalog 和本机发现的 `SKILL.md`。在线公共 Catalog 是另一个项目，所以不是任意意图都一定有结果。
 
 ## 三分钟开始
 

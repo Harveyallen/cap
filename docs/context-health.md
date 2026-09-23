@@ -4,6 +4,8 @@ CAP 不只是 MCP / Skill 的安装器。它是 **Agent Capability & Context Con
 
 一句话：**用最小能力集，换最大有效上下文。**
 
+这些可视化是 [Capability Router](./product-requirements.md#1-product-definition) 的解释层：说明一次推荐或卸载（例如「为什么卸下这 12 个」）。产品主线在 PRD §1。
+
 首页与 `cap inspect` 应优先讲 Context Health 分数、能力已消耗的 token、以及通过动态注入可回收的 token——而不是「安装了 N 个 Skill」。
 
 ## 为什么要管 Context
