@@ -55,7 +55,8 @@
 
 ### Docs
 
-- Product north star is the **Capability Router**: for a task, assemble the Capability Set. Context Health stays the explanation layer (“why unload these?”). Phase 1 P0 boundary is unchanged. See PRD §1, the README intro, and the routing terms in `CONTEXT.md`.
+- README intro restored to the pre-#47 «Install more. Expose less.» marketing copy. PRD §1 and `CONTEXT.md` still lock the Capability Router north star.
+- Product north star is the **Capability Router**: for a task, assemble the Capability Set. Context Health stays the explanation layer (“why unload these?”). Phase 1 P0 boundary is unchanged. See PRD §1 and the routing terms in `CONTEXT.md`.
 - Phase 1 launch-gap close (#26, #27 docs, #28, #29, #31): `.cap-backup` recovery runbook; Agent first-report / partial-scan / optimize copy; OS×Agent inspect matrix; inspect labels mapped to CONTEXT.md; Observation Period deferred to Phase 2.
 - Material-savings threshold frozen at **10% of effective budget** (`docs/adr/0001-material-savings-threshold.md`). Frequency labels deferred; no day-one unused→remove (`docs/adr/0002-observation-period-phase1.md`).
 - PRD encodes the Grill-settled Phase 1 boundary: P0 and launch gates bind Phase 1 only; every journey and requirement ID has Phase plus Target / Now / Gap. Restore is the JSON optimize `.cap-backup` path; remote catalog, semantic retrieval, full one-click Restore, and anonymous product telemetry are not Phase 1 gates.
