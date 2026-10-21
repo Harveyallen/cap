@@ -65,7 +65,7 @@ test('setup installs persistent CLI launchers into a PATH directory', async (t) 
   assert.match(capMcp, /bin\/cap-mcp\.js/);
   assert.equal((await fs.stat(path.join(binDir, 'cap'))).mode & 0o111, 0o111);
   const executed = await exec(path.join(binDir, 'cap'), ['help']);
-  assert.match(executed.stdout, /CAP 0\.4\.1/);
+  assert.match(executed.stdout, /CAP 0\.5\.0/);
 });
 
 test('npx setup installs durable npx launchers and configures MCP without cache paths', async (t) => {
@@ -73,13 +73,13 @@ test('npx setup installs durable npx launchers and configures MCP without cache 
   t.after(() => fs.rm(ctx.root, {recursive: true, force: true}));
   const binDir = path.join(ctx.root, 'bin');
   const npxRoot = path.join(ctx.root, '.npm', '_npx', 'abc', 'node_modules', '@harvey2008', 'cap');
-  const result = await setupCap({...ctx.options, agent: 'claude', installCli: true, binDir, packageRoot: npxRoot, packageVersion: '0.4.1', env: {PATH: binDir}});
+  const result = await setupCap({...ctx.options, agent: 'claude', installCli: true, binDir, packageRoot: npxRoot, packageVersion: '0.5.0', env: {PATH: binDir}});
   const cap = await fs.readFile(path.join(binDir, 'cap'), 'utf8');
   assert.match(cap, /npx/);
-  assert.match(cap, /@harvey2008\/cap@0\.4\.1/);
+  assert.match(cap, /@harvey2008\/cap@0\.5\.0/);
   assert.doesNotMatch(cap, /_npx\/abc/);
   assert.equal(result.launch.command, 'npx');
-  assert.deepEqual(result.launch.args, ['-y', '-p', '@harvey2008/cap@0.4.1', 'cap-mcp']);
+  assert.deepEqual(result.launch.args, ['-y', '-p', '@harvey2008/cap@0.5.0', 'cap-mcp']);
   const config = JSON.parse(await fs.readFile(ctx.claudeJson, 'utf8'));
   assert.equal(config.mcpServers.cap.command, 'npx');
   assert.doesNotMatch(JSON.stringify(config.mcpServers.cap), /_npx\/abc/);
@@ -273,3 +273,4 @@ test('setup keeps a single Claude CAP surface when settings.json already has cap
   assert.equal(caps.length, 1);
   assert.ok(result.install.reused);
 });
+
