@@ -20,7 +20,7 @@ test('CLI help, MCP serverInfo, and changelog agree with package.json', async ()
 
   const escaped = pkg.version.replace(/\./g, '\\.');
   const changelog = await fs.readFile(path.join(root, 'CHANGELOG.md'), 'utf8');
-  assert.match(changelog, new RegExp(`^## ${escaped}$`, 'm'));
+  assert.match(changelog, new RegExp(`^## ${escaped}(?: — .+)?$`, 'm'));
 
   const {stdout} = await execFileAsync(process.execPath, [path.join(root, 'bin', 'cap.js'), 'help'], {cwd: root});
   assert.match(stdout, new RegExp(`^CAP ${escaped} —`));
@@ -29,3 +29,4 @@ test('CLI help, MCP serverInfo, and changelog agree with package.json', async ()
   assert.equal(init.result.serverInfo.name, 'cap');
   assert.equal(init.result.serverInfo.version, pkg.version);
 });
+

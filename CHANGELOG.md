@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.0 — 2026-10-21
+
+Rollup of work merged after **0.4.1** (#23–#48 on `main`): temporary try mode, pin/exclude Direct Exposure controls, Observation Period readiness, post-optimize savings validation, Codex dotted-table TOML migrate, setup CAP-surface reuse, inventory filters / Skill overlap, Registry search Activity, and the Capability Router north-star docs. Install with `npx -y @harvey2008/cap@0.5.0 setup` (or `@harvey2008/cap` for current). GitHub `npx -y github:Harveyallen/cap setup` remains a fallback. npm publish / git tag / GitHub Release stay with the coordinator after merge.
+
 ### Try mode (USE-11)
 
 - **`cap try` / `cap cleanup` are a local trial path.** Try runs a seed, local-skill, or already-managed Provider through a temporary ManagedBinding (same executors as `cap.use`) and does **not** write Agent configs — not Direct Exposure. Cleanup removes that trial binding and any Registry `mcp_bindings` launch copy the trial created, and keeps an anonymous local outcome record (`try` / `use` Activity rows with `anonymous` + `local`; no input, env, or remote telemetry).
@@ -66,6 +70,11 @@
 ### Copy
 
 - Human inspect / Web Health / setup Context Health skill use glossary role names (Direct Exposure, CAP-managed, CAP Surface). Value Analysis `underused` is a signal, not a remove recommendation. Inspect next-step mentions optional `cap web` at `http://127.0.0.1:4173` without starting the server.
+
+
+### Version surface
+
+- Package version is `0.5.0`. CLI help/banner and MCP `initialize` `serverInfo.version` still read `package.json`.
 
 ## 0.4.1
 
@@ -187,3 +196,4 @@ Rollup of work shipped after 0.1.x. npm registry publish remains deferred; insta
 - Added intent-first capability search and curated seed catalog.
 - Added CAP Registry, acquire/use flow, activity records, and guarded optimization.
 - Added CLI, Web Search, and MCP stdio interfaces.
+
