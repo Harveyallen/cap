@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Web
+
+- **`cap web` is bilingual (简体中文 / English).** With no saved choice, the page follows the browser language list (`zh*` → 中文, otherwise English). The header switch (中文 | English) stores `cap.web.locale` in `localStorage` and rewrites the visible copy without a reload. Glossary roles stay Direct Exposure / CAP-managed / CAP Surface. Catalog names and descriptions are unchanged.
+
 ## 0.5.0 — 2026-10-21
 
 Rollup of work merged after **0.4.1** (#23–#48 on `main`): temporary try mode, pin/exclude Direct Exposure controls, Observation Period readiness, post-optimize savings validation, Codex dotted-table TOML migrate, setup CAP-surface reuse, inventory filters / Skill overlap, Registry search Activity, and the Capability Router north-star docs. Install with `npx -y @harvey2008/cap@0.5.0 setup` (or `@harvey2008/cap` for current). GitHub `npx -y github:Harveyallen/cap setup` remains a fallback. npm publish / git tag / GitHub Release stay with the coordinator after merge.

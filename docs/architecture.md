@@ -44,6 +44,8 @@ CAP Core ── Search ── Catalog (data/catalog.json + local SKILL.md overla
 | `pin.js` | Pin / unpin Direct Exposure and exclude / include recommendation preferences | Expand default MCP tools |
 | `try.js` | Temporary try + cleanup of a trial ManagedBinding; local anonymous outcome | Download remote catalog assets; expand default MCP tools; mutate Agent configs |
 | `mcp-server.js` | JSON-RPC stdio tool surface | Re-inject downstream tools into `tools/list` |
+| `web-i18n.js` | zh/en web copy and locale resolution (browser list, `localStorage` override) | Format CLI output or talk to the network |
+| `web-client.js` | Browser script for the Discover / Health page | Own HTTP or registry writes |
 | `web-server.js` | Discover UI + thin JSON APIs | Own business logic |
 | `cli.js` | Arg parsing + human/JSON formatting | Domain logic |
 

@@ -185,7 +185,7 @@ V3 告诉你哪些已托管能力性价比低、可以不再常驻。V4 的第�
 
 每条 inventory item 增加 `status`（`direct` | `managed` | `estimated` | `cap`）和 `cost`。人体标签映射到 [CONTEXT.md](../CONTEXT.md)：`direct` / `estimated` = Direct Exposure，`managed` = CAP-managed，`cap` = CAP Surface。项目 `.mcp.json` 的 `agent` 为 `Project`（Cursor 与 Claude Code 都会读）。扫描路径与 OS 验证注记见 [compatibility.md](./compatibility.md)。Agent 用语见 [agent-onboarding.md](./agent-onboarding.md)。JSON 优化备份恢复见 [restore-from-backup.md](./restore-from-backup.md)。
 
-人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染，但人体输出不展示入口 / 漏斗（这两项只在 `--json` / `/api/inspect`）。人体用带标签的中文，角色名用 glossary：Direct Exposure / CAP-managed / CAP Surface。`summary.registryCapabilities` 是 Registry 里已 `add` 的能力数；`summary.managed` 仍是已迁入 CAP 的 MCP 条目数。
+人类可读的 `cap inspect` 与 Web Health 页按同一份报告渲染，但人体输出不展示入口 / 漏斗（这两项只在 `--json` / `/api/inspect`）。人体用带标签的中文，角色名用 glossary：Direct Exposure / CAP-managed / CAP Surface。`summary.registryCapabilities` 是 Registry 里已 `add` 的能力数；`summary.managed` 仍是已迁入 CAP 的 MCP 条目数。Web 页可在简体中文与 English 之间切换；未选择时按浏览器语言（`zh*` 为中文，其余为 English），选择记在 `localStorage`，切换不整页刷新。
 
 ## 相关命令
 

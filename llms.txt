@@ -32,7 +32,7 @@
 - Value Analysis: `src/profiler.js` (V3 value/cost from `use` activity only; Observation Period readiness + frequency/value advice; search/select do not create value scores)
 - Dynamic Injection: `src/inject.js` (V4 task → load/defer plan; CLI `cap inject`; MCP `cap.inject` via `CAP_MCP_INJECT=1`)
 - MCP: `bin/cap-mcp.js` → `src/mcp-server.js` (tools from `src/mcp-tools.js`: `cap.search`, `cap.add`, `cap.use`; optional `cap.inspect` / `cap.inject`)
-- Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173`
+- Web: `cap web` → `src/web-server.js` on `127.0.0.1:4173` (zh/en UI in `src/web-i18n.js`; browser locale, header switch, `localStorage`)
 - Library: `src/index.js` (`searchCapabilities`, `addCapability`, `useCapability`, `inspectLocal`, `loadCatalog`, `loadState`)
 
 ## Agent skills

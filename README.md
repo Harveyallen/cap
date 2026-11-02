@@ -154,7 +154,7 @@ Capability 描述“能完成什么”，Provider 描述“由谁实现”。同
 | `cap exclude <provider>` | 从 optimize 建议中排除，不卸载 | 是，只改 Registry |
 | `cap include <provider>` | 重新允许出现在建议里 | 是，只改 Registry |
 | `cap optimize` | 预览 MCP 收拢与 Skill 索引计划 | 否，默认仅预览 |
-| `cap web` | 启动本地搜索与健康页面 | 否 |
+| `cap web` | 启动本地搜索与健康页面（简体中文 / English，跟随浏览器语言，可在页头切换） | 否 |
 
 机器读取时添加 `--json`：
 
