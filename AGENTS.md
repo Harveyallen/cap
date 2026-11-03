@@ -32,6 +32,8 @@ Stack: Node.js ≥20, ESM (`"type": "module"`), **zero npm runtime dependencies*
 | `src/try.js` | Temporary try + cleanup (trial ManagedBinding, local anonymous outcome) |
 | `src/mcp-server.js` | MCP JSON-RPC tools |
 | `src/mcp-tools.js` | CAP entry tool defs + `cap-mcp` detection |
+| `src/web-i18n.js` | `cap web` zh/en copy and locale resolution (browser list, then `localStorage`) |
+| `src/web-client.js` | Discover / Health page script; language switch rewrites visible copy in place |
 | `src/web-server.js` | Local Discover UI + JSON APIs |
 | `src/paths.js` | `CAP_HOME` / package root |
 | `src/catalog-schema.js` | Zero-dep catalog JSON Schema checks |
